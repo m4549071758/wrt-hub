@@ -1,0 +1,2973 @@
+{
+  "schemaVersion": 1,
+  "collectedAt": 1795300000000,
+  "board": {
+    "kernel": "6.12.94",
+    "hostname": "OpenWrt",
+    "system": "Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz",
+    "model": "Dell Inc. OptiPlex 3040",
+    "board_name": "dell-inc-optiplex-3040",
+    "rootfs_type": "ext4",
+    "release": {
+      "distribution": "OpenWrt",
+      "version": "25.12.5",
+      "firmware_url": "https://downloads.openwrt.org/",
+      "revision": "r33051-f5dae5ece4",
+      "target": "x86/64",
+      "description": "OpenWrt 25.12.5 r33051-f5dae5ece4",
+      "builddate": "1782737960"
+    }
+  },
+  "info": {
+    "localtime": 1795294133,
+    "uptime": 3709367,
+    "load": [
+      2656,
+      8192,
+      7168
+    ],
+    "memory": {
+      "total": 8249241600,
+      "free": 7235149824,
+      "shared": 20631552,
+      "buffered": 13737984,
+      "available": 7785992192,
+      "cached": 636563456
+    },
+    "root": {
+      "total": 246098980,
+      "free": 245329404,
+      "used": 769576,
+      "avail": 245313020
+    },
+    "tmp": {
+      "total": 4027948,
+      "free": 4008036,
+      "used": 19912,
+      "avail": 4008036
+    },
+    "swap": {
+      "total": 0,
+      "free": 0
+    }
+  },
+  "interfaces": {
+    "interface": [
+      {
+        "interface": "lan",
+        "up": true,
+        "pending": false,
+        "available": true,
+        "autostart": true,
+        "dynamic": false,
+        "uptime": 3709354,
+        "l3_device": "br-lan",
+        "proto": "static",
+        "device": "br-lan",
+        "updated": [
+          "addresses"
+        ],
+        "metric": 0,
+        "dns_metric": 0,
+        "delegation": true,
+        "ipv4-address": [
+          {
+            "address": "10.99.10.1",
+            "mask": 16
+          }
+        ],
+        "ipv6-address": [],
+        "ipv6-prefix": [],
+        "ipv6-prefix-assignment": [
+          {
+            "address": "fd00:db8::49",
+            "mask": 64,
+            "preferred": 11286,
+            "valid": 13086,
+            "local-address": {
+              "address": "fd00:db8::4a",
+              "mask": 64
+            }
+          },
+          {
+            "address": "fd00:db8::4b",
+            "mask": 64,
+            "local-address": {
+              "address": "fd00:db8::4c",
+              "mask": 64
+            }
+          }
+        ],
+        "route": [],
+        "dns-server": [],
+        "dns-search": [],
+        "neighbors": [],
+        "inactive": {
+          "ipv4-address": [],
+          "ipv6-address": [],
+          "route": [],
+          "dns-server": [],
+          "dns-search": [],
+          "neighbors": []
+        },
+        "data": {}
+      },
+      {
+        "interface": "living",
+        "up": true,
+        "pending": false,
+        "available": true,
+        "autostart": true,
+        "dynamic": false,
+        "uptime": 3709353,
+        "l3_device": "eth0",
+        "proto": "static",
+        "device": "eth0",
+        "updated": [
+          "addresses"
+        ],
+        "metric": 0,
+        "dns_metric": 0,
+        "delegation": true,
+        "ipv4-address": [
+          {
+            "address": "10.99.11.1",
+            "mask": 24
+          }
+        ],
+        "ipv6-address": [],
+        "ipv6-prefix": [],
+        "ipv6-prefix-assignment": [],
+        "route": [],
+        "dns-server": [],
+        "dns-search": [],
+        "neighbors": [],
+        "inactive": {
+          "ipv4-address": [],
+          "ipv6-address": [],
+          "route": [],
+          "dns-server": [],
+          "dns-search": [],
+          "neighbors": []
+        },
+        "data": {}
+      },
+      {
+        "interface": "loopback",
+        "up": true,
+        "pending": false,
+        "available": true,
+        "autostart": true,
+        "dynamic": false,
+        "uptime": 3709353,
+        "l3_device": "lo",
+        "proto": "static",
+        "device": "lo",
+        "updated": [
+          "addresses"
+        ],
+        "metric": 0,
+        "dns_metric": 0,
+        "delegation": true,
+        "ipv4-address": [
+          {
+            "address": "127.0.0.1",
+            "mask": 8
+          }
+        ],
+        "ipv6-address": [],
+        "ipv6-prefix": [],
+        "ipv6-prefix-assignment": [],
+        "route": [],
+        "dns-server": [],
+        "dns-search": [],
+        "neighbors": [],
+        "inactive": {
+          "ipv4-address": [],
+          "ipv6-address": [],
+          "route": [],
+          "dns-server": [],
+          "dns-search": [],
+          "neighbors": []
+        },
+        "data": {}
+      },
+      {
+        "interface": "wan",
+        "up": true,
+        "pending": false,
+        "available": true,
+        "autostart": true,
+        "dynamic": false,
+        "uptime": 3709339,
+        "l3_device": "ipip6-wan",
+        "proto": "ipip6",
+        "updated": [
+          "addresses",
+          "routes"
+        ],
+        "metric": 100,
+        "dns_metric": 0,
+        "delegation": true,
+        "ipv4-address": [
+          {
+            "address": "10.99.12.110",
+            "mask": 32
+          }
+        ],
+        "ipv6-address": [],
+        "ipv6-prefix": [],
+        "ipv6-prefix-assignment": [
+          {
+            "address": "fd00:db8::4d",
+            "mask": 64,
+            "preferred": 11286,
+            "valid": 13086,
+            "local-address": {
+              "address": "fd00:db8::4e",
+              "mask": 64
+            }
+          }
+        ],
+        "route": [
+          {
+            "target": "0.0.0.0",
+            "mask": 0,
+            "nexthop": "0.0.0.0",
+            "source": "0.0.0.0/0"
+          }
+        ],
+        "dns-server": [],
+        "dns-search": [],
+        "neighbors": [],
+        "inactive": {
+          "ipv4-address": [],
+          "ipv6-address": [],
+          "route": [],
+          "dns-server": [],
+          "dns-search": [],
+          "neighbors": []
+        },
+        "data": {}
+      },
+      {
+        "interface": "wan6",
+        "up": true,
+        "pending": false,
+        "available": true,
+        "autostart": true,
+        "dynamic": false,
+        "uptime": 3709339,
+        "l3_device": "br-wan",
+        "proto": "dhcpv6",
+        "device": "br-wan",
+        "metric": 100,
+        "dns_metric": 0,
+        "delegation": true,
+        "ipv4-address": [],
+        "ipv6-address": [],
+        "ipv6-prefix": [
+          {
+            "address": "fd00:db8::4d",
+            "mask": 56,
+            "preferred": 11286,
+            "valid": 13086,
+            "class": "wan6",
+            "assigned": {
+              "wan": {
+                "address": "fd00:db8::4d",
+                "mask": 64
+              },
+              "lan": {
+                "address": "fd00:db8::49",
+                "mask": 64
+              }
+            }
+          }
+        ],
+        "ipv6-prefix-assignment": [],
+        "route": [
+          {
+            "target": "::",
+            "mask": 0,
+            "nexthop": "fd00:db8::4f",
+            "metric": 512,
+            "valid": 1790,
+            "source": "fd00:db8::4d/56"
+          }
+        ],
+        "dns-server": [
+          "fd00:db8::50",
+          "fd00:db8::51"
+        ],
+        "dns-search": [
+          "domain-1",
+          "domain-2"
+        ],
+        "neighbors": [],
+        "inactive": {
+          "ipv4-address": [],
+          "ipv6-address": [],
+          "route": [],
+          "dns-server": [],
+          "dns-search": [],
+          "neighbors": []
+        },
+        "data": {
+          "passthru": ""
+        }
+      },
+      {
+        "interface": "wanaftr",
+        "up": true,
+        "pending": false,
+        "available": true,
+        "autostart": true,
+        "dynamic": false,
+        "uptime": 3709339,
+        "l3_device": "ds-wanaftr",
+        "proto": "dslite",
+        "updated": [
+          "addresses",
+          "routes",
+          "data"
+        ],
+        "metric": 110,
+        "dns_metric": 0,
+        "delegation": true,
+        "ipv4-address": [
+          {
+            "address": "10.99.13.2",
+            "mask": 32,
+            "ptpaddress": "10.99.13.1"
+          }
+        ],
+        "ipv6-address": [],
+        "ipv6-prefix": [],
+        "ipv6-prefix-assignment": [],
+        "route": [
+          {
+            "target": "0.0.0.0",
+            "mask": 0,
+            "nexthop": "0.0.0.0",
+            "source": "0.0.0.0/0"
+          }
+        ],
+        "dns-server": [],
+        "dns-search": [],
+        "neighbors": [],
+        "inactive": {
+          "ipv4-address": [],
+          "ipv6-address": [],
+          "route": [],
+          "dns-server": [],
+          "dns-search": [],
+          "neighbors": []
+        },
+        "data": {
+          "firewall": [
+            {
+              "type": "nat",
+              "target": "ACCEPT"
+            }
+          ]
+        }
+      },
+      {
+        "interface": "wwan",
+        "up": true,
+        "pending": false,
+        "available": true,
+        "autostart": true,
+        "dynamic": false,
+        "uptime": 48588,
+        "l3_device": "wwan0",
+        "proto": "modemmanager",
+        "updated": [
+          "addresses",
+          "routes"
+        ],
+        "metric": 120,
+        "dns_metric": 0,
+        "delegation": true,
+        "ipv4-address": [
+          {
+            "address": "10.99.14.44",
+            "mask": 29
+          }
+        ],
+        "ipv6-address": [],
+        "ipv6-prefix": [],
+        "ipv6-prefix-assignment": [],
+        "route": [
+          {
+            "target": "0.0.0.0",
+            "mask": 0,
+            "nexthop": "10.99.14.45",
+            "source": "10.99.14.44/32"
+          }
+        ],
+        "dns-server": [
+          "10.99.1.1",
+          "10.99.2.8",
+          "10.99.15.139",
+          "10.99.15.129"
+        ],
+        "dns-search": [],
+        "neighbors": [],
+        "inactive": {
+          "ipv4-address": [],
+          "ipv6-address": [],
+          "route": [],
+          "dns-server": [],
+          "dns-search": [],
+          "neighbors": []
+        },
+        "data": {}
+      }
+    ]
+  },
+  "devices": {
+    "br-lan": {
+      "external": false,
+      "present": true,
+      "type": "bridge",
+      "up": true,
+      "carrier": true,
+      "auth_status": false,
+      "link-advertising": [],
+      "link-partner-advertising": [],
+      "link-supported": [],
+      "speed": "10000F",
+      "autoneg": false,
+      "flow-control": {
+        "autoneg": true,
+        "supported": [],
+        "link-advertising": [],
+        "link-partner-advertising": [],
+        "negotiated": []
+      },
+      "hw-tc-offload": false,
+      "devtype": "bridge",
+      "bridge-members": [
+        "eth3"
+      ],
+      "bridge-attributes": {
+        "stp": false,
+        "forward_delay": 8,
+        "priority": 32767,
+        "ageing_time": 0,
+        "hello_time": 1,
+        "max_age": 10,
+        "igmp_snooping": false,
+        "bridge_empty": false,
+        "multicast_querier": false,
+        "hash_max": 512,
+        "robustness": 2,
+        "query_interval": 12500,
+        "query_response_interval": 1000,
+        "last_member_interval": 100,
+        "vlan_filtering": false,
+        "stp_kernel": false
+      },
+      "mtu": 1500,
+      "mtu6": 1500,
+      "macaddr": "02:aa:bb:00:00:18",
+      "txqueuelen": 1000,
+      "ipv6": true,
+      "ip6segmentrouting": false,
+      "promisc": false,
+      "rpfilter": 0,
+      "acceptlocal": false,
+      "igmpversion": 0,
+      "mldversion": 0,
+      "neigh4reachabletime": 30000,
+      "neigh6reachabletime": 30000,
+      "neigh4gcstaletime": 60,
+      "neigh6gcstaletime": 60,
+      "neigh4locktime": 100,
+      "dadtransmits": 1,
+      "multicast": true,
+      "sendredirects": true,
+      "drop_v4_unicast_in_l2_multicast": false,
+      "drop_v6_unicast_in_l2_multicast": false,
+      "drop_gratuitous_arp": false,
+      "drop_unsolicited_na": false,
+      "arp_accept": false,
+      "gro": true,
+      "statistics": {
+        "collisions": 0,
+        "rx_frame_errors": 0,
+        "tx_compressed": 0,
+        "multicast": 60092463,
+        "rx_length_errors": 0,
+        "tx_dropped": 3024,
+        "rx_bytes": 2387717872737,
+        "rx_missed_errors": 0,
+        "tx_errors": 0,
+        "rx_compressed": 0,
+        "rx_over_errors": 0,
+        "tx_fifo_errors": 0,
+        "rx_crc_errors": 0,
+        "rx_packets": 1923581882,
+        "tx_heartbeat_errors": 0,
+        "rx_dropped": 25,
+        "tx_aborted_errors": 0,
+        "tx_packets": 4059470800,
+        "rx_errors": 0,
+        "tx_bytes": 4342344937362,
+        "tx_window_errors": 0,
+        "rx_fifo_errors": 0,
+        "tx_carrier_errors": 0
+      }
+    },
+    "br-wan": {
+      "external": false,
+      "present": true,
+      "type": "bridge",
+      "up": true,
+      "carrier": true,
+      "auth_status": false,
+      "link-advertising": [],
+      "link-partner-advertising": [],
+      "link-supported": [],
+      "speed": "10000F",
+      "autoneg": false,
+      "flow-control": {
+        "autoneg": true,
+        "supported": [],
+        "link-advertising": [],
+        "link-partner-advertising": [],
+        "negotiated": []
+      },
+      "hw-tc-offload": false,
+      "devtype": "bridge",
+      "bridge-members": [
+        "eth1",
+        "eth2"
+      ],
+      "bridge-attributes": {
+        "stp": false,
+        "forward_delay": 8,
+        "priority": 32767,
+        "ageing_time": 0,
+        "hello_time": 1,
+        "max_age": 10,
+        "igmp_snooping": false,
+        "bridge_empty": false,
+        "multicast_querier": false,
+        "hash_max": 512,
+        "robustness": 2,
+        "query_interval": 12500,
+        "query_response_interval": 1000,
+        "last_member_interval": 100,
+        "vlan_filtering": false,
+        "stp_kernel": false
+      },
+      "mtu": 1500,
+      "mtu6": 1500,
+      "macaddr": "02:aa:bb:00:00:19",
+      "txqueuelen": 1000,
+      "ipv6": true,
+      "ip6segmentrouting": false,
+      "promisc": false,
+      "rpfilter": 0,
+      "acceptlocal": false,
+      "igmpversion": 0,
+      "mldversion": 0,
+      "neigh4reachabletime": 30000,
+      "neigh6reachabletime": 30000,
+      "neigh4gcstaletime": 60,
+      "neigh6gcstaletime": 60,
+      "neigh4locktime": 100,
+      "dadtransmits": 1,
+      "multicast": true,
+      "sendredirects": true,
+      "drop_v4_unicast_in_l2_multicast": false,
+      "drop_v6_unicast_in_l2_multicast": false,
+      "drop_gratuitous_arp": false,
+      "drop_unsolicited_na": false,
+      "arp_accept": false,
+      "gro": true,
+      "statistics": {
+        "collisions": 0,
+        "rx_frame_errors": 0,
+        "tx_compressed": 0,
+        "multicast": 21195,
+        "rx_length_errors": 0,
+        "tx_dropped": 5,
+        "rx_bytes": 4643599060760,
+        "rx_missed_errors": 0,
+        "tx_errors": 0,
+        "rx_compressed": 0,
+        "rx_over_errors": 0,
+        "tx_fifo_errors": 0,
+        "rx_crc_errors": 0,
+        "rx_packets": 1762825614,
+        "tx_heartbeat_errors": 0,
+        "rx_dropped": 0,
+        "tx_aborted_errors": 0,
+        "tx_packets": 2882192362,
+        "rx_errors": 0,
+        "tx_bytes": 2602311741186,
+        "tx_window_errors": 0,
+        "rx_fifo_errors": 0,
+        "tx_carrier_errors": 0
+      }
+    },
+    "ds-wanaftr": {
+      "external": false,
+      "present": true,
+      "type": "tunnel",
+      "up": true,
+      "carrier": true,
+      "auth_status": false,
+      "mtu": 1460,
+      "mtu6": 1460,
+      "macaddr": "02:aa:bb:00:00:1a",
+      "txqueuelen": 1000,
+      "ipv6": true,
+      "ip6segmentrouting": false,
+      "promisc": false,
+      "rpfilter": 0,
+      "acceptlocal": false,
+      "igmpversion": 0,
+      "mldversion": 0,
+      "neigh4reachabletime": 30000,
+      "neigh6reachabletime": 30000,
+      "neigh4gcstaletime": 60,
+      "neigh6gcstaletime": 60,
+      "neigh4locktime": 100,
+      "dadtransmits": 1,
+      "multicast": false,
+      "sendredirects": true,
+      "drop_v4_unicast_in_l2_multicast": false,
+      "drop_v6_unicast_in_l2_multicast": false,
+      "drop_gratuitous_arp": false,
+      "drop_unsolicited_na": false,
+      "arp_accept": false,
+      "gro": true,
+      "statistics": {
+        "collisions": 0,
+        "rx_frame_errors": 0,
+        "tx_compressed": 0,
+        "multicast": 0,
+        "rx_length_errors": 0,
+        "tx_dropped": 0,
+        "rx_bytes": 41214096,
+        "rx_missed_errors": 0,
+        "tx_errors": 0,
+        "rx_compressed": 0,
+        "rx_over_errors": 0,
+        "tx_fifo_errors": 0,
+        "rx_crc_errors": 0,
+        "rx_packets": 490644,
+        "tx_heartbeat_errors": 0,
+        "rx_dropped": 0,
+        "tx_aborted_errors": 0,
+        "tx_packets": 490697,
+        "rx_errors": 0,
+        "tx_bytes": 41218548,
+        "tx_window_errors": 0,
+        "rx_fifo_errors": 0,
+        "tx_carrier_errors": 0
+      }
+    },
+    "eth0": {
+      "external": false,
+      "present": true,
+      "type": "Network device",
+      "up": true,
+      "carrier": true,
+      "auth_status": false,
+      "link-advertising": [
+        "10baseT-H",
+        "10baseT-F",
+        "100baseT-H",
+        "100baseT-F",
+        "1000baseT-F"
+      ],
+      "link-partner-advertising": [
+        "10baseT-H",
+        "10baseT-F",
+        "100baseT-H",
+        "100baseT-F",
+        "1000baseT-F"
+      ],
+      "link-supported": [
+        "10baseT-H",
+        "10baseT-F",
+        "100baseT-H",
+        "100baseT-F",
+        "1000baseT-F"
+      ],
+      "speed": "1000F",
+      "autoneg": true,
+      "flow-control": {
+        "autoneg": true,
+        "supported": [
+          "pause",
+          "asym_pause"
+        ],
+        "link-advertising": [
+          "pause",
+          "asym_pause"
+        ],
+        "link-partner-advertising": [
+          "asym_pause"
+        ],
+        "negotiated": [
+          "tx"
+        ]
+      },
+      "hw-tc-offload": false,
+      "devtype": "ethernet",
+      "mtu": 1500,
+      "mtu6": 1500,
+      "macaddr": "02:aa:bb:00:00:1b",
+      "txqueuelen": 1000,
+      "ipv6": true,
+      "ip6segmentrouting": false,
+      "promisc": false,
+      "rpfilter": 0,
+      "acceptlocal": false,
+      "igmpversion": 0,
+      "mldversion": 0,
+      "neigh4reachabletime": 30000,
+      "neigh6reachabletime": 30000,
+      "neigh4gcstaletime": 60,
+      "neigh6gcstaletime": 60,
+      "neigh4locktime": 100,
+      "dadtransmits": 1,
+      "multicast": true,
+      "sendredirects": true,
+      "drop_v4_unicast_in_l2_multicast": false,
+      "drop_v6_unicast_in_l2_multicast": false,
+      "drop_gratuitous_arp": false,
+      "drop_unsolicited_na": false,
+      "arp_accept": false,
+      "gro": true,
+      "statistics": {
+        "collisions": 0,
+        "rx_frame_errors": 0,
+        "tx_compressed": 0,
+        "multicast": 476970,
+        "rx_length_errors": 0,
+        "tx_dropped": 1101,
+        "rx_bytes": 90742967500,
+        "rx_missed_errors": 249,
+        "tx_errors": 0,
+        "rx_compressed": 0,
+        "rx_over_errors": 0,
+        "tx_fifo_errors": 0,
+        "rx_crc_errors": 0,
+        "rx_packets": 115630583,
+        "tx_heartbeat_errors": 0,
+        "rx_dropped": 10,
+        "tx_aborted_errors": 0,
+        "tx_packets": 395561736,
+        "rx_errors": 0,
+        "tx_bytes": 502128337621,
+        "tx_window_errors": 0,
+        "rx_fifo_errors": 0,
+        "tx_carrier_errors": 0
+      }
+    },
+    "eth1": {
+      "external": false,
+      "present": true,
+      "type": "Network device",
+      "up": true,
+      "carrier": true,
+      "auth_status": false,
+      "link-advertising": [
+        "10baseT-H",
+        "10baseT-F",
+        "100baseT-H",
+        "100baseT-F",
+        "1000baseT-F"
+      ],
+      "link-partner-advertising": [
+        "10baseT-H",
+        "10baseT-F",
+        "100baseT-H",
+        "100baseT-F",
+        "1000baseT-F"
+      ],
+      "link-supported": [
+        "10baseT-H",
+        "10baseT-F",
+        "100baseT-H",
+        "100baseT-F",
+        "1000baseT-F"
+      ],
+      "speed": "1000F",
+      "autoneg": true,
+      "flow-control": {
+        "autoneg": true,
+        "supported": [
+          "pause",
+          "asym_pause"
+        ],
+        "link-advertising": [],
+        "link-partner-advertising": [],
+        "negotiated": []
+      },
+      "hw-tc-offload": false,
+      "devtype": "ethernet",
+      "mtu": 1500,
+      "mtu6": 1500,
+      "macaddr": "02:aa:bb:00:00:19",
+      "txqueuelen": 1000,
+      "ipv6": false,
+      "ip6segmentrouting": false,
+      "promisc": false,
+      "rpfilter": 0,
+      "acceptlocal": false,
+      "igmpversion": 0,
+      "mldversion": 0,
+      "neigh4reachabletime": 30000,
+      "neigh6reachabletime": 30000,
+      "neigh4gcstaletime": 60,
+      "neigh6gcstaletime": 60,
+      "neigh4locktime": 100,
+      "dadtransmits": 1,
+      "multicast": true,
+      "sendredirects": true,
+      "drop_v4_unicast_in_l2_multicast": false,
+      "drop_v6_unicast_in_l2_multicast": false,
+      "drop_gratuitous_arp": false,
+      "drop_unsolicited_na": false,
+      "arp_accept": false,
+      "gro": true,
+      "statistics": {
+        "collisions": 0,
+        "rx_frame_errors": 0,
+        "tx_compressed": 0,
+        "multicast": 1,
+        "rx_length_errors": 0,
+        "tx_dropped": 1,
+        "rx_bytes": 21753360,
+        "rx_missed_errors": 0,
+        "tx_errors": 0,
+        "rx_compressed": 0,
+        "rx_over_errors": 0,
+        "tx_fifo_errors": 0,
+        "rx_crc_errors": 0,
+        "rx_packets": 101238,
+        "tx_heartbeat_errors": 0,
+        "rx_dropped": 0,
+        "tx_aborted_errors": 0,
+        "tx_packets": 122765,
+        "rx_errors": 0,
+        "tx_bytes": 23772287,
+        "tx_window_errors": 0,
+        "rx_fifo_errors": 0,
+        "tx_carrier_errors": 0
+      }
+    },
+    "eth2": {
+      "external": false,
+      "present": true,
+      "type": "Network device",
+      "up": true,
+      "carrier": true,
+      "auth_status": false,
+      "link-advertising": [
+        "100baseT-F",
+        "1000baseT-F",
+        "10000baseT-F"
+      ],
+      "link-partner-advertising": [],
+      "link-supported": [
+        "100baseT-F",
+        "1000baseT-F",
+        "10000baseT-F"
+      ],
+      "speed": "10000F",
+      "autoneg": true,
+      "flow-control": {
+        "autoneg": true,
+        "supported": [
+          "pause"
+        ],
+        "link-advertising": [
+          "pause"
+        ],
+        "link-partner-advertising": [],
+        "negotiated": []
+      },
+      "hw-tc-offload": false,
+      "devtype": "ethernet",
+      "mtu": 1500,
+      "mtu6": 1500,
+      "macaddr": "02:aa:bb:00:00:1c",
+      "txqueuelen": 1000,
+      "ipv6": false,
+      "ip6segmentrouting": false,
+      "promisc": false,
+      "rpfilter": 0,
+      "acceptlocal": false,
+      "igmpversion": 0,
+      "mldversion": 0,
+      "neigh4reachabletime": 30000,
+      "neigh6reachabletime": 30000,
+      "neigh4gcstaletime": 60,
+      "neigh6gcstaletime": 60,
+      "neigh4locktime": 100,
+      "dadtransmits": 1,
+      "multicast": true,
+      "sendredirects": true,
+      "drop_v4_unicast_in_l2_multicast": false,
+      "drop_v6_unicast_in_l2_multicast": false,
+      "drop_gratuitous_arp": false,
+      "drop_unsolicited_na": false,
+      "arp_accept": false,
+      "gro": true,
+      "statistics": {
+        "collisions": 0,
+        "rx_frame_errors": 0,
+        "tx_compressed": 0,
+        "multicast": 21194,
+        "rx_length_errors": 0,
+        "tx_dropped": 1,
+        "rx_bytes": 4880849751051,
+        "rx_missed_errors": 0,
+        "tx_errors": 0,
+        "rx_compressed": 0,
+        "rx_over_errors": 0,
+        "tx_fifo_errors": 0,
+        "rx_crc_errors": 0,
+        "rx_packets": 4219435027,
+        "tx_heartbeat_errors": 0,
+        "rx_dropped": 0,
+        "tx_aborted_errors": 0,
+        "tx_packets": 2881240057,
+        "rx_errors": 0,
+        "tx_bytes": 2600743477155,
+        "tx_window_errors": 0,
+        "rx_fifo_errors": 0,
+        "tx_carrier_errors": 0
+      }
+    },
+    "eth3": {
+      "external": false,
+      "present": true,
+      "type": "Network device",
+      "up": true,
+      "carrier": true,
+      "auth_status": false,
+      "link-advertising": [
+        "100baseT-F",
+        "1000baseT-F",
+        "10000baseT-F"
+      ],
+      "link-partner-advertising": [],
+      "link-supported": [
+        "100baseT-F",
+        "1000baseT-F",
+        "10000baseT-F"
+      ],
+      "speed": "10000F",
+      "autoneg": true,
+      "flow-control": {
+        "autoneg": true,
+        "supported": [
+          "pause"
+        ],
+        "link-advertising": [
+          "pause"
+        ],
+        "link-partner-advertising": [],
+        "negotiated": []
+      },
+      "hw-tc-offload": false,
+      "devtype": "ethernet",
+      "mtu": 1500,
+      "mtu6": 1500,
+      "macaddr": "02:aa:bb:00:00:18",
+      "txqueuelen": 1000,
+      "ipv6": false,
+      "ip6segmentrouting": false,
+      "promisc": false,
+      "rpfilter": 0,
+      "acceptlocal": false,
+      "igmpversion": 0,
+      "mldversion": 0,
+      "neigh4reachabletime": 30000,
+      "neigh6reachabletime": 30000,
+      "neigh4gcstaletime": 60,
+      "neigh6gcstaletime": 60,
+      "neigh4locktime": 100,
+      "dadtransmits": 1,
+      "multicast": true,
+      "sendredirects": true,
+      "drop_v4_unicast_in_l2_multicast": false,
+      "drop_v6_unicast_in_l2_multicast": false,
+      "drop_gratuitous_arp": false,
+      "drop_unsolicited_na": false,
+      "arp_accept": false,
+      "gro": true,
+      "statistics": {
+        "collisions": 0,
+        "rx_frame_errors": 0,
+        "tx_compressed": 0,
+        "multicast": 60291597,
+        "rx_length_errors": 0,
+        "tx_dropped": 184,
+        "rx_bytes": 2495216142717,
+        "rx_missed_errors": 488843,
+        "tx_errors": 0,
+        "rx_compressed": 0,
+        "rx_over_errors": 0,
+        "tx_fifo_errors": 0,
+        "rx_crc_errors": 0,
+        "rx_packets": 3028067852,
+        "tx_heartbeat_errors": 0,
+        "rx_dropped": 123767,
+        "tx_aborted_errors": 0,
+        "tx_packets": 4056840247,
+        "rx_errors": 0,
+        "tx_bytes": 4337623801407,
+        "tx_window_errors": 0,
+        "rx_fifo_errors": 0,
+        "tx_carrier_errors": 0
+      }
+    },
+    "ipip6-wan": {
+      "external": false,
+      "present": true,
+      "type": "tunnel",
+      "up": true,
+      "carrier": true,
+      "auth_status": false,
+      "mtu": 1460,
+      "mtu6": 1460,
+      "macaddr": "02:aa:bb:00:00:1a",
+      "txqueuelen": 1000,
+      "ipv6": true,
+      "ip6segmentrouting": false,
+      "promisc": false,
+      "rpfilter": 0,
+      "acceptlocal": false,
+      "igmpversion": 0,
+      "mldversion": 0,
+      "neigh4reachabletime": 30000,
+      "neigh6reachabletime": 30000,
+      "neigh4gcstaletime": 60,
+      "neigh6gcstaletime": 60,
+      "neigh4locktime": 100,
+      "dadtransmits": 1,
+      "multicast": false,
+      "sendredirects": true,
+      "drop_v4_unicast_in_l2_multicast": false,
+      "drop_v6_unicast_in_l2_multicast": false,
+      "drop_gratuitous_arp": false,
+      "drop_unsolicited_na": false,
+      "arp_accept": false,
+      "gro": true,
+      "statistics": {
+        "collisions": 0,
+        "rx_frame_errors": 0,
+        "tx_compressed": 0,
+        "multicast": 0,
+        "rx_length_errors": 0,
+        "tx_dropped": 0,
+        "rx_bytes": 2198087459578,
+        "rx_missed_errors": 0,
+        "tx_errors": 0,
+        "rx_compressed": 0,
+        "rx_over_errors": 0,
+        "tx_fifo_errors": 0,
+        "rx_crc_errors": 0,
+        "rx_packets": 1152356266,
+        "tx_heartbeat_errors": 0,
+        "rx_dropped": 0,
+        "tx_aborted_errors": 0,
+        "tx_packets": 1653143124,
+        "rx_errors": 0,
+        "tx_bytes": 1195959799368,
+        "tx_window_errors": 0,
+        "rx_fifo_errors": 0,
+        "tx_carrier_errors": 0
+      }
+    },
+    "lo": {
+      "external": false,
+      "present": true,
+      "type": "Network device",
+      "up": true,
+      "carrier": true,
+      "auth_status": false,
+      "mtu": 65536,
+      "mtu6": 65536,
+      "macaddr": "00:00:00:00:00:00",
+      "txqueuelen": 1000,
+      "ipv6": true,
+      "ip6segmentrouting": false,
+      "promisc": false,
+      "rpfilter": 0,
+      "acceptlocal": false,
+      "igmpversion": 0,
+      "mldversion": 0,
+      "neigh4reachabletime": 30000,
+      "neigh6reachabletime": 30000,
+      "neigh4gcstaletime": 60,
+      "neigh6gcstaletime": 60,
+      "neigh4locktime": 100,
+      "dadtransmits": 1,
+      "multicast": false,
+      "sendredirects": true,
+      "drop_v4_unicast_in_l2_multicast": false,
+      "drop_v6_unicast_in_l2_multicast": false,
+      "drop_gratuitous_arp": false,
+      "drop_unsolicited_na": false,
+      "arp_accept": false,
+      "gro": true,
+      "statistics": {
+        "collisions": 0,
+        "rx_frame_errors": 0,
+        "tx_compressed": 0,
+        "multicast": 0,
+        "rx_length_errors": 0,
+        "tx_dropped": 0,
+        "rx_bytes": 1104745468,
+        "rx_missed_errors": 0,
+        "tx_errors": 0,
+        "rx_compressed": 0,
+        "rx_over_errors": 0,
+        "tx_fifo_errors": 0,
+        "rx_crc_errors": 0,
+        "rx_packets": 2874134,
+        "tx_heartbeat_errors": 0,
+        "rx_dropped": 0,
+        "tx_aborted_errors": 0,
+        "tx_packets": 2874134,
+        "rx_errors": 0,
+        "tx_bytes": 1104745468,
+        "tx_window_errors": 0,
+        "rx_fifo_errors": 0,
+        "tx_carrier_errors": 0
+      }
+    },
+    "wwan0": {
+      "external": false,
+      "present": true,
+      "type": "Network device",
+      "up": true,
+      "carrier": true,
+      "auth_status": false,
+      "mtu": 1430,
+      "mtu6": 1430,
+      "macaddr": "00:00:00:00:00:00",
+      "txqueuelen": 1000,
+      "ipv6": true,
+      "ip6segmentrouting": false,
+      "promisc": false,
+      "rpfilter": 0,
+      "acceptlocal": false,
+      "igmpversion": 0,
+      "mldversion": 0,
+      "neigh4reachabletime": 30000,
+      "neigh6reachabletime": 30000,
+      "neigh4gcstaletime": 60,
+      "neigh6gcstaletime": 60,
+      "neigh4locktime": 100,
+      "dadtransmits": 1,
+      "multicast": true,
+      "sendredirects": true,
+      "drop_v4_unicast_in_l2_multicast": false,
+      "drop_v6_unicast_in_l2_multicast": false,
+      "drop_gratuitous_arp": false,
+      "drop_unsolicited_na": false,
+      "arp_accept": false,
+      "gro": true,
+      "statistics": {
+        "collisions": 0,
+        "rx_frame_errors": 0,
+        "tx_compressed": 0,
+        "multicast": 0,
+        "rx_length_errors": 0,
+        "tx_dropped": 2,
+        "rx_bytes": 41212517,
+        "rx_missed_errors": 0,
+        "tx_errors": 0,
+        "rx_compressed": 0,
+        "rx_over_errors": 0,
+        "tx_fifo_errors": 0,
+        "rx_crc_errors": 0,
+        "rx_packets": 490627,
+        "tx_heartbeat_errors": 0,
+        "rx_dropped": 0,
+        "tx_aborted_errors": 0,
+        "tx_packets": 492623,
+        "rx_errors": 0,
+        "tx_bytes": 41380844,
+        "tx_window_errors": 0,
+        "rx_fifo_errors": 0,
+        "tx_carrier_errors": 0
+      }
+    }
+  },
+  "wireless": [],
+  "dhcpLeases": {
+    "dhcp_leases": [
+      {
+        "expires": 35673,
+        "hostname": "host-2",
+        "macaddr": "02:AA:BB:00:00:1D",
+        "ipaddr": "10.99.11.220"
+      },
+      {
+        "expires": 35664,
+        "hostname": "host-11",
+        "macaddr": "02:AA:BB:00:00:1E",
+        "ipaddr": "10.99.11.120"
+      },
+      {
+        "expires": 37557,
+        "hostname": "host-12",
+        "macaddr": "02:AA:BB:00:00:1F",
+        "ipaddr": "10.99.11.199"
+      },
+      {
+        "expires": 34419,
+        "hostname": "host-13",
+        "macaddr": "02:AA:BB:00:00:20",
+        "ipaddr": "10.99.11.221"
+      },
+      {
+        "expires": 22985,
+        "hostname": "host-14",
+        "macaddr": "02:AA:BB:00:00:21",
+        "ipaddr": "10.99.16.83"
+      },
+      {
+        "expires": 43038,
+        "hostname": "host-15",
+        "macaddr": "02:AA:BB:00:00:22",
+        "ipaddr": "10.99.16.111"
+      },
+      {
+        "expires": 30554,
+        "hostname": "host-16",
+        "macaddr": "02:AA:BB:00:00:23",
+        "duid": "duid-4",
+        "iaid": "ca53095a",
+        "ipaddr": "10.99.17.138"
+      },
+      {
+        "expires": 29102,
+        "hostname": "host-17",
+        "macaddr": "02:AA:BB:00:00:24",
+        "duid": "duid-5",
+        "iaid": "ca53095a",
+        "ipaddr": "10.99.17.140"
+      },
+      {
+        "expires": 34441,
+        "macaddr": "02:AA:BB:00:00:25",
+        "ipaddr": "10.99.11.108"
+      },
+      {
+        "expires": 25983,
+        "macaddr": "02:AA:BB:00:00:26",
+        "ipaddr": "10.99.11.198"
+      },
+      {
+        "expires": 30079,
+        "macaddr": "02:AA:BB:00:00:27",
+        "ipaddr": "10.99.11.242"
+      },
+      {
+        "expires": 41618,
+        "macaddr": "02:AA:BB:00:00:28",
+        "ipaddr": "10.99.11.132"
+      },
+      {
+        "expires": 26019,
+        "macaddr": "02:AA:BB:00:00:29",
+        "ipaddr": "10.99.11.248"
+      },
+      {
+        "expires": false,
+        "hostname": "host-18",
+        "macaddr": "02:AA:BB:00:00:2A",
+        "ipaddr": "10.99.11.218"
+      },
+      {
+        "expires": 26911,
+        "hostname": "host-19",
+        "macaddr": "02:AA:BB:00:00:2B",
+        "ipaddr": "10.99.17.116"
+      },
+      {
+        "expires": 29775,
+        "hostname": "host-20",
+        "macaddr": "02:AA:BB:00:00:2C",
+        "ipaddr": "10.99.17.139"
+      },
+      {
+        "expires": 30963,
+        "hostname": "host-21",
+        "macaddr": "02:AA:BB:00:00:2D",
+        "ipaddr": "10.99.17.127"
+      },
+      {
+        "expires": 30161,
+        "hostname": "host-22",
+        "macaddr": "02:AA:BB:00:00:2E",
+        "ipaddr": "10.99.17.135"
+      },
+      {
+        "expires": 29107,
+        "macaddr": "02:AA:BB:00:00:2F",
+        "ipaddr": "10.99.17.101"
+      },
+      {
+        "expires": 40486,
+        "hostname": "host-23",
+        "macaddr": "02:AA:BB:00:00:30",
+        "ipaddr": "10.99.17.110"
+      },
+      {
+        "expires": 31702,
+        "macaddr": "02:AA:BB:00:00:31",
+        "ipaddr": "10.99.17.220"
+      },
+      {
+        "expires": 28306,
+        "macaddr": "02:AA:BB:00:00:32",
+        "ipaddr": "10.99.17.104"
+      },
+      {
+        "expires": 29244,
+        "macaddr": "02:AA:BB:00:00:33",
+        "ipaddr": "10.99.17.128"
+      },
+      {
+        "expires": 30504,
+        "macaddr": "02:AA:BB:00:00:34",
+        "ipaddr": "10.99.17.117"
+      },
+      {
+        "expires": 33381,
+        "hostname": "host-24",
+        "macaddr": "02:AA:BB:00:00:35",
+        "ipaddr": "10.99.17.136"
+      },
+      {
+        "expires": 31133,
+        "macaddr": "02:AA:BB:00:00:36",
+        "ipaddr": "10.99.17.130"
+      },
+      {
+        "expires": 29180,
+        "macaddr": "02:AA:BB:00:00:37",
+        "ipaddr": "10.99.17.112"
+      },
+      {
+        "expires": 29324,
+        "macaddr": "02:AA:BB:00:00:38",
+        "ipaddr": "10.99.17.134"
+      },
+      {
+        "expires": 31615,
+        "macaddr": "02:AA:BB:00:00:39",
+        "ipaddr": "10.99.17.106"
+      },
+      {
+        "expires": 27674,
+        "macaddr": "02:AA:BB:00:00:3A",
+        "ipaddr": "10.99.17.129"
+      },
+      {
+        "expires": false,
+        "hostname": "host-25",
+        "macaddr": "02:AA:BB:00:00:3B",
+        "ipaddr": "10.99.16.249"
+      },
+      {
+        "expires": 42549,
+        "hostname": "host-26",
+        "macaddr": "02:AA:BB:00:00:3C",
+        "ipaddr": "10.99.16.125"
+      },
+      {
+        "expires": 24566,
+        "hostname": "host-27",
+        "macaddr": "02:AA:BB:00:00:3D",
+        "ipaddr": "10.99.16.70"
+      },
+      {
+        "expires": 42614,
+        "hostname": "host-28",
+        "macaddr": "02:AA:BB:00:00:3E",
+        "ipaddr": "10.99.16.91"
+      },
+      {
+        "expires": 24239,
+        "hostname": "host-29",
+        "macaddr": "02:AA:BB:00:00:3F",
+        "ipaddr": "10.99.16.230"
+      },
+      {
+        "expires": 33274,
+        "hostname": "host-30",
+        "macaddr": "02:AA:BB:00:00:40",
+        "ipaddr": "10.99.16.170"
+      },
+      {
+        "expires": false,
+        "hostname": "host-31",
+        "macaddr": "02:AA:BB:00:00:41",
+        "ipaddr": "10.99.11.252"
+      },
+      {
+        "expires": 39031,
+        "hostname": "host-32",
+        "macaddr": "02:AA:BB:00:00:42",
+        "ipaddr": "10.99.16.221"
+      },
+      {
+        "expires": false,
+        "hostname": "host-33",
+        "macaddr": "02:AA:BB:00:00:43",
+        "ipaddr": "10.99.11.253"
+      },
+      {
+        "expires": 27903,
+        "hostname": "host-34",
+        "macaddr": "02:AA:BB:00:00:44",
+        "ipaddr": "10.99.17.107"
+      },
+      {
+        "expires": 29817,
+        "hostname": "host-35",
+        "macaddr": "02:AA:BB:00:00:45",
+        "ipaddr": "10.99.17.119"
+      },
+      {
+        "expires": 28798,
+        "hostname": "host-36",
+        "macaddr": "02:AA:BB:00:00:46",
+        "ipaddr": "10.99.17.137"
+      },
+      {
+        "expires": 28422,
+        "macaddr": "02:AA:BB:00:00:47",
+        "ipaddr": "10.99.17.102"
+      },
+      {
+        "expires": 29798,
+        "macaddr": "02:AA:BB:00:00:48",
+        "ipaddr": "10.99.17.115"
+      },
+      {
+        "expires": 32326,
+        "hostname": "host-37",
+        "macaddr": "02:AA:BB:00:00:49",
+        "ipaddr": "10.99.17.126"
+      },
+      {
+        "expires": 28799,
+        "hostname": "host-38",
+        "macaddr": "02:AA:BB:00:00:4A",
+        "ipaddr": "10.99.17.113"
+      },
+      {
+        "expires": 36791,
+        "hostname": "host-39",
+        "macaddr": "02:AA:BB:00:00:4B",
+        "ipaddr": "10.99.17.118"
+      },
+      {
+        "expires": 29577,
+        "hostname": "host-40",
+        "macaddr": "02:AA:BB:00:00:4C",
+        "ipaddr": "10.99.17.120"
+      }
+    ],
+    "dhcp6_leases": [
+      {
+        "expires": 5054,
+        "interface": "br-lan",
+        "hostname": "host-23",
+        "duid": "duid-6",
+        "iaid": "1137444c",
+        "ip6addr": "fd00:db8::52",
+        "ip6addrs": [
+          "fd00:db8::52/128",
+          "fd00:db8::53/128"
+        ]
+      },
+      {
+        "expires": 4173,
+        "interface": "br-lan",
+        "hostname": "host-34",
+        "duid": "duid-7",
+        "iaid": "ca53095a",
+        "ip6addr": "fd00:db8::54",
+        "ip6addrs": [
+          "fd00:db8::54/128",
+          "fd00:db8::55/128"
+        ]
+      },
+      {
+        "expires": 5000,
+        "interface": "br-lan",
+        "hostname": "host-16",
+        "duid": "duid-4",
+        "iaid": "ca53095a",
+        "ip6addr": "fd00:db8::56",
+        "ip6addrs": [
+          "fd00:db8::56/128",
+          "fd00:db8::57/128"
+        ]
+      },
+      {
+        "expires": 5238,
+        "interface": "br-lan",
+        "macaddr": "02:AA:BB:00:00:22",
+        "duid": "duid-8",
+        "iaid": "0",
+        "ip6addr": "fd00:db8::58",
+        "ip6addrs": [
+          "fd00:db8::58/128",
+          "fd00:db8::59/128"
+        ]
+      },
+      {
+        "expires": 4305,
+        "interface": "br-lan",
+        "hostname": "host-35",
+        "duid": "duid-9",
+        "iaid": "2b506735",
+        "ip6addr": "fd00:db8::5a",
+        "ip6addrs": [
+          "fd00:db8::5a/128",
+          "fd00:db8::5b/128"
+        ]
+      },
+      {
+        "expires": 4225,
+        "interface": "br-lan",
+        "hostname": "host-41",
+        "duid": "duid-10",
+        "iaid": "2b506735",
+        "ip6addr": "fd00:db8::5c",
+        "ip6addrs": [
+          "fd00:db8::5c/128",
+          "fd00:db8::5d/128"
+        ]
+      },
+      {
+        "expires": 4611,
+        "interface": "br-lan",
+        "hostname": "host-21",
+        "duid": "duid-11",
+        "iaid": "2b506735",
+        "ip6addr": "fd00:db8::5e",
+        "ip6addrs": [
+          "fd00:db8::5e/128",
+          "fd00:db8::5f/128"
+        ]
+      },
+      {
+        "expires": 4466,
+        "interface": "br-lan",
+        "duid": "duid-12",
+        "iaid": "ca53095a",
+        "ip6addr": "fd00:db8::60",
+        "ip6addrs": [
+          "fd00:db8::60/128",
+          "fd00:db8::61/128"
+        ]
+      },
+      {
+        "expires": 4294,
+        "interface": "br-lan",
+        "duid": "duid-13",
+        "iaid": "7409e913",
+        "ip6addr": "fd00:db8::62",
+        "ip6addrs": [
+          "fd00:db8::62/128",
+          "fd00:db8::63/128"
+        ]
+      },
+      {
+        "expires": 4350,
+        "interface": "br-lan",
+        "duid": "duid-14",
+        "iaid": "7409e913",
+        "ip6addr": "fd00:db8::64",
+        "ip6addrs": [
+          "fd00:db8::64/128",
+          "fd00:db8::65/128"
+        ]
+      },
+      {
+        "expires": 4333,
+        "interface": "br-lan",
+        "duid": "duid-15",
+        "iaid": "ca53095a",
+        "ip6addr": "fd00:db8::66",
+        "ip6addrs": [
+          "fd00:db8::66/128",
+          "fd00:db8::67/128"
+        ]
+      },
+      {
+        "expires": 5055,
+        "interface": "br-lan",
+        "hostname": "host-36",
+        "duid": "duid-16",
+        "iaid": "2b506735",
+        "ip6addr": "fd00:db8::68",
+        "ip6addrs": [
+          "fd00:db8::68/128",
+          "fd00:db8::69/128"
+        ]
+      },
+      {
+        "expires": 4755,
+        "interface": "br-lan",
+        "hostname": "host-17",
+        "duid": "duid-5",
+        "iaid": "ca53095a",
+        "ip6addr": "fd00:db8::6a",
+        "ip6addrs": [
+          "fd00:db8::6a/128",
+          "fd00:db8::6b/128"
+        ]
+      },
+      {
+        "expires": 5217,
+        "interface": "br-lan",
+        "duid": "duid-17",
+        "iaid": "ca53095a",
+        "ip6addr": "fd00:db8::6c",
+        "ip6addrs": [
+          "fd00:db8::6c/128",
+          "fd00:db8::6d/128"
+        ]
+      },
+      {
+        "expires": 5360,
+        "interface": "br-lan",
+        "hostname": "host-22",
+        "duid": "duid-18",
+        "iaid": "7409e913",
+        "ip6addr": "fd00:db8::6e",
+        "ip6addrs": [
+          "fd00:db8::6e/128",
+          "fd00:db8::6f/128"
+        ]
+      },
+      {
+        "expires": 4771,
+        "interface": "br-lan",
+        "duid": "duid-19",
+        "iaid": "ca53095a",
+        "ip6addr": "fd00:db8::70",
+        "ip6addrs": [
+          "fd00:db8::70/128",
+          "fd00:db8::71/128"
+        ]
+      },
+      {
+        "expires": 4774,
+        "interface": "br-lan",
+        "hostname": "host-20",
+        "duid": "duid-20",
+        "iaid": "2b506735",
+        "ip6addr": "fd00:db8::72",
+        "ip6addrs": [
+          "fd00:db8::72/128",
+          "fd00:db8::73/128"
+        ]
+      },
+      {
+        "expires": 5316,
+        "interface": "br-lan",
+        "duid": "duid-21",
+        "iaid": "ca53095a",
+        "ip6addr": "fd00:db8::74",
+        "ip6addrs": [
+          "fd00:db8::74/128",
+          "fd00:db8::75/128"
+        ]
+      },
+      {
+        "expires": 4758,
+        "interface": "br-lan",
+        "hostname": "host-38",
+        "duid": "duid-22",
+        "iaid": "11cde1d5",
+        "ip6addr": "fd00:db8::76",
+        "ip6addrs": [
+          "fd00:db8::76/128",
+          "fd00:db8::77/128"
+        ]
+      },
+      {
+        "expires": 4746,
+        "interface": "br-lan",
+        "hostname": "host-42",
+        "duid": "duid-23",
+        "iaid": "2b506735",
+        "ip6addr": "fd00:db8::78",
+        "ip6addrs": [
+          "fd00:db8::78/128",
+          "fd00:db8::79/128"
+        ]
+      },
+      {
+        "expires": 5224,
+        "interface": "br-lan",
+        "hostname": "host-43",
+        "duid": "duid-24",
+        "iaid": "2b506735",
+        "ip6addr": "fd00:db8::7a",
+        "ip6addrs": [
+          "fd00:db8::7a/128",
+          "fd00:db8::7b/128"
+        ]
+      },
+      {
+        "expires": 4826,
+        "interface": "br-lan",
+        "duid": "duid-25",
+        "iaid": "7409e913",
+        "ip6addr": "fd00:db8::7c",
+        "ip6addrs": [
+          "fd00:db8::7c/128",
+          "fd00:db8::7d/128"
+        ]
+      },
+      {
+        "expires": 4168,
+        "interface": "br-lan",
+        "hostname": "host-44",
+        "duid": "duid-26",
+        "iaid": "2b506735",
+        "ip6addr": "fd00:db8::7e",
+        "ip6addrs": [
+          "fd00:db8::7e/128",
+          "fd00:db8::7f/128"
+        ]
+      },
+      {
+        "expires": 5201,
+        "interface": "br-lan",
+        "hostname": "host-19",
+        "duid": "duid-27",
+        "iaid": "2b506735",
+        "ip6addr": "fd00:db8::80",
+        "ip6addrs": [
+          "fd00:db8::80/128",
+          "fd00:db8::81/128"
+        ]
+      },
+      {
+        "expires": 5167,
+        "interface": "br-lan",
+        "duid": "duid-28",
+        "iaid": "ca53095a",
+        "ip6addr": "fd00:db8::82",
+        "ip6addrs": [
+          "fd00:db8::82/128",
+          "fd00:db8::83/128"
+        ]
+      },
+      {
+        "expires": 4227,
+        "interface": "br-lan",
+        "hostname": "host-24",
+        "duid": "duid-29",
+        "iaid": "ca53095a",
+        "ip6addr": "fd00:db8::84",
+        "ip6addrs": [
+          "fd00:db8::84/128",
+          "fd00:db8::85/128"
+        ]
+      },
+      {
+        "expires": 5400,
+        "interface": "br-lan",
+        "duid": "duid-30",
+        "iaid": "ca53095a",
+        "ip6addr": "fd00:db8::86",
+        "ip6addrs": [
+          "fd00:db8::86/128",
+          "fd00:db8::87/128"
+        ]
+      },
+      {
+        "expires": 4386,
+        "interface": "br-lan",
+        "duid": "duid-31",
+        "iaid": "ca53095a",
+        "ip6addr": "fd00:db8::88",
+        "ip6addrs": [
+          "fd00:db8::88/128",
+          "fd00:db8::89/128"
+        ]
+      },
+      {
+        "expires": 4532,
+        "interface": "br-lan",
+        "duid": "duid-32",
+        "iaid": "7409e913",
+        "ip6addr": "fd00:db8::8a",
+        "ip6addrs": [
+          "fd00:db8::8a/128",
+          "fd00:db8::8b/128"
+        ]
+      }
+    ]
+  },
+  "hostHints": {
+    "02:AA:BB:00:00:4D": {
+      "ipaddrs": [
+        "10.99.11.184"
+      ],
+      "ip6addrs": []
+    },
+    "02:AA:BB:00:00:2E": {
+      "ipaddrs": [
+        "10.99.17.135"
+      ],
+      "ip6addrs": [
+        "fd00:db8::6e",
+        "fd00:db8::8c"
+      ],
+      "name": "host-22"
+    },
+    "02:AA:BB:00:00:27": {
+      "ipaddrs": [
+        "10.99.11.242"
+      ],
+      "ip6addrs": []
+    },
+    "02:AA:BB:00:00:1E": {
+      "ipaddrs": [
+        "10.99.11.120"
+      ],
+      "ip6addrs": [],
+      "name": "host-11"
+    },
+    "02:AA:BB:00:00:19": {
+      "ipaddrs": [],
+      "ip6addrs": [
+        "fd00:db8::8d"
+      ]
+    },
+    "02:AA:BB:00:00:29": {
+      "ipaddrs": [
+        "10.99.11.248"
+      ],
+      "ip6addrs": []
+    },
+    "02:AA:BB:00:00:41": {
+      "ipaddrs": [
+        "10.99.11.252"
+      ],
+      "ip6addrs": [],
+      "name": "host-31"
+    },
+    "02:AA:BB:00:00:4E": {
+      "ipaddrs": [
+        "10.99.11.252"
+      ],
+      "ip6addrs": [],
+      "name": "host-31"
+    },
+    "02:AA:BB:00:00:22": {
+      "ipaddrs": [
+        "10.99.16.111"
+      ],
+      "ip6addrs": [
+        "fd00:db8::58",
+        "fd00:db8::59"
+      ],
+      "name": "host-15"
+    },
+    "02:AA:BB:00:00:2A": {
+      "ipaddrs": [
+        "10.99.11.218",
+        "10.99.11.253"
+      ],
+      "ip6addrs": [],
+      "name": "host-33"
+    },
+    "02:AA:BB:00:00:3B": {
+      "ipaddrs": [
+        "10.99.16.249"
+      ],
+      "ip6addrs": [],
+      "name": "host-25"
+    },
+    "02:AA:BB:00:00:4F": {
+      "ipaddrs": [
+        "10.99.18.253"
+      ],
+      "ip6addrs": [
+        "fd00:db8::8e"
+      ]
+    },
+    "02:AA:BB:00:00:26": {
+      "ipaddrs": [
+        "10.99.11.198"
+      ],
+      "ip6addrs": []
+    },
+    "02:AA:BB:00:00:20": {
+      "ipaddrs": [
+        "10.99.11.221"
+      ],
+      "ip6addrs": [],
+      "name": "host-13"
+    },
+    "02:AA:BB:00:00:50": {
+      "ipaddrs": [
+        "10.99.11.152"
+      ],
+      "ip6addrs": []
+    },
+    "02:AA:BB:00:00:18": {
+      "ipaddrs": [
+        "10.99.10.1"
+      ],
+      "ip6addrs": [
+        "fd00:db8::8f"
+      ],
+      "name": "OpenWrt"
+    },
+    "02:AA:BB:00:00:51": {
+      "ipaddrs": [
+        "10.99.18.150"
+      ],
+      "ip6addrs": []
+    },
+    "02:AA:BB:00:00:52": {
+      "ipaddrs": [
+        "10.99.18.200"
+      ],
+      "ip6addrs": []
+    },
+    "02:AA:BB:00:00:53": {
+      "ipaddrs": [
+        "10.99.18.100"
+      ],
+      "ip6addrs": []
+    },
+    "02:AA:BB:00:00:1D": {
+      "ipaddrs": [
+        "10.99.11.220"
+      ],
+      "ip6addrs": [],
+      "name": "host-2"
+    },
+    "02:AA:BB:00:00:54": {
+      "ipaddrs": [
+        "10.99.19.37"
+      ],
+      "ip6addrs": []
+    },
+    "02:AA:BB:00:00:21": {
+      "ipaddrs": [
+        "10.99.16.83"
+      ],
+      "ip6addrs": [
+        "fd00:db8::90"
+      ],
+      "name": "host-14"
+    },
+    "02:AA:BB:00:00:43": {
+      "ipaddrs": [
+        "10.99.11.253"
+      ],
+      "ip6addrs": [],
+      "name": "host-33"
+    },
+    "02:AA:BB:00:00:40": {
+      "ipaddrs": [
+        "10.99.16.170"
+      ],
+      "ip6addrs": [
+        "fd00:db8::91",
+        "fd00:db8::92",
+        "fd00:db8::93"
+      ],
+      "name": "host-30"
+    },
+    "02:AA:BB:00:00:3F": {
+      "ipaddrs": [
+        "10.99.16.230"
+      ],
+      "ip6addrs": [],
+      "name": "host-29"
+    },
+    "02:AA:BB:00:00:3E": {
+      "ipaddrs": [
+        "10.99.16.91"
+      ],
+      "ip6addrs": [],
+      "name": "host-28"
+    },
+    "02:AA:BB:00:00:55": {
+      "ipaddrs": [
+        "10.99.11.115"
+      ],
+      "ip6addrs": []
+    },
+    "02:AA:BB:00:00:25": {
+      "ipaddrs": [
+        "10.99.11.108"
+      ],
+      "ip6addrs": []
+    },
+    "02:AA:BB:00:00:1B": {
+      "ipaddrs": [
+        "10.99.11.1"
+      ],
+      "ip6addrs": [
+        "fd00:db8::94"
+      ],
+      "name": "OpenWrt"
+    },
+    "02:AA:BB:00:00:42": {
+      "ipaddrs": [
+        "10.99.16.221"
+      ],
+      "ip6addrs": [],
+      "name": "host-32"
+    },
+    "02:AA:BB:00:00:3D": {
+      "ipaddrs": [
+        "10.99.16.70"
+      ],
+      "ip6addrs": [],
+      "name": "host-27"
+    },
+    "02:AA:BB:00:00:3C": {
+      "ipaddrs": [
+        "10.99.16.125"
+      ],
+      "ip6addrs": [],
+      "name": "host-26"
+    },
+    "02:AA:BB:00:00:39": {
+      "ipaddrs": [
+        "10.99.17.106"
+      ],
+      "ip6addrs": [
+        "fd00:db8::64",
+        "fd00:db8::95"
+      ]
+    },
+    "02:AA:BB:00:00:48": {
+      "ipaddrs": [
+        "10.99.17.115"
+      ],
+      "ip6addrs": [
+        "fd00:db8::96"
+      ]
+    },
+    "02:AA:BB:00:00:36": {
+      "ipaddrs": [
+        "10.99.17.130"
+      ],
+      "ip6addrs": [
+        "fd00:db8::88",
+        "fd00:db8::97"
+      ]
+    },
+    "02:AA:BB:00:00:49": {
+      "ipaddrs": [
+        "10.99.17.126"
+      ],
+      "ip6addrs": [
+        "fd00:db8::98",
+        "fd00:db8::99"
+      ],
+      "name": "host-37"
+    },
+    "02:AA:BB:00:00:4C": {
+      "ipaddrs": [
+        "10.99.17.120"
+      ],
+      "ip6addrs": [
+        "fd00:db8::9a",
+        "fd00:db8::9b",
+        "fd00:db8::9c",
+        "fd00:db8::9d",
+        "fd00:db8::9e"
+      ],
+      "name": "host-40"
+    },
+    "02:AA:BB:00:00:30": {
+      "ipaddrs": [
+        "10.99.17.110"
+      ],
+      "ip6addrs": [
+        "fd00:db8::52",
+        "fd00:db8::9f"
+      ],
+      "name": "host-23"
+    },
+    "02:AA:BB:00:00:24": {
+      "ipaddrs": [
+        "10.99.17.140"
+      ],
+      "ip6addrs": [
+        "fd00:db8::6a",
+        "fd00:db8::a0"
+      ],
+      "name": "host-17"
+    },
+    "02:AA:BB:00:00:37": {
+      "ipaddrs": [
+        "10.99.17.112"
+      ],
+      "ip6addrs": [
+        "fd00:db8::66",
+        "fd00:db8::a1"
+      ]
+    },
+    "02:AA:BB:00:00:56": {
+      "ipaddrs": [
+        "10.99.20.13",
+        "10.99.20.113"
+      ],
+      "ip6addrs": [
+        "fd00:db8::7e",
+        "fd00:db8::a2"
+      ],
+      "name": "host-44"
+    },
+    "02:AA:BB:00:00:2F": {
+      "ipaddrs": [
+        "10.99.17.101"
+      ],
+      "ip6addrs": [
+        "fd00:db8::7c",
+        "fd00:db8::a3",
+        "fd00:db8::a4"
+      ]
+    },
+    "02:AA:BB:00:00:46": {
+      "ipaddrs": [
+        "10.99.17.137"
+      ],
+      "ip6addrs": [
+        "fd00:db8::68",
+        "fd00:db8::a5"
+      ],
+      "name": "host-36"
+    },
+    "02:AA:BB:00:00:47": {
+      "ipaddrs": [
+        "10.99.17.102"
+      ],
+      "ip6addrs": [
+        "fd00:db8::74",
+        "fd00:db8::a6"
+      ]
+    },
+    "02:AA:BB:00:00:4B": {
+      "ipaddrs": [
+        "10.99.17.118"
+      ],
+      "ip6addrs": [
+        "fd00:db8::a7",
+        "fd00:db8::a8"
+      ],
+      "name": "host-39"
+    },
+    "02:AA:BB:00:00:57": {
+      "ipaddrs": [
+        "10.99.20.12"
+      ],
+      "ip6addrs": [
+        "fd00:db8::7a",
+        "fd00:db8::7b",
+        "fd00:db8::a9"
+      ],
+      "name": "host-43"
+    },
+    "02:AA:BB:00:00:35": {
+      "ipaddrs": [
+        "10.99.17.136"
+      ],
+      "ip6addrs": [
+        "fd00:db8::84",
+        "fd00:db8::aa"
+      ],
+      "name": "host-24"
+    },
+    "02:AA:BB:00:00:58": {
+      "ipaddrs": [
+        "10.99.21.121"
+      ],
+      "ip6addrs": [
+        "fd00:db8::5c",
+        "fd00:db8::ab"
+      ],
+      "name": "host-41"
+    },
+    "02:AA:BB:00:00:31": {
+      "ipaddrs": [
+        "10.99.17.220"
+      ],
+      "ip6addrs": [
+        "fd00:db8::8a",
+        "fd00:db8::ac"
+      ]
+    },
+    "02:AA:BB:00:00:2C": {
+      "ipaddrs": [
+        "10.99.17.139"
+      ],
+      "ip6addrs": [
+        "fd00:db8::ad"
+      ],
+      "name": "host-20"
+    },
+    "02:AA:BB:00:00:34": {
+      "ipaddrs": [
+        "10.99.17.117"
+      ],
+      "ip6addrs": [
+        "fd00:db8::62",
+        "fd00:db8::ae"
+      ]
+    },
+    "02:AA:BB:00:00:3A": {
+      "ipaddrs": [
+        "10.99.17.129"
+      ],
+      "ip6addrs": [
+        "fd00:db8::82",
+        "fd00:db8::af"
+      ]
+    },
+    "02:AA:BB:00:00:23": {
+      "ipaddrs": [
+        "10.99.17.138"
+      ],
+      "ip6addrs": [
+        "fd00:db8::b0"
+      ],
+      "name": "host-16"
+    },
+    "02:AA:BB:00:00:2B": {
+      "ipaddrs": [
+        "10.99.17.116"
+      ],
+      "ip6addrs": [
+        "fd00:db8::b1"
+      ],
+      "name": "host-19"
+    },
+    "02:AA:BB:00:00:32": {
+      "ipaddrs": [
+        "10.99.17.104"
+      ],
+      "ip6addrs": [
+        "fd00:db8::b2"
+      ]
+    },
+    "02:AA:BB:00:00:4A": {
+      "ipaddrs": [
+        "10.99.17.113"
+      ],
+      "ip6addrs": [
+        "fd00:db8::76",
+        "fd00:db8::b3"
+      ],
+      "name": "host-38"
+    },
+    "02:AA:BB:00:00:2D": {
+      "ipaddrs": [
+        "10.99.17.127"
+      ],
+      "ip6addrs": [
+        "fd00:db8::5e",
+        "fd00:db8::b4"
+      ],
+      "name": "host-21"
+    },
+    "02:AA:BB:00:00:59": {
+      "ipaddrs": [
+        "10.99.20.11",
+        "10.99.20.108"
+      ],
+      "ip6addrs": [
+        "fd00:db8::78",
+        "fd00:db8::b5"
+      ],
+      "name": "host-42"
+    },
+    "02:AA:BB:00:00:45": {
+      "ipaddrs": [
+        "10.99.17.119"
+      ],
+      "ip6addrs": [
+        "fd00:db8::b6"
+      ],
+      "name": "host-35"
+    },
+    "02:AA:BB:00:00:44": {
+      "ipaddrs": [
+        "10.99.17.107"
+      ],
+      "ip6addrs": [
+        "fd00:db8::54",
+        "fd00:db8::b7"
+      ],
+      "name": "host-34"
+    },
+    "02:AA:BB:00:00:33": {
+      "ipaddrs": [
+        "10.99.17.128"
+      ],
+      "ip6addrs": [
+        "fd00:db8::60",
+        "fd00:db8::b8"
+      ]
+    },
+    "02:AA:BB:00:00:38": {
+      "ipaddrs": [
+        "10.99.17.134"
+      ],
+      "ip6addrs": [
+        "fd00:db8::6c",
+        "fd00:db8::b9"
+      ]
+    },
+    "02:AA:BB:00:00:28": {
+      "ipaddrs": [
+        "10.99.11.132"
+      ],
+      "ip6addrs": []
+    },
+    "02:AA:BB:00:00:1F": {
+      "ipaddrs": [
+        "10.99.11.199"
+      ],
+      "ip6addrs": [],
+      "name": "host-12"
+    },
+    "02:AA:BB:00:00:5A": {
+      "ipaddrs": [],
+      "ip6addrs": [
+        "fd00:db8::4f"
+      ]
+    },
+    "02:AA:BB:00:00:5B": {
+      "ipaddrs": [
+        "10.99.18.250"
+      ],
+      "ip6addrs": []
+    }
+  },
+  "nlbw": {
+    "columns": [
+      "mac",
+      "conns",
+      "rx_bytes",
+      "rx_pkts",
+      "tx_bytes",
+      "tx_pkts"
+    ],
+    "data": [
+      [
+        "02:aa:bb:00:00:5c",
+        265379,
+        983840675776,
+        155460520,
+        330461695826,
+        155614025
+      ],
+      [
+        "02:aa:bb:00:00:30",
+        16456,
+        778750912135,
+        156677693,
+        520245148862,
+        118038602
+      ],
+      [
+        "02:aa:bb:00:00:4c",
+        500268,
+        238578716883,
+        341419070,
+        251999743641,
+        383133285
+      ],
+      [
+        "02:aa:bb:00:00:25",
+        122330,
+        82333401431,
+        17578502,
+        46926120854,
+        13971127
+      ],
+      [
+        "02:aa:bb:00:00:29",
+        119405,
+        63816305703,
+        6124195,
+        814057987,
+        6105911
+      ],
+      [
+        "02:aa:bb:00:00:54",
+        115876,
+        61723025415,
+        9067892,
+        7779454245,
+        7227157
+      ],
+      [
+        "02:aa:bb:00:00:53",
+        2803778,
+        58248229236,
+        97695365,
+        123294204470,
+        98001960
+      ],
+      [
+        "02:aa:bb:00:00:22",
+        326654,
+        43506188825,
+        14850644,
+        6824799823,
+        9013678
+      ],
+      [
+        "02:aa:bb:00:00:57",
+        2598486,
+        34498136763,
+        48988980,
+        9566153588,
+        45446153
+      ],
+      [
+        "02:aa:bb:00:00:26",
+        45518,
+        33456347049,
+        4266562,
+        525349556,
+        2031662
+      ],
+      [
+        "02:aa:bb:00:00:38",
+        65441,
+        29438697562,
+        7640528,
+        644692176,
+        5440344
+      ],
+      [
+        "02:aa:bb:00:00:55",
+        43191,
+        24110319222,
+        3922578,
+        469862182,
+        1883042
+      ],
+      [
+        "02:aa:bb:00:00:50",
+        40525,
+        21210334345,
+        2735702,
+        523364941,
+        1617270
+      ],
+      [
+        "02:aa:bb:00:00:56",
+        1380150,
+        19597834797,
+        36793178,
+        9684177120,
+        36487430
+      ],
+      [
+        "02:aa:bb:00:00:2d",
+        16767,
+        18961357121,
+        3010373,
+        1386335699,
+        2455566
+      ],
+      [
+        "02:aa:bb:00:00:2f",
+        788473,
+        15252972284,
+        34504334,
+        23058124605,
+        33697412
+      ],
+      [
+        "02:aa:bb:00:00:59",
+        2683602,
+        12646762454,
+        19978977,
+        1782414653,
+        19440016
+      ],
+      [
+        "02:aa:bb:00:00:48",
+        291476,
+        9819444530,
+        2690221,
+        1514857377,
+        3300179
+      ],
+      [
+        "02:aa:bb:00:00:5d",
+        21452,
+        7588295148,
+        2032965,
+        266189722,
+        906821
+      ],
+      [
+        "02:aa:bb:00:00:4d",
+        19715,
+        7408104669,
+        1540884,
+        1797658627,
+        962960
+      ],
+      [
+        "02:aa:bb:00:00:47",
+        4987,
+        6444474878,
+        654386,
+        31532022,
+        387338
+      ],
+      [
+        "02:aa:bb:00:00:1f",
+        30136,
+        4167491327,
+        1677177,
+        1138450348,
+        1416432
+      ],
+      [
+        "02:aa:bb:00:00:39",
+        3814,
+        3885947540,
+        386060,
+        17661777,
+        201080
+      ],
+      [
+        "02:aa:bb:00:00:3a",
+        5150,
+        3627454483,
+        442629,
+        43059125,
+        335597
+      ],
+      [
+        "02:aa:bb:00:00:34",
+        1830,
+        3589777478,
+        387358,
+        39109074,
+        506095
+      ],
+      [
+        "02:aa:bb:00:00:2e",
+        23999,
+        3512693557,
+        2117156,
+        1107987193,
+        7419009
+      ],
+      [
+        "02:aa:bb:00:00:37",
+        11303,
+        3494070015,
+        329801,
+        16628038,
+        191406
+      ],
+      [
+        "02:aa:bb:00:00:32",
+        116444,
+        3232323344,
+        800343,
+        119489217,
+        746346
+      ],
+      [
+        "02:aa:bb:00:00:33",
+        3761,
+        3026816094,
+        406787,
+        21942035,
+        259898
+      ],
+      [
+        "02:aa:bb:00:00:5e",
+        7127,
+        2947147157,
+        900172,
+        100590852,
+        350584
+      ],
+      [
+        "02:aa:bb:00:00:44",
+        2340,
+        2809806638,
+        279508,
+        14109318,
+        161226
+      ],
+      [
+        "02:aa:bb:00:00:40",
+        17370,
+        2681640711,
+        983136,
+        358169431,
+        1698640
+      ],
+      [
+        "00:00:00:00:00:00",
+        65293,
+        2580330850,
+        18082835,
+        1039170,
+        1661
+      ],
+      [
+        "02:aa:bb:00:00:23",
+        684,
+        2564469187,
+        379042,
+        35126063,
+        290913
+      ],
+      [
+        "02:aa:bb:00:00:31",
+        32989,
+        2420685258,
+        310563,
+        16347011,
+        203786
+      ],
+      [
+        "02:aa:bb:00:00:28",
+        2331,
+        2396880235,
+        926965,
+        65153082,
+        930522
+      ],
+      [
+        "02:aa:bb:00:00:36",
+        4538,
+        2278830623,
+        331027,
+        26968892,
+        243453
+      ],
+      [
+        "02:aa:bb:00:00:4a",
+        237467,
+        2189471785,
+        615140,
+        51134853,
+        573368
+      ],
+      [
+        "02:aa:bb:00:00:21",
+        48983,
+        1627714883,
+        693877,
+        187630647,
+        673476
+      ],
+      [
+        "02:aa:bb:00:00:24",
+        11695,
+        1603038294,
+        199296,
+        13146629,
+        126951
+      ],
+      [
+        "02:aa:bb:00:00:58",
+        2773,
+        1555153619,
+        873165,
+        93508575,
+        872713
+      ],
+      [
+        "02:aa:bb:00:00:27",
+        7614,
+        1443154310,
+        614394,
+        173323802,
+        556149
+      ],
+      [
+        "02:aa:bb:00:00:4b",
+        8508,
+        1374888970,
+        8226605,
+        9492243919,
+        8979918
+      ],
+      [
+        "02:aa:bb:00:00:51",
+        31993,
+        1260129931,
+        846743,
+        476237930,
+        990457
+      ],
+      [
+        "02:aa:bb:00:00:52",
+        39493,
+        1257345906,
+        905018,
+        497686796,
+        1031570
+      ],
+      [
+        "02:aa:bb:00:00:2c",
+        5099,
+        1126374308,
+        228591,
+        35910012,
+        205595
+      ],
+      [
+        "02:aa:bb:00:00:49",
+        50110,
+        1114006331,
+        7583658,
+        684996187,
+        7499661
+      ],
+      [
+        "02:aa:bb:00:00:46",
+        4269,
+        1056641447,
+        112744,
+        10271576,
+        115090
+      ],
+      [
+        "02:aa:bb:00:00:45",
+        1710,
+        902317912,
+        107394,
+        10161881,
+        111316
+      ],
+      [
+        "02:aa:bb:00:00:2b",
+        1396,
+        806426986,
+        106939,
+        8106475,
+        106952
+      ],
+      [
+        "02:aa:bb:00:00:35",
+        119628,
+        693243850,
+        1596597,
+        353828221,
+        1886384
+      ],
+      [
+        "02:aa:bb:00:00:5f",
+        196,
+        333322680,
+        72061,
+        6638791,
+        82736
+      ],
+      [
+        "02:aa:bb:00:00:4f",
+        460663,
+        305562908,
+        2243038,
+        151798354,
+        2244483
+      ],
+      [
+        "02:aa:bb:00:00:18",
+        1623858,
+        286254781,
+        1879384,
+        2514301135,
+        17690102
+      ],
+      [
+        "02:aa:bb:00:00:5b",
+        9985,
+        280214306,
+        189749,
+        71942355,
+        203499
+      ],
+      [
+        "02:aa:bb:00:00:60",
+        9728,
+        82701642,
+        94314,
+        35514249,
+        80414
+      ],
+      [
+        "02:aa:bb:00:00:20",
+        485,
+        77941146,
+        18100,
+        6294733,
+        15377
+      ],
+      [
+        "02:aa:bb:00:00:1e",
+        277,
+        59506822,
+        19686,
+        3573051,
+        12216
+      ],
+      [
+        "02:aa:bb:00:00:1d",
+        276,
+        24410350,
+        6671,
+        2086475,
+        5042
+      ],
+      [
+        "02:aa:bb:00:00:61",
+        418,
+        21161193,
+        12827,
+        2995699,
+        12167
+      ],
+      [
+        "02:aa:bb:00:00:04",
+        144,
+        5021864,
+        1618,
+        87227,
+        1217
+      ],
+      [
+        "02:aa:bb:00:00:3e",
+        507,
+        3921053,
+        70630,
+        9262362,
+        88586
+      ],
+      [
+        "02:aa:bb:00:00:17",
+        71,
+        3424999,
+        1116,
+        66426,
+        915
+      ],
+      [
+        "02:aa:bb:00:00:3f",
+        505,
+        3315746,
+        55576,
+        6754621,
+        76512
+      ],
+      [
+        "02:aa:bb:00:00:3b",
+        5709,
+        2940557,
+        32512,
+        7134209,
+        70487
+      ],
+      [
+        "02:aa:bb:00:00:42",
+        3014,
+        2772170,
+        39186,
+        5280563,
+        67114
+      ],
+      [
+        "02:aa:bb:00:00:3c",
+        502,
+        2761722,
+        41563,
+        4996407,
+        68034
+      ],
+      [
+        "02:aa:bb:00:00:3d",
+        503,
+        2596460,
+        37549,
+        4422922,
+        65245
+      ],
+      [
+        "02:aa:bb:00:00:2a",
+        375,
+        2563317,
+        25654,
+        2958242,
+        27529
+      ],
+      [
+        "02:aa:bb:00:00:4e",
+        24,
+        1864248,
+        23087,
+        2265293,
+        23054
+      ],
+      [
+        "02:aa:bb:00:00:62",
+        9,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        "02:aa:bb:00:00:1b",
+        131,
+        0,
+        0,
+        70398,
+        250
+      ],
+      [
+        "02:aa:bb:00:00:07",
+        3,
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "blockedClients": []
+}
