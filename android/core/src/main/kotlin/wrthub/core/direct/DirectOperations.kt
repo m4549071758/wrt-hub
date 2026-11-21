@@ -62,20 +62,21 @@ class DirectOperations(private val ubus: UbusCaller, private val rollbackSeconds
     }
 
     /**
-     * Stages SSID and key on every `mode ap` wifi-iface of this node without applying them, and returns how many
-     * interfaces were staged (0: no AP interface). Stage on every node of the site first, then [applyUnchecked] on
-     * all of them at once: the phone doing this usually loses its Wi-Fi as soon as one node applies.
+     * Stages SSID and key on the `mode ap` wifi-ifaces of this node whose values differ, without applying them.
+     * Only differing interfaces are staged because `uci apply` fails ("No response") when nothing changed.
+     * Stage on every node of the site first, then [applyUnchecked] where [WifiStage.changed] is non-zero, all at once:
+     * the phone doing this usually loses its Wi-Fi as soon as one node applies.
      */
-    suspend fun stageWifi(ssid: String, key: String): Int {
+    suspend fun stageWifi(ssid: String, key: String): WifiStage {
         requireValidSsid(ssid)
         requireValidPsk(key)
         val sections = ubus.call("uci", "get", buildJsonObject { put("config", "wireless") })?.obj("values")
             ?: throw UbusException(UbusException.NO_DATA, "uci.get wireless returned no values")
-        val apSections = sections.entries
-            .filter { (_, value) -> value.asObject()?.let { it.str(".type") == "wifi-iface" && it.str("mode") == "ap" } == true }
-            .map { it.key }
-        if (apSections.isEmpty()) return 0
-        for (section in apSections) {
+        val accessPoints = sections.entries.mapNotNull { (name, value) ->
+            value.asObject()?.takeIf { it.str(".type") == "wifi-iface" && it.str("mode") == "ap" }?.let { name to it }
+        }
+        val changed = accessPoints.filter { (_, iface) -> iface.str("ssid") != ssid || iface.str("key") != key }.map { it.first }
+        for (section in changed) {
             ubus.call(
                 "uci",
                 "set",
@@ -89,7 +90,7 @@ class DirectOperations(private val ubus: UbusCaller, private val rollbackSeconds
                 },
             )
         }
-        return apSections.size
+        return WifiStage(accessPoints = accessPoints.size, changed = changed.size)
     }
 
     /**
@@ -148,3 +149,6 @@ class DirectOperations(private val ubus: UbusCaller, private val rollbackSeconds
         }
     }
 }
+
+/** [accessPoints] AP interfaces on the node, of which [changed] were staged with new values. */
+data class WifiStage(val accessPoints: Int, val changed: Int)

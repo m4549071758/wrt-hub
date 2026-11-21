@@ -85,6 +85,7 @@
     <string name="wifi_confirm_body">%1$d台のノードのSSIDを「%2$s」に変更します。このスマホはWi-Fiから切断されるので、新しいSSIDとパスワードで接続し直してください。</string>
     <string name="wifi_changed">%1$d個のSSIDを変更</string>
     <string name="wifi_no_ap">APなし</string>
+    <string name="wifi_unchanged">変更なし（設定済み）</string>
     <string name="wifi_not_applied">未適用（他のノードで失敗）</string>
     <string name="error_ssid">SSIDは1〜32バイトで入力してください。</string>
     <string name="error_psk">パスワードは8〜63文字の半角英数字・記号で入力してください。</string>

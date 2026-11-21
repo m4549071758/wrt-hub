@@ -2,6 +2,7 @@ package wrthub.app.domain
 
 import wrthub.core.direct.DirectOperations
 import wrthub.core.direct.ExecResult
+import wrthub.core.direct.WifiStage
 import wrthub.core.direct.WriteOutcome
 
 /** Write and diagnostic operations on one node; the hub mode will provide its own implementation. */
@@ -16,8 +17,8 @@ interface NodeOperations {
 
     suspend fun reboot()
 
-    /** Returns the number of AP interfaces staged; 0 when the node has none. */
-    suspend fun stageWifi(ssid: String, key: String): Int
+    /** Stages only the AP interfaces whose SSID or key differ; apply only when [WifiStage.changed] is non-zero. */
+    suspend fun stageWifi(ssid: String, key: String): WifiStage
 
     suspend fun applyUnchecked()
 

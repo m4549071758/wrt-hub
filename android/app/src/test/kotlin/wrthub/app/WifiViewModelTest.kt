@@ -18,6 +18,7 @@ import wrthub.app.ui.sites.WifiNodeResult
 import wrthub.app.ui.sites.WifiOutcome
 import wrthub.app.ui.sites.WifiViewModel
 import wrthub.core.Fixtures
+import wrthub.core.direct.WifiStage
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class WifiViewModelTest {
@@ -66,13 +67,27 @@ class WifiViewModelTest {
 
     @Test
     fun `a node without an AP is left alone`() = runTest(main.dispatcher) {
-        val vm = viewModel { FakeNodeOperations(it, log, wifiInterfaces = if (it == "router") 0 else 2) }
+        val vm = viewModel { FakeNodeOperations(it, log, wifiStage = if (it == "router") WifiStage(0, 0) else WifiStage(2, 2)) }
         advanceUntilIdle()
         vm.enter()
         vm.apply()
         advanceUntilIdle()
         assertEquals(listOf("stage router", "stage ap", "apply ap"), log)
         assertEquals(WifiOutcome.NoAccessPoint, vm.state.value.results!!.first().outcome)
+    }
+
+    @Test
+    fun `a node that already has the requested SSID and key is not applied`() = runTest(main.dispatcher) {
+        val vm = viewModel { FakeNodeOperations(it, log, wifiStage = if (it == "router") WifiStage(2, 0) else WifiStage(2, 2)) }
+        advanceUntilIdle()
+        vm.enter()
+        vm.apply()
+        advanceUntilIdle()
+        assertEquals(listOf("stage router", "stage ap", "apply ap"), log)
+        assertEquals(
+            listOf(WifiNodeResult("WRC-1", WifiOutcome.Unchanged), WifiNodeResult("WRC-2", WifiOutcome.Changed(2))),
+            vm.state.value.results,
+        )
     }
 
     @Test

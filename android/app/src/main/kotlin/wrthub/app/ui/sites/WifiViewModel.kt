@@ -31,6 +31,9 @@ sealed interface WifiOutcome {
 
     data object NoAccessPoint : WifiOutcome
 
+    /** Every AP interface already had this SSID and key, so nothing was applied. */
+    data object Unchanged : WifiOutcome
+
     /** Staged fine but not applied because another node failed, so the site keeps one consistent Wi-Fi. */
     data object NotApplied : WifiOutcome
 
@@ -113,11 +116,12 @@ class WifiViewModel(
                 coroutineScope {
                     staged.map { (node, result) ->
                         async {
-                            val interfaces = result.getOrThrow()
+                            val stage = result.getOrThrow()
                             val outcome = when {
-                                interfaces == 0 -> WifiOutcome.NoAccessPoint
+                                stage.accessPoints == 0 -> WifiOutcome.NoAccessPoint
+                                stage.changed == 0 -> WifiOutcome.Unchanged
                                 else -> attempt { operations.getValue(node.id).applyUnchecked() }
-                                    .fold({ WifiOutcome.Changed(interfaces) }, { WifiOutcome.Failed(it.reason()) })
+                                    .fold({ WifiOutcome.Changed(stage.changed) }, { WifiOutcome.Failed(it.reason()) })
                             }
                             WifiNodeResult(node.label, outcome)
                         }

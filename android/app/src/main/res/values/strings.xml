@@ -86,6 +86,7 @@
     <string name="wifi_confirm_body">The SSID on %1$d nodes becomes \"%2$s\". This phone will drop off the Wi-Fi; reconnect with the new SSID and password.</string>
     <string name="wifi_changed">%1$d SSID(s) changed</string>
     <string name="wifi_no_ap">No AP</string>
+    <string name="wifi_unchanged">Already set</string>
     <string name="wifi_not_applied">Not applied (another node failed)</string>
     <string name="error_ssid">The SSID must be 1 to 32 bytes.</string>
     <string name="error_psk">The password must be 8 to 63 printable ASCII characters.</string>

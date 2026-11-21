@@ -157,6 +157,7 @@ private fun OutcomeText(outcome: WifiOutcome) {
     when (outcome) {
         is WifiOutcome.Changed -> Text(stringResource(R.string.wifi_changed, outcome.interfaces), color = semantic.signalGood)
         WifiOutcome.NoAccessPoint -> Text(stringResource(R.string.wifi_no_ap), color = semantic.inactive)
+        WifiOutcome.Unchanged -> Text(stringResource(R.string.wifi_unchanged), color = semantic.inactive)
         WifiOutcome.NotApplied -> Text(stringResource(R.string.wifi_not_applied), color = semantic.signalFair)
         is WifiOutcome.Failed -> Text(stringResource(R.string.operation_failed, outcome.reason), color = MaterialTheme.colorScheme.error)
     }

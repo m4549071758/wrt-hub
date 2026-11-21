@@ -2,6 +2,7 @@ package wrthub.app
 
 import wrthub.app.domain.NodeOperations
 import wrthub.core.direct.ExecResult
+import wrthub.core.direct.WifiStage
 import wrthub.core.direct.WriteOutcome
 
 /** Records every call as "<verb> <argument>" into [log], which several fakes can share to check ordering. */
@@ -9,7 +10,7 @@ class FakeNodeOperations(
     private val name: String = "node",
     val log: MutableList<String> = mutableListOf(),
     private val failure: Exception? = null,
-    private val wifiInterfaces: Int = 1,
+    private val wifiStage: WifiStage = WifiStage(accessPoints = 1, changed = 1),
     private val execResult: ExecResult = ExecResult(0, "ok\n", ""),
 ) : NodeOperations {
     private fun record(entry: String) {
@@ -27,7 +28,7 @@ class FakeNodeOperations(
 
     override suspend fun reboot() = record("reboot $name")
 
-    override suspend fun stageWifi(ssid: String, key: String): Int = record("stage $name").let { wifiInterfaces }
+    override suspend fun stageWifi(ssid: String, key: String): WifiStage = record("stage $name").let { wifiStage }
 
     override suspend fun applyUnchecked() = record("apply $name")
 

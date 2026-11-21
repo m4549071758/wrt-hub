@@ -14,6 +14,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import wrthub.core.direct.DirectOperations
 import wrthub.core.direct.ExecResult
+import wrthub.core.direct.WifiStage
 import wrthub.core.direct.WriteOutcome
 import wrthub.core.json.arr
 import wrthub.core.json.bool
@@ -27,7 +28,8 @@ class DirectOperationsTest {
 
     private val wireless = Json.parseToJsonElement(
         """{"values":{
-            "default_radio0":{".type":"wifi-iface","mode":"ap","ssid":"old"},
+            "default_radio0":{".type":"wifi-iface","mode":"ap","ssid":"old","key":"correct horse"},
+            "default_radio1":{".type":"wifi-iface","mode":"ap","ssid":"New-SSID","key":"correct horse"},
             "mesh0":{".type":"wifi-iface","mode":"mesh","mesh_id":"m"},
             "radio0":{".type":"wifi-device"}}}""",
     ).jsonObject
@@ -55,13 +57,23 @@ class DirectOperationsTest {
     }
 
     @Test
-    fun `staging wifi touches only ap interfaces and applies nothing`() = runTest {
+    fun `staging wifi touches only ap interfaces whose values differ and applies nothing`() = runTest {
         val fake = recording { obj, method -> if (obj == "uci" && method == "get") wireless else null }
-        assertEquals(1, DirectOperations(fake).stageWifi("New-SSID", "correct horse"))
+        assertEquals(WifiStage(accessPoints = 2, changed = 1), DirectOperations(fake).stageWifi("New-SSID", "correct horse"))
         val sets = fake.calls.filter { it.method == "set" }
         assertEquals(listOf("default_radio0"), sets.map { it.args.str("section") })
         assertEquals("New-SSID", sets.single().args.obj("values")?.str("ssid"))
         assertTrue(fake.calls.none { it.method == "apply" })
+    }
+
+    @Test
+    fun `staging the current wifi stages nothing so nothing needs applying`() = runTest {
+        val current = Json.parseToJsonElement(
+            """{"values":{"default_radio0":{".type":"wifi-iface","mode":"ap","ssid":"New-SSID","key":"correct horse"}}}""",
+        ).jsonObject
+        val fake = recording { obj, method -> if (obj == "uci" && method == "get") current else null }
+        assertEquals(WifiStage(accessPoints = 1, changed = 0), DirectOperations(fake).stageWifi("New-SSID", "correct horse"))
+        assertEquals(listOf("uci.get"), fake.calls.map { "${it.obj}.${it.method}" })
     }
 
     @Test
@@ -79,7 +91,7 @@ class DirectOperationsTest {
     fun `staging wifi on a node without ap interfaces changes nothing`() = runTest {
         val empty = buildJsonObject { put("values", buildJsonObject {}) }
         val fake = recording { obj, method -> if (obj == "uci" && method == "get") empty else null }
-        assertEquals(0, DirectOperations(fake).stageWifi("New-SSID", "correct horse"))
+        assertEquals(WifiStage(accessPoints = 0, changed = 0), DirectOperations(fake).stageWifi("New-SSID", "correct horse"))
         assertEquals(listOf("uci.get"), fake.calls.map { "${it.obj}.${it.method}" })
     }
 
