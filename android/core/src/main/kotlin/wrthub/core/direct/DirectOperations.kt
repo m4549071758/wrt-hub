@@ -62,11 +62,11 @@ class DirectOperations(private val ubus: UbusCaller, private val rollbackSeconds
     }
 
     /**
-     * Sets SSID and key on every `mode ap` wifi-iface and applies without rollback: the phone doing this is
-     * usually on that Wi-Fi and always loses the connection, which would otherwise trigger a rollback.
-     * Returns the number of interfaces changed; 0 means the node has no AP interface and nothing was applied.
+     * Stages SSID and key on every `mode ap` wifi-iface of this node without applying them, and returns how many
+     * interfaces were staged (0: no AP interface). Stage on every node of the site first, then [applyUnchecked] on
+     * all of them at once: the phone doing this usually loses its Wi-Fi as soon as one node applies.
      */
-    suspend fun setWifi(ssid: String, key: String): Int {
+    suspend fun stageWifi(ssid: String, key: String): Int {
         requireValidSsid(ssid)
         requireValidPsk(key)
         val sections = ubus.call("uci", "get", buildJsonObject { put("config", "wireless") })?.obj("values")
@@ -89,8 +89,20 @@ class DirectOperations(private val ubus: UbusCaller, private val rollbackSeconds
                 },
             )
         }
-        ubus.call("uci", "apply", buildJsonObject { put("rollback", false) })
         return apSections.size
+    }
+
+    /**
+     * Applies staged changes without rollback: the phone is usually on the Wi-Fi being changed and always loses the
+     * connection, which would otherwise trigger the rollback.
+     */
+    suspend fun applyUnchecked() {
+        ubus.call("uci", "apply", buildJsonObject { put("rollback", false) })
+    }
+
+    /** Drops staged wireless changes, so a later apply in this session does not pick them up. */
+    suspend fun discardWifi() {
+        ubus.call("uci", "revert", buildJsonObject { put("config", "wireless") })
     }
 
     suspend fun reboot() {

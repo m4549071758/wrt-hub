@@ -55,22 +55,31 @@ class DirectOperationsTest {
     }
 
     @Test
-    fun `set wifi changes only ap interfaces and applies without rollback`() = runTest {
+    fun `staging wifi touches only ap interfaces and applies nothing`() = runTest {
         val fake = recording { obj, method -> if (obj == "uci" && method == "get") wireless else null }
-        assertEquals(1, DirectOperations(fake).setWifi("New-SSID", "correct horse"))
+        assertEquals(1, DirectOperations(fake).stageWifi("New-SSID", "correct horse"))
         val sets = fake.calls.filter { it.method == "set" }
         assertEquals(listOf("default_radio0"), sets.map { it.args.str("section") })
         assertEquals("New-SSID", sets.single().args.obj("values")?.str("ssid"))
-        val apply = fake.calls.last()
-        assertEquals("uci.apply", "${apply.obj}.${apply.method}")
-        assertEquals(false, apply.args.bool("rollback"))
+        assertTrue(fake.calls.none { it.method == "apply" })
     }
 
     @Test
-    fun `set wifi on a node without ap interfaces changes nothing`() = runTest {
+    fun `staged wifi is applied without rollback or reverted`() = runTest {
+        val fake = recording()
+        val ops = DirectOperations(fake)
+        ops.applyUnchecked()
+        ops.discardWifi()
+        assertEquals(listOf("uci.apply", "uci.revert"), fake.calls.map { "${it.obj}.${it.method}" })
+        assertEquals(false, fake.calls[0].args.bool("rollback"))
+        assertEquals("wireless", fake.calls[1].args.str("config"))
+    }
+
+    @Test
+    fun `staging wifi on a node without ap interfaces changes nothing`() = runTest {
         val empty = buildJsonObject { put("values", buildJsonObject {}) }
         val fake = recording { obj, method -> if (obj == "uci" && method == "get") empty else null }
-        assertEquals(0, DirectOperations(fake).setWifi("New-SSID", "correct horse"))
+        assertEquals(0, DirectOperations(fake).stageWifi("New-SSID", "correct horse"))
         assertEquals(listOf("uci.get"), fake.calls.map { "${it.obj}.${it.method}" })
     }
 
@@ -79,8 +88,8 @@ class DirectOperationsTest {
         val fake = recording()
         val ops = DirectOperations(fake)
         assertFailsWith<IllegalArgumentException> { ops.blockClient("not-a-mac") }
-        assertFailsWith<IllegalArgumentException> { ops.setWifi("ok", "short") }
-        assertFailsWith<IllegalArgumentException> { ops.setWifi("x".repeat(33), "long enough") }
+        assertFailsWith<IllegalArgumentException> { ops.stageWifi("ok", "short") }
+        assertFailsWith<IllegalArgumentException> { ops.stageWifi("x".repeat(33), "long enough") }
         assertFailsWith<IllegalArgumentException> { ops.ping("-c 100 example.com") }
         assertFailsWith<IllegalArgumentException> { ops.traceroute("a;reboot") }
         assertTrue(fake.calls.isEmpty())
