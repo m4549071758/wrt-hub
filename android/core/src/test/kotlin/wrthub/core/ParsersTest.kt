@@ -9,6 +9,9 @@ import wrthub.core.model.WirelessMode
 import wrthub.core.model.deviceCounters
 import wrthub.core.model.hostNames
 import wrthub.core.model.lanIpv4
+import wrthub.core.model.live
+import wrthub.core.model.neighborEntries
+import wrthub.core.model.upstreamDevices
 import wrthub.core.model.leases
 import wrthub.core.model.netInterfaces
 import wrthub.core.model.summary
@@ -76,5 +79,20 @@ class ParsersTest {
         assertEquals("wan", router.wanDevice())
         assertEquals("ipip6-wan", home.wanDevice())
         assertNull(Fixtures.snapshot("mesh-site/ap.json").wanDevice())
+    }
+
+    @Test
+    fun `neighbour table keeps entries with a MAC and knows live states`() {
+        val entries = home.neighborEntries()
+        assertTrue(entries.isNotEmpty())
+        assertTrue(entries.all { it.mac == it.mac.lowercase() && it.device != null })
+        assertTrue(entries.any { it.live })
+        assertTrue(router.neighborEntries().isEmpty())
+    }
+
+    @Test
+    fun `upstream devices are the wan and modem interfaces`() {
+        assertEquals(setOf("ipip6-wan", "br-wan", "ds-wanaftr", "wwan0"), home.upstreamDevices())
+        assertEquals(setOf("wan"), router.upstreamDevices())
     }
 }

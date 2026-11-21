@@ -48,7 +48,10 @@ class DirectCollectorTest {
             }
         }
         val collected: Snapshot = DirectCollector(restricted).collect()
-        assertEquals(listOf("luci-rpc.getWirelessDevices", "iwinfo.devices"), collected.deniedCalls)
+        assertEquals(
+            listOf("luci-rpc.getWirelessDevices", "iwinfo.devices", "file.exec /sbin/ip -4 neigh show"),
+            collected.deniedCalls,
+        )
         assertTrue(collected.wireless.isEmpty())
         assertEquals("ELECOM WRC-X3200GST3", collected.board.str("model"))
     }

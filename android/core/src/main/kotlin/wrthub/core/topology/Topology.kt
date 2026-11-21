@@ -4,6 +4,10 @@ import wrthub.core.model.UsteerSighting
 import wrthub.core.model.WirelessInterface
 import wrthub.core.model.WirelessMode
 import wrthub.core.model.hostNames
+import wrthub.core.model.live
+import wrthub.core.model.neighborEntries
+import wrthub.core.model.ownMacs
+import wrthub.core.model.upstreamDevices
 import wrthub.core.model.lanIpv4
 import wrthub.core.model.leases
 import wrthub.core.model.usteerSightings
@@ -20,7 +24,13 @@ enum class Presence {
     /** Associated with an AP interface of one of the site's nodes. */
     WIRELESS,
 
-    /** Holds a DHCP lease but is not associated with any AP: wired, or recently disconnected. */
+    /**
+     * On the LAN now (a live entry in a node's neighbour table) but not associated with any AP of the site:
+     * wired, or behind an AP that is not a registered OpenWrt node.
+     */
+    ONLINE_UNKNOWN_LINK,
+
+    /** Only a DHCP lease remains: the device left recently. */
     LEASE_ONLY,
 
     /** Known only because wrt-hub blocks it. */
@@ -86,15 +96,21 @@ private fun clients(snapshots: Map<String, Snapshot>, wireless: Map<String, List
     val names = snapshots.values.fold(emptyMap<String, String>()) { acc, snapshot -> acc + snapshot.hostNames() }
     val blocked = snapshots.values.flatMap { it.blockedClients }.map { it.lowercase() }.toSet()
     val sightings = sightings(snapshots)
-    return (attachments.keys + leases.keys + blocked).map { mac ->
+    val ownMacs = snapshots.values.flatMap { it.ownMacs() }.toSet()
+    val online = snapshots.values.flatMap { snapshot ->
+        val upstream = snapshot.upstreamDevices()
+        snapshot.neighborEntries().filter { it.live && it.device !in upstream }
+    }.associateBy { it.mac }
+    return (attachments.keys + leases.keys + online.keys + blocked - ownMacs).map { mac ->
         val attachment = attachments[mac]
         val lease = leases[mac]
         SiteClient(
             mac = mac,
             name = names[mac] ?: lease?.hostname,
-            ipv4 = lease?.ipv4,
+            ipv4 = lease?.ipv4 ?: online[mac]?.ipv4,
             presence = when {
                 attachment != null -> Presence.WIRELESS
+                mac in online -> Presence.ONLINE_UNKNOWN_LINK
                 lease != null -> Presence.LEASE_ONLY
                 else -> Presence.OFFLINE
             },

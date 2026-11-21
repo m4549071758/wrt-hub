@@ -58,6 +58,13 @@ data class Lease(val mac: String, val ipv4: String, val hostname: String?)
 
 data class UsteerSighting(val nodeAddress: String?, val apObject: String, val connected: Boolean, val signal: Int?)
 
+data class Neighbor(val ipv4: String, val device: String?, val mac: String, val state: String)
+
+private val LIVE_NEIGHBOR_STATES = setOf("REACHABLE", "STALE", "DELAY", "PROBE", "PERMANENT", "NOARP")
+
+/** STALE counts as live: the kernel keeps it for minutes after the last traffic, until garbage collection. */
+val Neighbor.live: Boolean get() = state in LIVE_NEIGHBOR_STATES
+
 private const val LOAD_SCALE = 65536.0
 
 fun Snapshot.summary(): NodeSummary {
@@ -148,3 +155,25 @@ fun Snapshot.usteerSightings(): Map<String, List<UsteerSighting>> =
             )
         }
     }
+
+/** Entries of the kernel neighbour (ARP) table that carry a MAC; FAILED and INCOMPLETE entries have none. */
+fun Snapshot.neighborEntries(): List<Neighbor> =
+    neighbors.orEmpty().lineSequence().mapNotNull { line ->
+        val tokens = line.trim().split(WHITESPACE)
+        val mac = tokens.valueAfter("lladdr")?.lowercase() ?: return@mapNotNull null
+        Neighbor(ipv4 = tokens.first(), device = tokens.valueAfter("dev"), mac = mac, state = tokens.last())
+    }.toList()
+
+private val WHITESPACE = Regex("\\s+")
+
+private fun List<String>.valueAfter(key: String): String? = indexOf(key).takeIf { it >= 0 }?.let { getOrNull(it + 1) }
+
+/** MACs of the node's own network devices, so a node never shows up as a client. */
+fun Snapshot.ownMacs(): Set<String> =
+    devices.values.mapNotNull { it.asObject()?.str("macaddr")?.lowercase() }
+        .filterNot { it == "00:00:00:00:00:00" }
+        .toSet()
+
+/** L3 devices of upstream interfaces; OpenWrt names them `wan*`, and `wwan*` for cellular modems. */
+fun Snapshot.upstreamDevices(): Set<String> =
+    netInterfaces().filter { it.name.startsWith("wan") || it.name.startsWith("wwan") }.mapNotNull { it.device }.toSet()

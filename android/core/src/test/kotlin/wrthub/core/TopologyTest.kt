@@ -4,6 +4,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import wrthub.core.json.obj
+import wrthub.core.json.str
 import wrthub.core.topology.LinkMetrics
 import wrthub.core.topology.Presence
 import wrthub.core.topology.Sighting
@@ -41,11 +43,33 @@ class TopologyTest {
     }
 
     @Test
-    fun `wired site has no links and lease-only clients`() {
+    fun `wired site splits live devices from those that only left a lease`() {
         val topology = buildTopology(Fixtures.wiredSite)
         assertTrue(topology.links.isEmpty())
-        assertEquals(48, topology.clients.count { it.presence == Presence.LEASE_ONLY })
+        assertEquals(57, topology.clients.count { it.presence == Presence.ONLINE_UNKNOWN_LINK })
+        assertEquals(4, topology.clients.count { it.presence == Presence.LEASE_ONLY })
+        assertTrue(topology.clients.filter { it.presence == Presence.ONLINE_UNKNOWN_LINK }.all { it.ipv4 != null })
         assertTrue(topology.clients.any { it.name != null })
+    }
+
+    @Test
+    fun `neighbour table adds static devices but not upstream peers or the site's own nodes`() {
+        val ap = Fixtures.meshSite.getValue("ap")
+        val apLanMac = ap.devices.obj("br-lan")!!.str("macaddr")!!
+        val router = Fixtures.meshSite.getValue("router").copy(
+            neighbors = """
+                10.99.0.50 dev br-lan lladdr 02:00:00:00:aa:01 REACHABLE
+                10.99.0.51 dev br-lan  FAILED
+                100.64.0.1 dev wan lladdr 02:00:00:00:aa:02 REACHABLE
+                10.99.0.2 dev br-lan lladdr $apLanMac STALE
+            """.trimIndent(),
+        )
+        val clients = buildTopology(mapOf("router" to router, "ap" to ap)).clients.associateBy { it.mac }
+        val static = clients.getValue("02:00:00:00:aa:01")
+        assertEquals(Presence.ONLINE_UNKNOWN_LINK, static.presence)
+        assertEquals("10.99.0.50", static.ipv4)
+        assertTrue("02:00:00:00:aa:02" !in clients)
+        assertTrue(apLanMac.lowercase() !in clients)
     }
 
     @Test

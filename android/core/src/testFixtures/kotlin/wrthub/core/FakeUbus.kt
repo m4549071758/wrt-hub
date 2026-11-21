@@ -55,10 +55,14 @@ fun fakeRouter(snapshot: Snapshot): FakeUbus = FakeUbus { obj, method, args ->
         "luci-rpc.getDHCPLeases" -> snapshot.dhcpLeases ?: notFound()
         "luci-rpc.getHostHints" -> snapshot.hostHints ?: notFound()
         "usteer.get_clients" -> snapshot.usteerClients ?: notFound()
-        "file.exec" -> snapshot.nlbw?.let { nlbw ->
+        "file.exec" -> when (args.str("command")) {
+            "/usr/sbin/nlbw" -> snapshot.nlbw?.toString()
+            "/sbin/ip" -> snapshot.neighbors
+            else -> null
+        }?.let { stdout ->
             buildJsonObject {
                 put("code", 0)
-                put("stdout", nlbw.toString())
+                put("stdout", stdout)
             }
         } ?: notFound()
         "uci.get" -> buildJsonObject { putJsonObject("values") {} }

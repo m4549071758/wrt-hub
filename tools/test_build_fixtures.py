@@ -35,6 +35,7 @@ RAW = {
         "dhcp6_leases": [{"duid": "000100012e", "ip6addrs": ["2001:db8:77:901::836/128"]}],
     },
     "hosthints.json": {"ce:11:22:33:44:03": {"ipaddrs": ["192.168.77.23"], "name": "Alice-Phone"}},
+    "ip-neigh.txt": "192.168.77.23 dev br-lan lladdr ce:11:22:33:44:03 REACHABLE \n192.168.77.9 dev br-lan  FAILED \n",
     "usteer-get_clients.json": {
         "ce:11:22:33:44:03": {"192.168.77.2#hostapd.wl1-ap0": {"connected": True, "signal": -50}}
     },
@@ -63,7 +64,7 @@ class BuildFixturesTest(unittest.TestCase):
         host = self.raw / "r1"
         host.mkdir(parents=True)
         for name, data in RAW.items():
-            (host / name).write_text(json.dumps(data))
+            (host / name).write_text(data if isinstance(data, str) else json.dumps(data))
         self.out = root / "out"
 
     def tearDown(self) -> None:
@@ -105,6 +106,10 @@ class BuildFixturesTest(unittest.TestCase):
     def test_ipv6_prefix_suffix_is_kept(self) -> None:
         _, snap = self.build()
         self.assertEqual(["fd00:db8::2/128"], snap["dhcpLeases"]["dhcp6_leases"][0]["ip6addrs"])
+
+    def test_neighbor_table_is_kept_as_text_and_anonymized(self) -> None:
+        _, snap = self.build()
+        self.assertEqual("10.99.0.23 dev br-lan lladdr 02:aa:bb:00:00:03 REACHABLE \n10.99.0.9 dev br-lan  FAILED \n", snap["neighbors"])
 
     def test_search_domains_and_dhcp_passthru_are_replaced(self) -> None:
         _, snap = self.build()

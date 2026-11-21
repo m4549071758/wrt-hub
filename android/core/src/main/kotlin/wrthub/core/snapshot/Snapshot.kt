@@ -28,6 +28,8 @@ data class Snapshot(
     val hostHints: JsonObject? = null,
     val usteerClients: JsonObject? = null,
     val nlbw: JsonObject? = null,
+    /** Raw output of `ip -4 neigh show`; text because busybox `ip` has no JSON output. */
+    val neighbors: String? = null,
     val blockedClients: List<String> = emptyList(),
     /** ubus calls (`object.method`) that the router's ACL refused, so their data is missing on purpose. */
     val deniedCalls: List<String> = emptyList(),

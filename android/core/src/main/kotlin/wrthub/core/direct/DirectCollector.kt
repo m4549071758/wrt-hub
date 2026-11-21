@@ -46,13 +46,14 @@ class DirectCollector(private val ubus: UbusCaller, private val clock: () -> Lon
             method: String,
             args: JsonObject = JsonObject(emptyMap()),
             reportDenied: Boolean = true,
+            label: String = "$obj.$method",
         ): JsonObject? =
             try {
                 ubus.call(obj, method, args)
             } catch (e: UbusException) {
                 when (e.code) {
                     in MISSING_CODES -> null
-                    in DENIED_CODES -> null.also { if (reportDenied) denied += "$obj.$method" }
+                    in DENIED_CODES -> null.also { if (reportDenied) denied += label }
                     else -> throw e
                 }
             }
@@ -74,6 +75,7 @@ class DirectCollector(private val ubus: UbusCaller, private val clock: () -> Lon
             usteerClients = if (ifnames.isEmpty()) null else optional("usteer", "get_clients"),
             // LuCI grants exec of nlbw only with luci-app-nlbwmon, so a denial here just means "not installed".
             nlbw = optional("file", "exec", NLBW_ARGS, reportDenied = false)?.let(::nlbwOutput),
+            neighbors = optional("file", "exec", IP_NEIGH_ARGS, label = "file.exec $IP_NEIGH_COMMAND")?.let(::stdoutOf),
             blockedClients = optional("uci", "get", buildJsonObject { put("config", "firewall") })?.let(::blockedMacs).orEmpty(),
             deniedCalls = denied.toList(),
         )
@@ -100,6 +102,16 @@ private val NLBW_ARGS = buildJsonObject {
     put("command", NLBW_PATH)
     putJsonArray("params") { listOf("-c", "json", "-g", "mac").forEach { add(it) } }
 }
+
+private const val IP_NEIGH_COMMAND = "/sbin/ip -4 neigh show"
+
+/** LuCI's status page is granted exactly this command line, so the stock ACL allows it. */
+private val IP_NEIGH_ARGS = buildJsonObject {
+    put("command", "/sbin/ip")
+    putJsonArray("params") { listOf("-4", "neigh", "show").forEach { add(it) } }
+}
+
+private fun stdoutOf(result: JsonObject): String? = if (result.int("code") == 0) result.str("stdout") else null
 
 private fun nlbwOutput(result: JsonObject): JsonObject? {
     if (result.int("code") != 0) return null

@@ -156,6 +156,9 @@ def assemble(host_dir: Path) -> dict[str, Any]:
         value = load_optional(host_dir / filename)
         if value is not None:
             snapshot[key] = value
+    neighbors = host_dir / "ip-neigh.txt"
+    if neighbors.exists():
+        snapshot["neighbors"] = neighbors.read_text()
     snapshot["blockedClients"] = []
     return snapshot
 
