@@ -76,6 +76,7 @@ class DirectCollector(private val ubus: UbusCaller, private val clock: () -> Lon
             // LuCI grants exec of nlbw only with luci-app-nlbwmon, so a denial here just means "not installed".
             nlbw = optional("file", "exec", NLBW_ARGS, reportDenied = false)?.let(::nlbwOutput),
             neighbors = optional("file", "exec", IP_NEIGH_ARGS, label = "file.exec $IP_NEIGH_COMMAND")?.let(::stdoutOf),
+            dhcpConfig = optional("uci", "get", buildJsonObject { put("config", "dhcp") }, label = "uci.get dhcp"),
             blockedClients = optional("uci", "get", buildJsonObject { put("config", "firewall") })?.let(::blockedMacs).orEmpty(),
             deniedCalls = denied.toList(),
         )

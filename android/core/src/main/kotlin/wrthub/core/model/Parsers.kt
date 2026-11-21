@@ -1,6 +1,7 @@
 package wrthub.core.model
 
 import kotlinx.serialization.json.JsonObject
+import wrthub.core.admin.staticLeaseNames
 import wrthub.core.json.arr
 import wrthub.core.json.asLong
 import wrthub.core.json.asObject
@@ -138,10 +139,11 @@ fun Snapshot.leases(): List<Lease> =
         Lease(mac, ip, o.str("hostname"))
     }
 
+/** Static lease names win over the names the clients announce, as they are what the owner chose on the router. */
 fun Snapshot.hostNames(): Map<String, String> =
     hostHints?.entries.orEmpty().mapNotNull { (mac, value) ->
         value.asObject()?.str("name")?.let { mac.lowercase() to it }
-    }.toMap()
+    }.toMap() + dhcpConfig?.let(::staticLeaseNames).orEmpty()
 
 fun Snapshot.usteerSightings(): Map<String, List<UsteerSighting>> =
     usteerClients?.entries.orEmpty().associate { (mac, perAp) ->

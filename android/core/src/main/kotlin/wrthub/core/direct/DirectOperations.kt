@@ -1,6 +1,5 @@
 package wrthub.core.direct
 
-import java.io.IOException
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
@@ -15,7 +14,8 @@ import wrthub.core.ubus.UbusCaller
 import wrthub.core.ubus.UbusException
 import wrthub.core.ubus.call
 
-enum class WriteOutcome { APPLIED, ROLLED_BACK }
+/** [UNCHANGED]: the requested values were already set, so nothing was applied. */
+enum class WriteOutcome { APPLIED, ROLLED_BACK, UNCHANGED }
 
 data class ExecResult(val exitCode: Int, val stdout: String, val stderr: String)
 
@@ -110,44 +110,12 @@ class DirectOperations(private val ubus: UbusCaller, private val rollbackSeconds
         ubus.call("system", "reboot")
     }
 
-    suspend fun ping(host: String): ExecResult = exec(PING_PATH, listOf("-c", "4", "-W", "2", requireValidHost(host)))
+    suspend fun ping(host: String): ExecResult = ubus.exec(PING_PATH, listOf("-c", "4", "-W", "2", requireValidHost(host)))
 
     suspend fun traceroute(host: String): ExecResult =
-        exec(TRACEROUTE_PATH, listOf("-q", "1", "-w", "2", "-m", "20", requireValidHost(host)))
+        ubus.exec(TRACEROUTE_PATH, listOf("-q", "1", "-w", "2", "-m", "20", requireValidHost(host)))
 
-    private suspend fun exec(command: String, params: List<String>): ExecResult {
-        val args = buildJsonObject {
-            put("command", command)
-            putJsonArray("params") { params.forEach { add(it) } }
-        }
-        val result: JsonObject = ubus.call("file", "exec", args)
-            ?: throw UbusException(UbusException.NO_DATA, "file.exec returned no data for $command")
-        return ExecResult(result.int("code") ?: -1, result.str("stdout").orEmpty(), result.str("stderr").orEmpty())
-    }
-
-    /**
-     * Applies staged changes with rpcd's rollback timer, then confirms only if the router still answers.
-     * An exception after apply means the confirm did not happen, so rpcd reverts the change by itself.
-     */
-    private suspend fun applyWithRollback(): WriteOutcome {
-        ubus.call(
-            "uci",
-            "apply",
-            buildJsonObject {
-                put("rollback", true)
-                put("timeout", rollbackSeconds)
-            },
-        )
-        return try {
-            ubus.call("system", "info")
-            ubus.call("uci", "confirm")
-            WriteOutcome.APPLIED
-        } catch (e: IOException) {
-            WriteOutcome.ROLLED_BACK
-        } catch (e: UbusException) {
-            WriteOutcome.ROLLED_BACK
-        }
-    }
+    private suspend fun applyWithRollback(): WriteOutcome = ubus.applyWithRollback(rollbackSeconds)
 }
 
 /** [accessPoints] AP interfaces on the node, of which [changed] were staged with new values. */

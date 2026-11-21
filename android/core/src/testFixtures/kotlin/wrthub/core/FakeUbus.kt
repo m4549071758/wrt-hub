@@ -65,7 +65,7 @@ fun fakeRouter(snapshot: Snapshot): FakeUbus = FakeUbus { obj, method, args ->
                 put("stdout", stdout)
             }
         } ?: notFound()
-        "uci.get" -> buildJsonObject { putJsonObject("values") {} }
+        "uci.get" -> if (args.str("config") == "dhcp") snapshot.dhcpConfig ?: notFound() else buildJsonObject { putJsonObject("values") {} }
         else -> if (obj.startsWith("hostapd.") && method == "get_clients") {
             snapshot.wireless.firstOrNull { "hostapd.${it.ifname}" == obj }?.hostapdClients ?: notFound()
         } else {

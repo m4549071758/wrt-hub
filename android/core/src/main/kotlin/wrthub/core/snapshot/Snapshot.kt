@@ -30,6 +30,8 @@ data class Snapshot(
     val nlbw: JsonObject? = null,
     /** Raw output of `ip -4 neigh show`; text because busybox `ip` has no JSON output. */
     val neighbors: String? = null,
+    /** Raw `uci get dhcp`; the static leases' names override the DHCP clients' own host names. */
+    val dhcpConfig: JsonObject? = null,
     val blockedClients: List<String> = emptyList(),
     /** ubus calls (`object.method`) that the router's ACL refused, so their data is missing on purpose. */
     val deniedCalls: List<String> = emptyList(),
