@@ -18,6 +18,6 @@ jobs:
           java-version: "21"
       - name: Fixture tool tests
         run: python3 -m unittest discover -s tools -p 'test_*.py'
-      - name: Core tests
+      - name: Core and app tests, debug build
         working-directory: android
-        run: ./gradlew --no-daemon :core:test
+        run: ./gradlew --no-daemon :core:test :app:testDebugUnitTest :app:assembleDebug
