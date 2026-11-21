@@ -19,10 +19,13 @@ import wrthub.app.data.SiteStore
 import wrthub.app.domain.CounterReading
 import wrthub.app.domain.DirectCounterReader
 import wrthub.app.domain.DirectNodeOperations
+import wrthub.app.domain.DirectNodeAdmin
+import wrthub.app.domain.NodeAdmin
 import wrthub.app.domain.NodeOperations
 import wrthub.app.domain.SiteLoader
 import wrthub.app.domain.SiteSession
 import wrthub.core.direct.DirectOperations
+import wrthub.core.direct.DirectAdmin
 
 class WrtHubApplication : Application() {
     val container: AppContainer by lazy { AppContainer(this) }
@@ -44,6 +47,7 @@ class AppContainer(context: Context) {
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
     )
     val operationsFor: (NodeConfig) -> NodeOperations = { node -> DirectNodeOperations(DirectOperations(connections.node(node))) }
+    val adminFor: (NodeConfig) -> NodeAdmin = { node -> DirectNodeAdmin(DirectAdmin(connections.node(node))) }
     val counters: CounterReading = DirectCounterReader(connections::node)
     val verifier: NodeVerifying = DirectNodeVerifier(http)
 }

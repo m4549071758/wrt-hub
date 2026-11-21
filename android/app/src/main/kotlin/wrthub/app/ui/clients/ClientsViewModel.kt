@@ -14,6 +14,7 @@ import wrthub.app.data.NodeConfig
 import wrthub.app.data.SiteConfig
 import wrthub.app.domain.NodeOperations
 import wrthub.app.domain.SiteSession
+import wrthub.app.domain.dhcpServerOf
 import wrthub.app.domain.routerOf
 import wrthub.app.domain.siteTopology
 import wrthub.core.direct.WriteOutcome
@@ -39,6 +40,9 @@ data class ClientsUiState(
     val filter: ClientFilter = ClientFilter.ALL,
     val busy: Set<String> = emptySet(),
     val notice: ClientNotice? = null,
+    /** The node whose DHCP server hands out static leases; null hides "fix this IP". */
+    val dhcpNodeId: String? = null,
+    val staticMacs: Set<String> = emptySet(),
 )
 
 /** Blocks and unblocks go to the router (the node with WAN), whose firewall forwards every client's traffic. */
@@ -51,6 +55,7 @@ class ClientsViewModel(
     private val local = MutableStateFlow(Local())
 
     val state: StateFlow<ClientsUiState> = combine(session.state, local) { site, ui ->
+        val dhcp = dhcpServerOf(site.nodes)
         ClientsUiState(
             site = site.site,
             nodeLabels = site.nodes.associate { it.config.id to it.config.label },
@@ -59,6 +64,8 @@ class ClientsViewModel(
             filter = ui.filter,
             busy = ui.busy,
             notice = ui.notice,
+            dhcpNodeId = dhcp?.first?.config?.id,
+            staticMacs = dhcp?.second?.leases.orEmpty().flatMap { it.macs }.toSet(),
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, ClientsUiState())
 

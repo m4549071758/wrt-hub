@@ -30,6 +30,13 @@ import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 import wrthub.app.AppContainer
 import wrthub.app.R
+import wrthub.app.ui.admin.ForwardsRoute
+import wrthub.app.ui.admin.ForwardsViewModel
+import wrthub.app.ui.admin.LeasePrefill
+import wrthub.app.ui.admin.LeasesRoute
+import wrthub.app.ui.admin.LeasesViewModel
+import wrthub.app.ui.admin.StatusRoute
+import wrthub.app.ui.admin.StatusViewModel
 import wrthub.app.ui.clients.ClientsRoute
 import wrthub.app.ui.clients.ClientsViewModel
 import wrthub.app.ui.home.HomeRoute
@@ -66,6 +73,16 @@ data class NodeDestination(val nodeId: String)
 @Serializable
 data class WifiDestination(val siteId: String)
 
+@Serializable
+data class StatusDestination(val nodeId: String)
+
+/** [mac] set: opened from a client to pin its IP. */
+@Serializable
+data class LeasesDestination(val nodeId: String, val mac: String? = null, val ip: String? = null, val name: String? = null)
+
+@Serializable
+data class ForwardsDestination(val nodeId: String)
+
 @Composable
 fun WrtHubApp(container: AppContainer) {
     val navController = rememberNavController()
@@ -74,10 +91,10 @@ fun WrtHubApp(container: AppContainer) {
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            val fullScreen = destination?.let {
-                it.hasRoute<AddNodeDestination>() || it.hasRoute<NodeDestination>() || it.hasRoute<WifiDestination>()
-            } == true
-            if (!fullScreen) {
+            val onTab = destination?.let {
+                it.hasRoute<HomeDestination>() || it.hasRoute<ClientsDestination>() || it.hasRoute<MeshDestination>() || it.hasRoute<SitesDestination>()
+            } != false
+            if (onTab) {
                 NavigationBar {
                     NavigationBarItem(
                         selected = destination?.hasRoute<HomeDestination>() == true,
@@ -122,7 +139,9 @@ fun WrtHubApp(container: AppContainer) {
                 val vm: ClientsViewModel = viewModel(
                     factory = viewModelFactory { initializer { ClientsViewModel(container.session, container.operationsFor) } },
                 )
-                ClientsRoute(vm)
+                ClientsRoute(vm, onPinIp = { nodeId, client ->
+                    navController.navigate(LeasesDestination(nodeId, client.mac, client.ipv4, client.name))
+                })
             }
             composable<MeshDestination> {
                 val vm: MeshViewModel = viewModel(factory = viewModelFactory { initializer { MeshViewModel(container.session) } })
@@ -151,7 +170,13 @@ fun WrtHubApp(container: AppContainer) {
                 val vm: NodeDetailViewModel = viewModel(
                     factory = viewModelFactory { initializer { NodeDetailViewModel(route.nodeId, container.session, container.operationsFor) } },
                 )
-                NodeDetailRoute(vm, onBack = { navController.popBackStack() })
+                NodeDetailRoute(
+                    vm,
+                    onBack = { navController.popBackStack() },
+                    onOpenStatus = { navController.navigate(StatusDestination(route.nodeId)) },
+                    onOpenLeases = { navController.navigate(LeasesDestination(route.nodeId)) },
+                    onOpenForwards = { navController.navigate(ForwardsDestination(route.nodeId)) },
+                )
             }
             composable<WifiDestination> { backStackEntry ->
                 val route = backStackEntry.toRoute<WifiDestination>()
@@ -159,6 +184,28 @@ fun WrtHubApp(container: AppContainer) {
                     factory = viewModelFactory { initializer { WifiViewModel(route.siteId, container.session, container.operationsFor) } },
                 )
                 WifiRoute(vm, onBack = { navController.popBackStack() })
+            }
+            composable<StatusDestination> { backStackEntry ->
+                val route = backStackEntry.toRoute<StatusDestination>()
+                val vm: StatusViewModel = viewModel(
+                    factory = viewModelFactory { initializer { StatusViewModel(route.nodeId, container.session, container.adminFor) } },
+                )
+                StatusRoute(vm, onBack = { navController.popBackStack() })
+            }
+            composable<LeasesDestination> { backStackEntry ->
+                val route = backStackEntry.toRoute<LeasesDestination>()
+                val prefill = route.mac?.let { LeasePrefill(it, route.ip, route.name) }
+                val vm: LeasesViewModel = viewModel(
+                    factory = viewModelFactory { initializer { LeasesViewModel(route.nodeId, container.session, container.adminFor, prefill) } },
+                )
+                LeasesRoute(vm, onBack = { navController.popBackStack() })
+            }
+            composable<ForwardsDestination> { backStackEntry ->
+                val route = backStackEntry.toRoute<ForwardsDestination>()
+                val vm: ForwardsViewModel = viewModel(
+                    factory = viewModelFactory { initializer { ForwardsViewModel(route.nodeId, container.session, container.adminFor) } },
+                )
+                ForwardsRoute(vm, onBack = { navController.popBackStack() })
             }
         }
     }

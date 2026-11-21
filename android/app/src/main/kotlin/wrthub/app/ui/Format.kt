@@ -9,6 +9,13 @@ fun formatBps(bps: Double): String = when {
     else -> String.format(Locale.ROOT, "%.2f Gbps", bps / 1e9)
 }
 
+fun formatBytes(bytes: Long): String = when {
+    bytes < 1_000 -> "$bytes B"
+    bytes < 1_000_000 -> String.format(Locale.ROOT, "%.1f kB", bytes / 1e3)
+    bytes < 1_000_000_000 -> String.format(Locale.ROOT, "%.1f MB", bytes / 1e6)
+    else -> String.format(Locale.ROOT, "%.2f GB", bytes / 1e9)
+}
+
 fun formatUptime(seconds: Long): String {
     val days = seconds / 86_400
     val hours = seconds % 86_400 / 3_600

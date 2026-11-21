@@ -1,5 +1,6 @@
 package wrthub.app.ui.node
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -20,6 +22,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -52,14 +56,33 @@ data class NodeDetailActions(
     val onReboot: () -> Unit,
     val onDismissNotice: () -> Unit,
     val onBack: () -> Unit,
+    val onOpenStatus: () -> Unit = {},
+    val onOpenLeases: () -> Unit = {},
+    val onOpenForwards: () -> Unit = {},
 )
 
 @Composable
-fun NodeDetailRoute(viewModel: NodeDetailViewModel, onBack: () -> Unit) {
+fun NodeDetailRoute(
+    viewModel: NodeDetailViewModel,
+    onBack: () -> Unit,
+    onOpenStatus: () -> Unit,
+    onOpenLeases: () -> Unit,
+    onOpenForwards: () -> Unit,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     NodeDetailScreen(
         state,
-        NodeDetailActions(viewModel::onHost, viewModel::ping, viewModel::traceroute, viewModel::reboot, viewModel::dismissNotice, onBack),
+        NodeDetailActions(
+            viewModel::onHost,
+            viewModel::ping,
+            viewModel::traceroute,
+            viewModel::reboot,
+            viewModel::dismissNotice,
+            onBack,
+            onOpenStatus,
+            onOpenLeases,
+            onOpenForwards,
+        ),
     )
 }
 
@@ -96,6 +119,13 @@ fun NodeDetailScreen(state: NodeDetailUiState, actions: NodeDetailActions) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             state.node?.let { NodeCard(it, wifiClients = null) }
+            if (state.admin.status) {
+                Section(stringResource(R.string.manage)) {
+                    AdminEntry(R.string.status, R.string.status_body, actions.onOpenStatus)
+                    if (state.admin.staticLeases) AdminEntry(R.string.static_leases, R.string.static_leases_body, actions.onOpenLeases)
+                    if (state.admin.portForwards) AdminEntry(R.string.port_forwards, R.string.port_forwards_body, actions.onOpenForwards)
+                }
+            }
             Section(stringResource(R.string.diagnostics)) {
                 OutlinedTextField(
                     value = state.host,
@@ -160,6 +190,18 @@ private fun Section(title: String, content: @Composable () -> Unit) {
             Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
             content()
         }
+    }
+}
+
+@Composable
+private fun AdminEntry(title: Int, body: Int, onClick: () -> Unit) {
+    ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
+        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+        supportingContent = { Text(stringResource(body)) },
+        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+    ) {
+        Text(stringResource(title))
     }
 }
 

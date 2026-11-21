@@ -16,6 +16,8 @@ import wrthub.app.domain.NodeState
 import wrthub.app.domain.SiteSession
 import wrthub.core.direct.ExecResult
 import wrthub.core.ubus.UbusException
+import wrthub.core.admin.parseDhcpConfig
+import wrthub.core.model.wanDevice
 
 sealed interface NodeNotice {
     data object InvalidHost : NodeNotice
@@ -27,12 +29,16 @@ sealed interface NodeNotice {
 
 data class ExecView(val title: String, val output: String, val exitCode: Int)
 
+/** Which LuCI-replacement pages the node offers; status needs the node to answer. */
+data class AdminEntries(val status: Boolean = false, val staticLeases: Boolean = false, val portForwards: Boolean = false)
+
 data class NodeDetailUiState(
     val node: NodeState? = null,
     val host: String = NodeDetailViewModel.DEFAULT_HOST,
     val running: Boolean = false,
     val result: ExecView? = null,
     val notice: NodeNotice? = null,
+    val admin: AdminEntries = AdminEntries(),
 )
 
 class NodeDetailViewModel(
@@ -50,7 +56,8 @@ class NodeDetailViewModel(
     private val local = MutableStateFlow(Local())
 
     val state: StateFlow<NodeDetailUiState> = combine(session.state, local) { site, ui ->
-        NodeDetailUiState(site.nodes.firstOrNull { it.config.id == nodeId }, ui.host, ui.running, ui.result, ui.notice)
+        val node = site.nodes.firstOrNull { it.config.id == nodeId }
+        NodeDetailUiState(node, ui.host, ui.running, ui.result, ui.notice, adminEntries(node))
     }.stateIn(viewModelScope, SharingStarted.Eagerly, NodeDetailUiState())
 
     fun onHost(value: String) = local.update { it.copy(host = value) }
@@ -102,4 +109,14 @@ class NodeDetailViewModel(
     companion object {
         const val DEFAULT_HOST = "1.1.1.1"
     }
+}
+
+/** Static leases only where a DHCP server runs, port forwards only on the node with the WAN. */
+private fun adminEntries(node: NodeState?): AdminEntries {
+    val snapshot = (node as? NodeState.Online)?.snapshot ?: return AdminEntries()
+    return AdminEntries(
+        status = true,
+        staticLeases = snapshot.dhcpConfig?.let(::parseDhcpConfig)?.servesDhcp == true,
+        portForwards = snapshot.wanDevice() != null,
+    )
 }

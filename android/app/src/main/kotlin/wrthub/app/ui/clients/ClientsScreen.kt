@@ -55,9 +55,9 @@ import wrthub.core.topology.Presence
 import wrthub.core.topology.SiteClient
 
 @Composable
-fun ClientsRoute(viewModel: ClientsViewModel) {
+fun ClientsRoute(viewModel: ClientsViewModel, onPinIp: (nodeId: String, client: SiteClient) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    ClientsScreen(state, viewModel::setFilter, viewModel::refresh, viewModel::setBlocked, viewModel::dismissNotice)
+    ClientsScreen(state, viewModel::setFilter, viewModel::refresh, viewModel::setBlocked, viewModel::dismissNotice, onPinIp)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,6 +68,7 @@ fun ClientsScreen(
     onRefresh: () -> Unit,
     onSetBlocked: (mac: String, blocked: Boolean) -> Unit,
     onDismissNotice: () -> Unit,
+    onPinIp: (nodeId: String, client: SiteClient) -> Unit = { _, _ -> },
 ) {
     var selectedMac by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
@@ -114,7 +115,13 @@ fun ClientsScreen(
     val selected = state.clients.firstOrNull { it.mac == selectedMac }
     if (selected != null) {
         ModalBottomSheet(onDismissRequest = { selectedMac = null }) {
-            ClientDetail(selected, state.nodeLabels, busy = selected.mac in state.busy, onSetBlocked = onSetBlocked)
+            val pin = state.dhcpNodeId?.takeIf { selected.ipv4 != null }?.let { nodeId ->
+                PinIp(pinned = selected.mac in state.staticMacs, onClick = {
+                    selectedMac = null
+                    onPinIp(nodeId, selected)
+                })
+            }
+            ClientDetail(selected, state.nodeLabels, busy = selected.mac in state.busy, onSetBlocked = onSetBlocked, pin = pin)
         }
     }
 }
@@ -153,8 +160,17 @@ private fun placeText(client: SiteClient, nodeLabels: Map<String, String>): Stri
     Presence.OFFLINE -> stringResource(R.string.presence_offline)
 }
 
+/** "Fix this IP" in the client sheet; [pinned] clients already have a static lease and get "edit" instead. */
+data class PinIp(val pinned: Boolean, val onClick: () -> Unit)
+
 @Composable
-fun ClientDetail(client: SiteClient, nodeLabels: Map<String, String>, busy: Boolean, onSetBlocked: (String, Boolean) -> Unit) {
+fun ClientDetail(
+    client: SiteClient,
+    nodeLabels: Map<String, String>,
+    busy: Boolean,
+    pin: PinIp? = null,
+    onSetBlocked: (String, Boolean) -> Unit,
+) {
     var confirming by remember { mutableStateOf(false) }
     val semantic = LocalSemanticColors.current
     val title = client.name ?: client.mac
@@ -183,6 +199,11 @@ fun ClientDetail(client: SiteClient, nodeLabels: Map<String, String>, busy: Bool
                     }
                     Text(sighting.signal?.let { "$it dBm" } ?: "—", color = semantic.forSignal(sighting.signal))
                 }
+            }
+        }
+        pin?.let {
+            OutlinedButton(onClick = it.onClick, modifier = Modifier.fillMaxWidth().padding(top = 24.dp)) {
+                Text(stringResource(if (it.pinned) R.string.edit_static_ip else R.string.fix_ip))
             }
         }
         if (client.blocked) {
@@ -229,7 +250,7 @@ private fun noticeText(notice: ClientNotice, clients: List<SiteClient>): String 
     fun nameOf(mac: String) = clients.firstOrNull { it.mac == mac }?.name ?: mac
     return when (notice) {
         is ClientNotice.Done -> when (notice.outcome) {
-            WriteOutcome.APPLIED -> stringResource(R.string.notice_applied, nameOf(notice.mac))
+            WriteOutcome.APPLIED, WriteOutcome.UNCHANGED -> stringResource(R.string.notice_applied, nameOf(notice.mac))
             WriteOutcome.ROLLED_BACK -> stringResource(R.string.notice_rolled_back, nameOf(notice.mac))
         }
         is ClientNotice.Failed -> stringResource(R.string.notice_failed, nameOf(notice.mac), notice.reason)

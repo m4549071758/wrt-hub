@@ -44,6 +44,22 @@ import wrthub.app.ui.sites.WifiNodeResult
 import wrthub.app.ui.sites.WifiOutcome
 import wrthub.app.ui.sites.WifiScreen
 import wrthub.app.ui.sites.WifiUiState
+import wrthub.app.ui.admin.ForwardsActions
+import wrthub.app.ui.admin.ForwardsScreen
+import wrthub.app.ui.admin.ForwardsUiState
+import wrthub.app.ui.admin.LeasesActions
+import wrthub.app.ui.admin.LeasesScreen
+import wrthub.app.ui.admin.LeasesUiState
+import wrthub.app.ui.admin.StatusActions
+import wrthub.app.ui.admin.StatusScreen
+import wrthub.app.ui.admin.StatusTab
+import wrthub.app.ui.admin.StatusUiState
+import wrthub.app.ui.node.AdminEntries
+import wrthub.core.admin.ForwardProtocol
+import wrthub.core.admin.LogLine
+import wrthub.core.admin.PortForward
+import wrthub.core.admin.Service
+import wrthub.core.admin.StaticLease
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -105,9 +121,10 @@ class ScreenshotTest {
     fun nodeDetail() = capture("node_detail") {
         NodeDetailScreen(
             NodeDetailUiState(
-                node = online[1],
+                node = online[0],
                 host = "1.1.1.1",
                 result = ExecView("ping 1.1.1.1", "PING 1.1.1.1 (1.1.1.1): 56 data bytes\n64 bytes from 1.1.1.1: seq=0 ttl=57 time=38.211 ms\n\n--- 1.1.1.1 ping statistics ---\n4 packets transmitted, 4 packets received, 0% packet loss", 0),
+                admin = AdminEntries(status = true, staticLeases = true, portForwards = true),
             ),
             NodeDetailActions({}, {}, {}, {}, {}, {}),
         )
@@ -171,4 +188,41 @@ class ScreenshotTest {
             ),
         ) {}
     }
+
+    @Test
+    fun statusLogs() = capture("status_logs") {
+        val lines = listOf(
+            LogLine(1_795_300_000_000, null, 6, "daemon.info dnsmasq-dhcp[1]: DHCPACK(br-lan) 192.168.1.30 ce:11:22:00:00:09 printer"),
+            LogLine(1_795_300_005_000, null, 4, "daemon.warn odhcpd[2]: No default route present, overriding ra_lifetime!"),
+            LogLine(1_795_300_010_000, null, 3, "daemon.err uhttpd[3]: luci: accepted login on / for root from 192.168.1.10"),
+        )
+        StatusScreen(StatusUiState(title = "Router", logs = lines.asReversed()), statusActions)
+    }
+
+    @Test
+    fun statusServices() = capture("status_services", dark = true) {
+        val services = listOf(Service("boot", true, null), Service("collectd", false, false), Service("dnsmasq", true, true), Service("rpcd", true, true))
+        StatusScreen(StatusUiState(title = "Router", tab = StatusTab.SERVICES, services = services), statusActions)
+    }
+
+    @Test
+    fun leases() = capture("leases") {
+        val leases = listOf(
+            StaticLease("cfg05fe63", "nas", listOf("ce:11:22:00:00:01"), "192.168.1.20"),
+            StaticLease("cfg06fe63", "tv", listOf("ce:11:22:00:00:02", "ce:11:22:00:00:03"), "192.168.1.21"),
+        )
+        LeasesScreen(LeasesUiState(title = "Router", servesDhcp = true, leases = leases), LeasesActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}))
+    }
+
+    @Test
+    fun forwards() = capture("forwards") {
+        val forwards = listOf(
+            PortForward("a", "web", ForwardProtocol.BOTH, "8443", "192.168.1.20", "443", enabled = true, editable = true),
+            PortForward("b", "game", ForwardProtocol.UDP, "3074", "192.168.1.30", "3074", enabled = false, editable = true),
+            PortForward("c", "ssh", ForwardProtocol.TCP, "2222", "192.168.1.20", "22", enabled = true, editable = false),
+        )
+        ForwardsScreen(ForwardsUiState(title = "Router", forwards = forwards), ForwardsActions({}, {}, {}, {}, { _, _ -> }, {}, {}, {}, {}, {}))
+    }
+
+    private val statusActions = StatusActions({}, {}, {}, {}, { _, _ -> }, {}, {}, {})
 }
