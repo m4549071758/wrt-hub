@@ -43,6 +43,7 @@ class DirectCollectorTest {
                 "luci-rpc.getWirelessDevices" -> throw UbusException(UbusException.PERMISSION_DENIED, "denied")
                 "iwinfo.devices" -> throw UbusException(UbusException.RPC_ACCESS_DENIED, "Access denied")
                 "usteer.get_clients" -> notFound()
+                "file.exec" -> throw UbusException(UbusException.PERMISSION_DENIED, "denied")
                 else -> router.handler(obj, method, args)
             }
         }

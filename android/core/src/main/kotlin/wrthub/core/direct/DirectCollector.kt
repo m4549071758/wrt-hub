@@ -41,13 +41,18 @@ class DirectCollector(private val ubus: UbusCaller, private val clock: () -> Lon
     suspend fun collect(): Snapshot {
         val denied = mutableListOf<String>()
 
-        suspend fun optional(obj: String, method: String, args: JsonObject = JsonObject(emptyMap())): JsonObject? =
+        suspend fun optional(
+            obj: String,
+            method: String,
+            args: JsonObject = JsonObject(emptyMap()),
+            reportDenied: Boolean = true,
+        ): JsonObject? =
             try {
                 ubus.call(obj, method, args)
             } catch (e: UbusException) {
                 when (e.code) {
                     in MISSING_CODES -> null
-                    in DENIED_CODES -> null.also { denied += "$obj.$method" }
+                    in DENIED_CODES -> null.also { if (reportDenied) denied += "$obj.$method" }
                     else -> throw e
                 }
             }
@@ -65,7 +70,8 @@ class DirectCollector(private val ubus: UbusCaller, private val clock: () -> Lon
             dhcpLeases = optional("luci-rpc", "getDHCPLeases"),
             hostHints = optional("luci-rpc", "getHostHints"),
             usteerClients = optional("usteer", "get_clients"),
-            nlbw = optional("file", "exec", NLBW_ARGS)?.let(::nlbwOutput),
+            // LuCI grants exec of nlbw only with luci-app-nlbwmon, so a denial here just means "not installed".
+            nlbw = optional("file", "exec", NLBW_ARGS, reportDenied = false)?.let(::nlbwOutput),
             blockedClients = optional("uci", "get", buildJsonObject { put("config", "firewall") })?.let(::blockedMacs).orEmpty(),
             deniedCalls = denied.toList(),
         )
