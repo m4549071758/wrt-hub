@@ -9,6 +9,8 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.putJsonArray
 import wrthub.core.json.int
 import wrthub.core.json.str
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 import wrthub.core.json.obj
 import wrthub.core.ubus.UbusCaller
 import wrthub.core.ubus.UbusException
@@ -33,11 +35,16 @@ internal suspend fun UbusCaller.exec(command: String, params: List<String>): Exe
     return ExecResult(result.int("code") ?: -1, result.str("stdout").orEmpty(), result.str("stderr").orEmpty())
 }
 
+/** Stop trying to confirm this long before rpcd's rollback fires, so a late confirm never races the revert. */
+private const val CONFIRM_MARGIN_MS = 5_000L
+private const val CONFIRM_INTERVAL_MS = 2_000L
+
 /**
- * Applies staged changes with rpcd's rollback timer, then confirms only if the router still answers.
- * An exception after apply means the confirm did not happen, so rpcd reverts the change by itself.
+ * Applies staged changes with rpcd's rollback timer, then confirms once the router answers again and [check] passes.
+ * Both are retried until shortly before the timer fires, because a radio restart can cut the phone off for a few
+ * seconds; if they never succeed, the confirm does not happen and rpcd reverts the change by itself.
  */
-internal suspend fun UbusCaller.applyWithRollback(rollbackSeconds: Int): WriteOutcome {
+internal suspend fun UbusCaller.applyWithRollback(rollbackSeconds: Int, check: suspend () -> Boolean = { true }): WriteOutcome {
     call(
         "uci",
         "apply",
@@ -46,13 +53,18 @@ internal suspend fun UbusCaller.applyWithRollback(rollbackSeconds: Int): WriteOu
             put("timeout", rollbackSeconds)
         },
     )
-    return try {
-        call("system", "info")
-        call("uci", "confirm")
-        WriteOutcome.APPLIED
-    } catch (e: IOException) {
-        WriteOutcome.ROLLED_BACK
-    } catch (e: UbusException) {
-        WriteOutcome.ROLLED_BACK
+    suspend fun confirmOnce(): Boolean =
+        try {
+            call("system", "info")
+            check() && call("uci", "confirm").let { true }
+        } catch (e: IOException) {
+            false
+        } catch (e: UbusException) {
+            false
+        }
+    val confirmed = withTimeoutOrNull(rollbackSeconds * 1_000L - CONFIRM_MARGIN_MS) {
+        while (!confirmOnce()) delay(CONFIRM_INTERVAL_MS)
+        true
     }
+    return if (confirmed == true) WriteOutcome.APPLIED else WriteOutcome.ROLLED_BACK
 }
