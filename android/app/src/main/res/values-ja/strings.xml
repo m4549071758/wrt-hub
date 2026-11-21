@@ -44,7 +44,9 @@
     <string name="filter_all">すべて</string>
     <string name="filter_wifi">Wi-Fi</string>
     <string name="filter_other">その他</string>
-    <string name="presence_lease_only">有線または切断直後</string>
+    <string name="presence_unknown_link">接続方法不明（有線・他社AP）</string>
+    <string name="presence_lease_only">最近いなくなった</string>
+    <string name="departed">最近いなくなった端末</string>
     <string name="presence_offline">オフライン</string>
     <string name="blocked">ブロック中</string>
     <string name="block">ブロック</string>

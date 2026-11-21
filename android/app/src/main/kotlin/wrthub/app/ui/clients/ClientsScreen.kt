@@ -148,6 +148,7 @@ private fun ClientRow(client: SiteClient, nodeLabels: Map<String, String>, onCli
 @Composable
 private fun placeText(client: SiteClient, nodeLabels: Map<String, String>): String = when (client.presence) {
     Presence.WIRELESS -> listOfNotNull(client.attachedTo?.let { nodeLabels[it] ?: it }, client.ifname).joinToString(" ")
+    Presence.ONLINE_UNKNOWN_LINK -> stringResource(R.string.presence_unknown_link)
     Presence.LEASE_ONLY -> stringResource(R.string.presence_lease_only)
     Presence.OFFLINE -> stringResource(R.string.presence_offline)
 }

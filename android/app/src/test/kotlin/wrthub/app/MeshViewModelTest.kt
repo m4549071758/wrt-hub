@@ -96,13 +96,15 @@ class MeshViewModelTest {
     }
 
     @Test
-    fun `devices without Wi-Fi association hang under the router`() = runTest(main.dispatcher) {
+    fun `devices on the LAN without an AP hang under the router and departed ones are counted`() = runTest(main.dispatcher) {
         val home = SiteConfig("home", "Home", listOf(node("router", "Gateway")))
         val loader = SiteLoading { site -> site.nodes.map { NodeState.Online(it, Fixtures.wiredSite.getValue(it.id)) } }
         val vm = MeshViewModel(SiteSession(FakeSiteRepository(listOf(home)), loader, appScope()))
         advanceUntilIdle()
         val router = vm.state.value.nodes.single()
-        assertEquals(48, router.clients.size)
-        assertEquals(setOf(Presence.LEASE_ONLY), router.clients.map { it.presence }.toSet())
+        assertEquals(57, router.clients.size)
+        assertEquals(setOf(Presence.ONLINE_UNKNOWN_LINK), router.clients.map { it.presence }.toSet())
+        assertEquals("router", vm.state.value.routerId)
+        assertEquals(4, vm.state.value.departed)
     }
 }

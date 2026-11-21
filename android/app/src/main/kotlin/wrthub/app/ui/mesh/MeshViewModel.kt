@@ -19,8 +19,9 @@ import wrthub.core.topology.Presence
 
 /**
  * [clients] are the devices under this node: Wi-Fi clients associated with its APs and, on the router, the devices
- * that only hold a DHCP lease (wired, or recently left). Wired devices behind other nodes cannot be told apart
- * because LuCI's ACL does not expose the bridge forwarding table, so they appear under the router.
+ * that are on the LAN without an association to any registered AP (wired, or behind a non-OpenWrt AP). Wired
+ * devices behind other nodes cannot be told apart because LuCI's ACL does not expose the bridge forwarding table,
+ * so they appear under the router.
  */
 data class MeshNode(val id: String, val label: String, val online: Boolean, val clients: List<SiteClient>)
 
@@ -40,6 +41,16 @@ data class MeshUiState(
     val nodes: List<MeshNode> = emptyList(),
     val edges: List<MeshEdge> = emptyList(),
     val selection: MeshSelection? = null,
+    val routerId: String? = null,
+    /** Devices that only left a DHCP lease; drawn as a count instead of nodes. */
+    val departed: Int = 0,
+)
+
+private data class Graph(
+    val nodes: List<MeshNode> = emptyList(),
+    val edges: List<MeshEdge> = emptyList(),
+    val routerId: String? = null,
+    val departed: Int = 0,
 )
 
 class MeshViewModel(private val session: SiteSession, private val refreshIntervalMs: Long = 10_000) : ViewModel() {
@@ -47,12 +58,12 @@ class MeshViewModel(private val session: SiteSession, private val refreshInterva
     private val smoothed = mutableMapOf<Pair<String, String>, Double>()
     private var smoothedSiteId: String? = null
     private var lastNodes: List<NodeState>? = null
-    private var lastGraph: Pair<List<MeshNode>, List<MeshEdge>> = emptyList<MeshNode>() to emptyList()
+    private var lastGraph = Graph()
     private var liveJob: Job? = null
 
     val state: StateFlow<MeshUiState> = combine(session.state, selection) { site, selected ->
-        val (nodes, edges) = graph(site.site?.id, site.nodes)
-        MeshUiState(site.site, nodes, edges, selected)
+        val graph = graph(site.site?.id, site.nodes)
+        MeshUiState(site.site, graph.nodes, graph.edges, selected, graph.routerId, graph.departed)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, MeshUiState())
 
     fun select(selection: MeshSelection?) {
@@ -70,7 +81,7 @@ class MeshViewModel(private val session: SiteSession, private val refreshInterva
     }
 
     /** Smooths once per load: [nodes] is a new list instance exactly when the session finished a load. */
-    private fun graph(siteId: String?, nodes: List<NodeState>): Pair<List<MeshNode>, List<MeshEdge>> {
+    private fun graph(siteId: String?, nodes: List<NodeState>): Graph {
         if (nodes === lastNodes) return lastGraph
         lastNodes = nodes
         if (siteId != smoothedSiteId) {
@@ -89,7 +100,7 @@ class MeshViewModel(private val session: SiteSession, private val refreshInterva
                 label = node.config.label,
                 online = node is NodeState.Online,
                 clients = topology.clients.filter {
-                    it.attachedTo == node.config.id || (node.config.id == routerId && it.presence == Presence.LEASE_ONLY)
+                    it.attachedTo == node.config.id || (node.config.id == routerId && it.presence == Presence.ONLINE_UNKNOWN_LINK)
                 },
             )
         }
@@ -102,7 +113,7 @@ class MeshViewModel(private val session: SiteSession, private val refreshInterva
                 signal = listOfNotNull(link.aToB?.signalAvg, link.bToA?.signalAvg).minOrNull(),
             )
         }
-        lastGraph = meshNodes to edges
+        lastGraph = Graph(meshNodes, edges, routerId, topology.clients.count { it.presence == Presence.LEASE_ONLY })
         return lastGraph
     }
 

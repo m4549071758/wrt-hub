@@ -45,7 +45,9 @@
     <string name="filter_all">All</string>
     <string name="filter_wifi">Wi-Fi</string>
     <string name="filter_other">Other</string>
-    <string name="presence_lease_only">Wired or recently left</string>
+    <string name="presence_unknown_link">Link unknown (wired or another AP)</string>
+    <string name="presence_lease_only">Left recently</string>
+    <string name="departed">Devices that left recently</string>
     <string name="presence_offline">Offline</string>
     <string name="blocked">Blocked</string>
     <string name="block">Block</string>

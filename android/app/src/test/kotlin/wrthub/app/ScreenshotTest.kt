@@ -34,6 +34,7 @@ import wrthub.app.ui.sites.AddNodeUiState
 import wrthub.app.ui.sites.SitesScreen
 import wrthub.app.ui.theme.WrtHubTheme
 import wrthub.core.Fixtures
+import wrthub.core.topology.Presence
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -112,6 +113,7 @@ class ScreenshotTest {
             MeshNode("ap", "Living AP", true, topology.clients.filter { it.attachedTo == "ap" }),
         ),
         edges = listOf(MeshEdge("ap", "router", 1_003_176.0, 856_400.0, -61)),
+        routerId = "router",
     )
 
     @Test
@@ -120,5 +122,19 @@ class ScreenshotTest {
     @Test
     fun meshDarkEdgeSelected() = capture("mesh_dark_edge", dark = true) {
         MeshScreen(meshState.copy(selection = MeshSelection.Edge("ap", "router"))) {}
+    }
+
+    @Test
+    fun meshWiredSite() = capture("mesh_wired") {
+        val nodes = listOf(NodeState.Online(home.nodes[0], Fixtures.wiredSite.getValue("router")))
+        val wired = siteTopology(nodes)
+        MeshScreen(
+            MeshUiState(
+                site = home,
+                nodes = listOf(MeshNode("home-router", "Gateway", true, wired.clients.filter { it.presence == Presence.ONLINE_UNKNOWN_LINK })),
+                routerId = "home-router",
+                departed = wired.clients.count { it.presence == Presence.LEASE_ONLY },
+            ),
+        ) {}
     }
 }
