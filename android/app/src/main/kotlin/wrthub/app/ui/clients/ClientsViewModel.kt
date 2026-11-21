@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import wrthub.app.data.NodeConfig
 import wrthub.app.data.SiteConfig
+import wrthub.app.domain.NodeOperations
 import wrthub.app.domain.SiteSession
 import wrthub.app.domain.routerOf
 import wrthub.app.domain.siteTopology
@@ -19,12 +20,6 @@ import wrthub.core.direct.WriteOutcome
 import wrthub.core.topology.Presence
 import wrthub.core.topology.SiteClient
 import wrthub.core.ubus.UbusException
-
-interface ClientBlocking {
-    suspend fun block(mac: String): WriteOutcome
-
-    suspend fun unblock(mac: String): WriteOutcome
-}
 
 enum class ClientFilter { ALL, WIRELESS, OTHER }
 
@@ -49,7 +44,7 @@ data class ClientsUiState(
 /** Blocks and unblocks go to the router (the node with WAN), whose firewall forwards every client's traffic. */
 class ClientsViewModel(
     private val session: SiteSession,
-    private val blockingFor: (NodeConfig) -> ClientBlocking,
+    private val operationsFor: (NodeConfig) -> NodeOperations,
 ) : ViewModel() {
     private data class Local(val filter: ClientFilter = ClientFilter.ALL, val busy: Set<String> = emptySet(), val notice: ClientNotice? = null)
 
@@ -78,7 +73,7 @@ class ClientsViewModel(
             ?: return local.update { it.copy(notice = ClientNotice.NoRouter) }
         local.update { it.copy(busy = it.busy + mac, notice = null) }
         viewModelScope.launch {
-            val operations = blockingFor(router.config)
+            val operations = operationsFor(router.config)
             val notice = try {
                 ClientNotice.Done(mac, blocked, if (blocked) operations.block(mac) else operations.unblock(mac))
             } catch (e: IOException) {

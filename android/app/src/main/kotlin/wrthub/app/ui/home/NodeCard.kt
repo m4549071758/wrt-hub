@@ -2,6 +2,7 @@ package wrthub.app.ui.home
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,12 +27,13 @@ import wrthub.app.ui.formatUsedPercent
 import wrthub.app.ui.theme.LocalSemanticColors
 import wrthub.core.model.summary
 
-/** [wifiClients] is null for nodes without an AP interface. */
+/** [wifiClients] is null for nodes without an AP interface; [onClick] makes the card open the node. */
 @Composable
-fun NodeCard(state: NodeState, wifiClients: Int?, modifier: Modifier = Modifier) {
+fun NodeCard(state: NodeState, wifiClients: Int?, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
     val semantic = LocalSemanticColors.current
+    val clickable = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
     Card(modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-        Column(Modifier.padding(16.dp)) {
+        Column(clickable.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(state.config.label, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 Box(

@@ -18,11 +18,11 @@ import wrthub.app.data.SecretCipher
 import wrthub.app.data.SiteStore
 import wrthub.app.domain.CounterReading
 import wrthub.app.domain.DirectCounterReader
+import wrthub.app.domain.DirectNodeOperations
+import wrthub.app.domain.NodeOperations
 import wrthub.app.domain.SiteLoader
 import wrthub.app.domain.SiteSession
-import wrthub.app.ui.clients.ClientBlocking
 import wrthub.core.direct.DirectOperations
-import wrthub.core.direct.WriteOutcome
 
 class WrtHubApplication : Application() {
     val container: AppContainer by lazy { AppContainer(this) }
@@ -30,9 +30,10 @@ class WrtHubApplication : Application() {
 
 /** Process-wide singletons; DataStore must have exactly one instance per file. */
 class AppContainer(context: Context) {
+    /** traceroute (20 hops x 2 s) is the slowest call; dead nodes still fail fast on connect. */
     private val http = OkHttpClient.Builder()
         .connectTimeout(5, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
         .build()
     val siteStore = SiteStore(PreferenceDataStoreFactory.create { context.preferencesDataStoreFile("sites") })
     val cipher: SecretCipher = KeystoreSecretCipher()
@@ -42,14 +43,7 @@ class AppContainer(context: Context) {
         SiteLoader(connections::node),
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
     )
-    val blockingFor: (NodeConfig) -> ClientBlocking = { node ->
-        val operations = DirectOperations(connections.node(node))
-        object : ClientBlocking {
-            override suspend fun block(mac: String): WriteOutcome = operations.blockClient(mac)
-
-            override suspend fun unblock(mac: String): WriteOutcome = operations.unblockClient(mac)
-        }
-    }
+    val operationsFor: (NodeConfig) -> NodeOperations = { node -> DirectNodeOperations(DirectOperations(connections.node(node))) }
     val counters: CounterReading = DirectCounterReader(connections::node)
     val verifier: NodeVerifying = DirectNodeVerifier(http)
 }

@@ -40,9 +40,9 @@ import wrthub.app.R
 import wrthub.app.data.SiteConfig
 
 @Composable
-fun SitesRoute(viewModel: SitesViewModel, onAddSite: () -> Unit, onAddNode: (String) -> Unit) {
+fun SitesRoute(viewModel: SitesViewModel, onAddSite: () -> Unit, onAddNode: (String) -> Unit, onOpenWifi: (String) -> Unit) {
     val sites by viewModel.sites.collectAsStateWithLifecycle()
-    SitesScreen(sites, onAddSite, onAddNode, viewModel::removeSite, viewModel::removeNode)
+    SitesScreen(sites, onAddSite, onAddNode, viewModel::removeSite, viewModel::removeNode, onOpenWifi)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,6 +53,7 @@ fun SitesScreen(
     onAddNode: (String) -> Unit,
     onRemoveSite: (String) -> Unit,
     onRemoveNode: (siteId: String, nodeId: String) -> Unit,
+    onOpenWifi: (String) -> Unit = {},
 ) {
     var pendingRemoval by remember { mutableStateOf<SiteConfig?>(null) }
     Scaffold(
@@ -99,7 +100,10 @@ fun SitesScreen(
                                 }
                             }
                         }
-                        TextButton(onClick = { onAddNode(site.id) }) { Text(stringResource(R.string.add_node)) }
+                        Row {
+                            TextButton(onClick = { onAddNode(site.id) }) { Text(stringResource(R.string.add_node)) }
+                            TextButton(onClick = { onOpenWifi(site.id) }) { Text(stringResource(R.string.wifi_settings)) }
+                        }
                     }
                 }
             }

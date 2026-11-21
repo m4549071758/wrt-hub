@@ -36,6 +36,10 @@ import wrthub.app.ui.home.HomeRoute
 import wrthub.app.ui.home.HomeViewModel
 import wrthub.app.ui.mesh.MeshRoute
 import wrthub.app.ui.mesh.MeshViewModel
+import wrthub.app.ui.node.NodeDetailRoute
+import wrthub.app.ui.node.NodeDetailViewModel
+import wrthub.app.ui.sites.WifiRoute
+import wrthub.app.ui.sites.WifiViewModel
 import wrthub.app.ui.sites.AddNodeRoute
 import wrthub.app.ui.sites.AddNodeViewModel
 import wrthub.app.ui.sites.SitesRoute
@@ -56,6 +60,12 @@ data object SitesDestination
 @Serializable
 data class AddNodeDestination(val siteId: String? = null)
 
+@Serializable
+data class NodeDestination(val nodeId: String)
+
+@Serializable
+data class WifiDestination(val siteId: String)
+
 @Composable
 fun WrtHubApp(container: AppContainer) {
     val navController = rememberNavController()
@@ -64,7 +74,10 @@ fun WrtHubApp(container: AppContainer) {
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            if (destination?.hasRoute<AddNodeDestination>() != true) {
+            val fullScreen = destination?.let {
+                it.hasRoute<AddNodeDestination>() || it.hasRoute<NodeDestination>() || it.hasRoute<WifiDestination>()
+            } == true
+            if (!fullScreen) {
                 NavigationBar {
                     NavigationBarItem(
                         selected = destination?.hasRoute<HomeDestination>() == true,
@@ -99,11 +112,15 @@ fun WrtHubApp(container: AppContainer) {
                 val vm: HomeViewModel = viewModel(
                     factory = viewModelFactory { initializer { HomeViewModel(container.session, container.counters) } },
                 )
-                HomeRoute(vm, onAddSite = { navController.navigate(AddNodeDestination()) })
+                HomeRoute(
+                    vm,
+                    onAddSite = { navController.navigate(AddNodeDestination()) },
+                    onOpenNode = { navController.navigate(NodeDestination(it)) },
+                )
             }
             composable<ClientsDestination> {
                 val vm: ClientsViewModel = viewModel(
-                    factory = viewModelFactory { initializer { ClientsViewModel(container.session, container.blockingFor) } },
+                    factory = viewModelFactory { initializer { ClientsViewModel(container.session, container.operationsFor) } },
                 )
                 ClientsRoute(vm)
             }
@@ -117,6 +134,7 @@ fun WrtHubApp(container: AppContainer) {
                     vm,
                     onAddSite = { navController.navigate(AddNodeDestination()) },
                     onAddNode = { navController.navigate(AddNodeDestination(it)) },
+                    onOpenWifi = { navController.navigate(WifiDestination(it)) },
                 )
             }
             composable<AddNodeDestination> { backStackEntry ->
@@ -127,6 +145,20 @@ fun WrtHubApp(container: AppContainer) {
                     },
                 )
                 AddNodeRoute(vm, onDone = { navController.popBackStack() }, onBack = { navController.popBackStack() })
+            }
+            composable<NodeDestination> { backStackEntry ->
+                val route = backStackEntry.toRoute<NodeDestination>()
+                val vm: NodeDetailViewModel = viewModel(
+                    factory = viewModelFactory { initializer { NodeDetailViewModel(route.nodeId, container.session, container.operationsFor) } },
+                )
+                NodeDetailRoute(vm, onBack = { navController.popBackStack() })
+            }
+            composable<WifiDestination> { backStackEntry ->
+                val route = backStackEntry.toRoute<WifiDestination>()
+                val vm: WifiViewModel = viewModel(
+                    factory = viewModelFactory { initializer { WifiViewModel(route.siteId, container.session, container.operationsFor) } },
+                )
+                WifiRoute(vm, onBack = { navController.popBackStack() })
             }
         }
     }

@@ -66,4 +66,26 @@
     <string name="no_clients">端末がありません。</string>
     <string name="mesh_hint">ノード、リンク、端末をタップすると詳細を表示します。</string>
     <string name="link_direction">%1$s → %2$s</string>
+    <string name="diagnostics">診断</string>
+    <string name="target_host">宛先（ホスト名かIPアドレス）</string>
+    <string name="reboot">再起動</string>
+    <string name="reboot_body">再起動中の1〜2分間、このノードを通る通信が止まります。</string>
+    <string name="reboot_confirm_title">%1$sを再起動しますか？</string>
+    <string name="notice_reboot_requested">再起動を指示しました。</string>
+    <string name="error_invalid_host">宛先はホスト名かIPアドレスで入力してください。</string>
+    <string name="operation_failed">失敗しました: %1$s</string>
+    <string name="wifi_settings">Wi-Fi</string>
+    <string name="wifi_settings_title">%1$sのWi-Fi</string>
+    <string name="current_ssid">現在のSSID</string>
+    <string name="new_ssid">新しいSSID</string>
+    <string name="new_password">新しいパスワード</string>
+    <string name="wifi_warning">この拠点のすべてのAPのSSIDとパスワードを一度に変更します。メッシュの設定は変わりません。自動で元に戻す仕組みは使えないので、適用前によく確認してください。</string>
+    <string name="apply">適用</string>
+    <string name="wifi_confirm_title">Wi-Fiを変更しますか？</string>
+    <string name="wifi_confirm_body">%1$d台のノードのSSIDを「%2$s」に変更します。このスマホはWi-Fiから切断されるので、新しいSSIDとパスワードで接続し直してください。</string>
+    <string name="wifi_changed">%1$d個のSSIDを変更</string>
+    <string name="wifi_no_ap">APなし</string>
+    <string name="wifi_not_applied">未適用（他のノードで失敗）</string>
+    <string name="error_ssid">SSIDは1〜32バイトで入力してください。</string>
+    <string name="error_psk">パスワードは8〜63文字の半角英数字・記号で入力してください。</string>
 </resources>

@@ -44,18 +44,24 @@ import wrthub.core.model.wirelessInterfaces
 import wrthub.app.domain.siteTopology
 
 @Composable
-fun HomeRoute(viewModel: HomeViewModel, onAddSite: () -> Unit) {
+fun HomeRoute(viewModel: HomeViewModel, onAddSite: () -> Unit, onOpenNode: (String) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LifecycleResumeEffect(viewModel) {
         viewModel.setRealtime(true)
         onPauseOrDispose { viewModel.setRealtime(false) }
     }
-    HomeScreen(state, onSelectSite = viewModel::select, onRefresh = viewModel::refresh, onAddSite = onAddSite)
+    HomeScreen(state, onSelectSite = viewModel::select, onRefresh = viewModel::refresh, onAddSite = onAddSite, onOpenNode = onOpenNode)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(state: HomeUiState, onSelectSite: (String) -> Unit, onRefresh: () -> Unit, onAddSite: () -> Unit) {
+fun HomeScreen(
+    state: HomeUiState,
+    onSelectSite: (String) -> Unit,
+    onRefresh: () -> Unit,
+    onAddSite: () -> Unit,
+    onOpenNode: (String) -> Unit = {},
+) {
     Scaffold(
         topBar = { SiteSwitcherBar(state.sites, state.site, onSelectSite, onAddSite) },
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -74,7 +80,9 @@ fun HomeScreen(state: HomeUiState, onSelectSite: (String) -> Unit, onRefresh: ()
             ) {
                 item { TopologyCard(strip) }
                 item { BandwidthRow(state.rates, state.realtimeError) }
-                items(state.nodes, key = { it.config.id }) { node -> NodeCard(node, wifiClients[node.config.id]) }
+                items(state.nodes, key = { it.config.id }) { node ->
+                    NodeCard(node, wifiClients[node.config.id], onClick = { onOpenNode(node.config.id) })
+                }
             }
         }
     }

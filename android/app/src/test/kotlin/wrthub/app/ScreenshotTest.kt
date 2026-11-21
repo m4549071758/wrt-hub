@@ -35,6 +35,15 @@ import wrthub.app.ui.sites.SitesScreen
 import wrthub.app.ui.theme.WrtHubTheme
 import wrthub.core.Fixtures
 import wrthub.core.topology.Presence
+import wrthub.app.ui.node.ExecView
+import wrthub.app.ui.node.NodeDetailActions
+import wrthub.app.ui.node.NodeDetailScreen
+import wrthub.app.ui.node.NodeDetailUiState
+import wrthub.app.ui.sites.WifiActions
+import wrthub.app.ui.sites.WifiNodeResult
+import wrthub.app.ui.sites.WifiOutcome
+import wrthub.app.ui.sites.WifiScreen
+import wrthub.app.ui.sites.WifiUiState
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -91,6 +100,31 @@ class ScreenshotTest {
 
     @Test
     fun sites() = capture("sites") { SitesScreen(listOf(home, cabin), {}, {}, {}, { _, _ -> }) }
+
+    @Test
+    fun nodeDetail() = capture("node_detail") {
+        NodeDetailScreen(
+            NodeDetailUiState(
+                node = online[1],
+                host = "1.1.1.1",
+                result = ExecView("ping 1.1.1.1", "PING 1.1.1.1 (1.1.1.1): 56 data bytes\n64 bytes from 1.1.1.1: seq=0 ttl=57 time=38.211 ms\n\n--- 1.1.1.1 ping statistics ---\n4 packets transmitted, 4 packets received, 0% packet loss", 0),
+            ),
+            NodeDetailActions({}, {}, {}, {}, {}, {}),
+        )
+    }
+
+    @Test
+    fun wifi() = capture("wifi") {
+        WifiScreen(
+            WifiUiState(
+                site = cabin,
+                currentSsids = listOf("ssid-2"),
+                ssid = "New-SSID",
+                results = listOf(WifiNodeResult("Router", WifiOutcome.Changed(2)), WifiNodeResult("Living AP", WifiOutcome.NotApplied)),
+            ),
+            WifiActions({}, {}, { true }, {}, {}),
+        )
+    }
 
     private val topology = siteTopology(online)
     private val labels = mapOf("router" to "Router", "ap" to "Living AP")

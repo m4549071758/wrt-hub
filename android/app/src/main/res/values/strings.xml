@@ -67,4 +67,26 @@
     <string name="no_clients">No clients.</string>
     <string name="mesh_hint">Tap a node, link or client for details.</string>
     <string name="link_direction">%1$s → %2$s</string>
+    <string name="diagnostics">Diagnostics</string>
+    <string name="target_host">Host or IP address</string>
+    <string name="reboot">Reboot</string>
+    <string name="reboot_body">Traffic through this node stops for a minute or two while it restarts.</string>
+    <string name="reboot_confirm_title">Reboot %1$s?</string>
+    <string name="notice_reboot_requested">Reboot requested.</string>
+    <string name="error_invalid_host">Enter a host name or an IP address.</string>
+    <string name="operation_failed">Failed: %1$s</string>
+    <string name="wifi_settings">Wi-Fi</string>
+    <string name="wifi_settings_title">Wi-Fi of %1$s</string>
+    <string name="current_ssid">Current SSID</string>
+    <string name="new_ssid">New SSID</string>
+    <string name="new_password">New password</string>
+    <string name="wifi_warning">Changes the SSID and password of every AP in this site at once; the mesh itself is not touched. There is no automatic rollback, so double-check before applying.</string>
+    <string name="apply">Apply</string>
+    <string name="wifi_confirm_title">Change the Wi-Fi?</string>
+    <string name="wifi_confirm_body">The SSID on %1$d nodes becomes \"%2$s\". This phone will drop off the Wi-Fi; reconnect with the new SSID and password.</string>
+    <string name="wifi_changed">%1$d SSID(s) changed</string>
+    <string name="wifi_no_ap">No AP</string>
+    <string name="wifi_not_applied">Not applied (another node failed)</string>
+    <string name="error_ssid">The SSID must be 1 to 32 bytes.</string>
+    <string name="error_psk">The password must be 8 to 63 printable ASCII characters.</string>
 </resources>
