@@ -37,6 +37,12 @@ import wrthub.app.ui.admin.LeasesRoute
 import wrthub.app.ui.admin.LeasesViewModel
 import wrthub.app.ui.admin.StatusRoute
 import wrthub.app.ui.admin.StatusViewModel
+import wrthub.app.ui.admin.SystemRoute
+import wrthub.app.ui.admin.SystemViewModel
+import wrthub.app.ui.admin.WanRoute
+import wrthub.app.ui.admin.WanViewModel
+import wrthub.app.ui.admin.WirelessRoute
+import wrthub.app.ui.admin.WirelessViewModel
 import wrthub.app.ui.clients.ClientsRoute
 import wrthub.app.ui.clients.ClientsViewModel
 import wrthub.app.ui.home.HomeRoute
@@ -45,6 +51,7 @@ import wrthub.app.ui.mesh.MeshRoute
 import wrthub.app.ui.mesh.MeshViewModel
 import wrthub.app.ui.node.NodeDetailRoute
 import wrthub.app.ui.node.NodeDetailViewModel
+import wrthub.app.ui.node.AdminPage
 import wrthub.app.ui.sites.WifiRoute
 import wrthub.app.ui.sites.WifiViewModel
 import wrthub.app.ui.sites.AddNodeRoute
@@ -82,6 +89,15 @@ data class LeasesDestination(val nodeId: String, val mac: String? = null, val ip
 
 @Serializable
 data class ForwardsDestination(val nodeId: String)
+
+@Serializable
+data class WirelessDestination(val nodeId: String)
+
+@Serializable
+data class WanDestination(val nodeId: String)
+
+@Serializable
+data class SystemDestination(val nodeId: String)
 
 @Composable
 fun WrtHubApp(container: AppContainer) {
@@ -170,13 +186,18 @@ fun WrtHubApp(container: AppContainer) {
                 val vm: NodeDetailViewModel = viewModel(
                     factory = viewModelFactory { initializer { NodeDetailViewModel(route.nodeId, container.session, container.operationsFor) } },
                 )
-                NodeDetailRoute(
-                    vm,
-                    onBack = { navController.popBackStack() },
-                    onOpenStatus = { navController.navigate(StatusDestination(route.nodeId)) },
-                    onOpenLeases = { navController.navigate(LeasesDestination(route.nodeId)) },
-                    onOpenForwards = { navController.navigate(ForwardsDestination(route.nodeId)) },
-                )
+                NodeDetailRoute(vm, onBack = { navController.popBackStack() }) { page ->
+                    navController.navigate(
+                        when (page) {
+                            AdminPage.STATUS -> StatusDestination(route.nodeId)
+                            AdminPage.LEASES -> LeasesDestination(route.nodeId)
+                            AdminPage.FORWARDS -> ForwardsDestination(route.nodeId)
+                            AdminPage.WIRELESS -> WirelessDestination(route.nodeId)
+                            AdminPage.WAN -> WanDestination(route.nodeId)
+                            AdminPage.SYSTEM -> SystemDestination(route.nodeId)
+                        },
+                    )
+                }
             }
             composable<WifiDestination> { backStackEntry ->
                 val route = backStackEntry.toRoute<WifiDestination>()
@@ -206,6 +227,27 @@ fun WrtHubApp(container: AppContainer) {
                     factory = viewModelFactory { initializer { ForwardsViewModel(route.nodeId, container.session, container.adminFor) } },
                 )
                 ForwardsRoute(vm, onBack = { navController.popBackStack() })
+            }
+            composable<WirelessDestination> { backStackEntry ->
+                val route = backStackEntry.toRoute<WirelessDestination>()
+                val vm: WirelessViewModel = viewModel(
+                    factory = viewModelFactory { initializer { WirelessViewModel(route.nodeId, container.session, container.adminFor) } },
+                )
+                WirelessRoute(vm, onBack = { navController.popBackStack() })
+            }
+            composable<WanDestination> { backStackEntry ->
+                val route = backStackEntry.toRoute<WanDestination>()
+                val vm: WanViewModel = viewModel(
+                    factory = viewModelFactory { initializer { WanViewModel(route.nodeId, container.session, container.adminFor) } },
+                )
+                WanRoute(vm, onBack = { navController.popBackStack() })
+            }
+            composable<SystemDestination> { backStackEntry ->
+                val route = backStackEntry.toRoute<SystemDestination>()
+                val vm: SystemViewModel = viewModel(
+                    factory = viewModelFactory { initializer { SystemViewModel(route.nodeId, container.session, container.adminFor) } },
+                )
+                SystemRoute(vm, onBack = { navController.popBackStack() })
             }
         }
     }

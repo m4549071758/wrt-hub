@@ -60,6 +60,27 @@ import wrthub.core.admin.LogLine
 import wrthub.core.admin.PortForward
 import wrthub.core.admin.Service
 import wrthub.core.admin.StaticLease
+import wrthub.app.ui.admin.RadioView
+import wrthub.app.ui.admin.SystemActions
+import wrthub.app.ui.admin.SystemForm
+import wrthub.app.ui.admin.SystemScreen
+import wrthub.app.ui.admin.SystemUiState
+import wrthub.app.ui.admin.WanActions
+import wrthub.app.ui.admin.WanForm
+import wrthub.app.ui.admin.WanScreen
+import wrthub.app.ui.admin.WanUiState
+import wrthub.app.ui.admin.WirelessActions
+import wrthub.app.ui.admin.WirelessScreen
+import wrthub.app.ui.admin.WirelessUiState
+import wrthub.core.admin.ChannelOption
+import wrthub.core.admin.DhcpRange
+import wrthub.core.admin.Led
+import wrthub.core.admin.Radio
+import wrthub.core.admin.RadioCapabilities
+import wrthub.core.admin.Ssid
+import wrthub.core.admin.SystemConfig
+import wrthub.core.admin.WanConfig
+import wrthub.core.admin.WanProto
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -124,7 +145,7 @@ class ScreenshotTest {
                 node = online[0],
                 host = "1.1.1.1",
                 result = ExecView("ping 1.1.1.1", "PING 1.1.1.1 (1.1.1.1): 56 data bytes\n64 bytes from 1.1.1.1: seq=0 ttl=57 time=38.211 ms\n\n--- 1.1.1.1 ping statistics ---\n4 packets transmitted, 4 packets received, 0% packet loss", 0),
-                admin = AdminEntries(status = true, staticLeases = true, portForwards = true),
+                admin = AdminEntries(status = true, staticLeases = true, portForwards = true, wireless = true, wan = true, system = true),
             ),
             NodeDetailActions({}, {}, {}, {}, {}, {}),
         )
@@ -225,4 +246,65 @@ class ScreenshotTest {
     }
 
     private val statusActions = StatusActions({}, {}, {}, {}, { _, _ -> }, {}, {}, {})
+
+    @Test
+    fun wireless() = capture("wireless") {
+        val caps = RadioCapabilities(listOf(ChannelOption(1, 2412, emptySet())), listOf("HT20", "HT40"), listOf(10, 20))
+        WirelessScreen(
+            WirelessUiState(
+                title = "Living AP",
+                radios = listOf(
+                    RadioView(Radio("radio0", "2g", "auto", "HT40", 20, carriesMesh = false), caps),
+                    RadioView(Radio("radio1", "5g", "48", "HE80", null, carriesMesh = true), caps),
+                ),
+                ssids = listOf(Ssid("ap0", "Home", "radio0", true), Ssid("ap1", "Home", "radio1", true), Ssid("guest", "Guest", "radio0", false)),
+            ),
+            WirelessActions({}, {}, {}, {}, {}, {}, { _, _ -> }, {}, {}, {}),
+        )
+    }
+
+    @Test
+    fun wanStatic() = capture("wan_static") {
+        WanScreen(
+            WanUiState(
+                title = "Router",
+                wan = WanConfig("static", WanProto.STATIC, "203.0.113.2", "255.255.255.0", "203.0.113.1", emptyList(), null, false),
+                form = WanForm(WanProto.STATIC, "203.0.113.2", "255.255.255.0", "203.0.113.1", "192.0.2.53"),
+            ),
+            WanActions({}, {}, {}, {}, {}),
+        )
+    }
+
+    @Test
+    fun wanUnsupported() = capture("wan_unsupported", dark = true) {
+        WanScreen(WanUiState(title = "Gateway", wan = WanConfig("ipip6", null, null, null, null, emptyList(), null, false)), WanActions({}, {}, {}, {}, {}))
+    }
+
+    @Test
+    fun system() = capture("system") {
+        SystemScreen(
+            SystemUiState(
+                title = "Router",
+                config = SystemConfig("cfg01", "router", "Asia/Tokyo", true, listOf("0.openwrt.pool.ntp.org")),
+                form = SystemForm("router", "Asia/Tokyo", true, "0.openwrt.pool.ntp.org\n1.openwrt.pool.ntp.org"),
+                leds = listOf(Led("blue:power", listOf("none", "default-on"), "none", null, null), Led("green:wan", listOf("none", "netdev"), "netdev", "s", "wan")),
+                cron = "0 4 * * * /sbin/reboot",
+                savedCron = "",
+            ),
+            SystemActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
+        )
+    }
+
+    @Test
+    fun leasesWithRange() = capture("leases_range") {
+        LeasesScreen(
+            LeasesUiState(
+                title = "Router",
+                servesDhcp = true,
+                ranges = listOf(DhcpRange("lan", "lan", 100, 150, "12h", "192.168.1.1/24")),
+                leases = listOf(StaticLease("cfg05fe63", "nas", listOf("ce:11:22:00:00:01"), "192.168.1.20")),
+            ),
+            LeasesActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
+        )
+    }
 }

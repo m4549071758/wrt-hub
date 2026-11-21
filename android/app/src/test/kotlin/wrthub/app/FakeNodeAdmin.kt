@@ -12,6 +12,17 @@ import wrthub.core.admin.RouteTable
 import wrthub.core.admin.Service
 import wrthub.core.admin.ServiceAction
 import wrthub.core.admin.StaticLeaseInput
+import wrthub.core.admin.DhcpRange
+import wrthub.core.admin.DhcpRangeInput
+import wrthub.core.admin.Led
+import wrthub.core.admin.LedInput
+import wrthub.core.admin.RadioCapabilities
+import wrthub.core.admin.RadioInput
+import wrthub.core.admin.SystemConfig
+import wrthub.core.admin.SystemInput
+import wrthub.core.admin.WanConfig
+import wrthub.core.admin.WanInput
+import wrthub.core.admin.WirelessConfig
 import wrthub.core.direct.WriteOutcome
 
 /** Serves fixed data and records every write as "<verb> <argument>" in [log]; [writeFailure] makes writes throw. */
@@ -22,6 +33,13 @@ class FakeNodeAdmin(
     private val logs: List<LogLine> = emptyList(),
     private val writeFailure: Exception? = null,
     private val outcome: WriteOutcome = WriteOutcome.APPLIED,
+    var wirelessConfig: WirelessConfig = WirelessConfig(emptyList(), emptyList()),
+    var capabilities: RadioCapabilities = RadioCapabilities(emptyList(), emptyList(), emptyList()),
+    var ranges: List<DhcpRange> = emptyList(),
+    var wanConfig: WanConfig? = null,
+    var systemConfig: SystemConfig = SystemConfig("cfg01", "OpenWrt", "UTC", true, emptyList()),
+    var ledList: List<Led> = emptyList(),
+    var cron: String = "",
 ) : NodeAdmin {
     val log = mutableListOf<String>()
 
@@ -60,4 +78,36 @@ class FakeNodeAdmin(
     override suspend fun setPortForwardEnabled(section: String, enabled: Boolean) = write("enable $section $enabled")
 
     override suspend fun deletePortForward(section: String) = write("delete forward $section")
+
+    override suspend fun wireless() = wirelessConfig
+
+    override suspend fun radioCapabilities(radio: String) = capabilities
+
+    override suspend fun saveRadio(name: String, input: RadioInput) = write("radio $name $input")
+
+    override suspend fun setSsidEnabled(section: String, enabled: Boolean) = write("ssid $section $enabled")
+
+    override suspend fun dhcpRanges() = ranges
+
+    override suspend fun saveDhcpRange(section: String, input: DhcpRangeInput) = write("range $section $input")
+
+    override suspend fun wan() = wanConfig
+
+    override suspend fun saveWan(input: WanInput) = write("wan $input")
+
+    override suspend fun system() = systemConfig
+
+    override suspend fun timezones() = mapOf("Asia/Tokyo" to "JST-9", "UTC" to "UTC")
+
+    override suspend fun saveSystem(input: SystemInput) = write("system $input")
+
+    override suspend fun leds() = ledList
+
+    override suspend fun saveLed(name: String, input: LedInput) = write("led $name $input")
+
+    override suspend fun crontab() = cron
+
+    override suspend fun saveCrontab(text: String) {
+        write("cron $text")
+    }
 }

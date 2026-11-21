@@ -13,6 +13,17 @@ import wrthub.core.admin.RouteTable
 import wrthub.core.admin.Service
 import wrthub.core.admin.ServiceAction
 import wrthub.core.admin.StaticLeaseInput
+import wrthub.core.admin.DhcpRange
+import wrthub.core.admin.DhcpRangeInput
+import wrthub.core.admin.Led
+import wrthub.core.admin.LedInput
+import wrthub.core.admin.RadioCapabilities
+import wrthub.core.admin.RadioInput
+import wrthub.core.admin.SystemConfig
+import wrthub.core.admin.SystemInput
+import wrthub.core.admin.WanConfig
+import wrthub.core.admin.WanInput
+import wrthub.core.admin.WirelessConfig
 import wrthub.core.direct.DirectAdmin
 import wrthub.core.direct.PendingChangesException
 import wrthub.core.direct.WriteOutcome
@@ -47,6 +58,38 @@ interface NodeAdmin {
     suspend fun setPortForwardEnabled(section: String, enabled: Boolean): WriteOutcome
 
     suspend fun deletePortForward(section: String): WriteOutcome
+
+    suspend fun wireless(): WirelessConfig
+
+    suspend fun radioCapabilities(radio: String): RadioCapabilities
+
+    suspend fun saveRadio(name: String, input: RadioInput): WriteOutcome
+
+    suspend fun setSsidEnabled(section: String, enabled: Boolean): WriteOutcome
+
+    suspend fun dhcpRanges(): List<DhcpRange>
+
+    suspend fun saveDhcpRange(section: String, input: DhcpRangeInput): WriteOutcome
+
+    suspend fun wan(): WanConfig?
+
+    /** Confirmed only once the router reaches the internet again. */
+    suspend fun saveWan(input: WanInput): WriteOutcome
+
+    suspend fun system(): SystemConfig
+
+    suspend fun timezones(): Map<String, String>
+
+    suspend fun saveSystem(input: SystemInput): WriteOutcome
+
+    suspend fun leds(): List<Led>
+
+    suspend fun saveLed(name: String, input: LedInput): WriteOutcome
+
+    suspend fun crontab(): String
+
+    /** A plain file write without rollback. */
+    suspend fun saveCrontab(text: String)
 }
 
 class DirectNodeAdmin(private val admin: DirectAdmin) : NodeAdmin {
@@ -77,6 +120,36 @@ class DirectNodeAdmin(private val admin: DirectAdmin) : NodeAdmin {
     override suspend fun setPortForwardEnabled(section: String, enabled: Boolean) = admin.setPortForwardEnabled(section, enabled)
 
     override suspend fun deletePortForward(section: String) = admin.deletePortForward(section)
+
+    override suspend fun wireless() = admin.wireless()
+
+    override suspend fun radioCapabilities(radio: String) = admin.radioCapabilities(radio)
+
+    override suspend fun saveRadio(name: String, input: RadioInput) = admin.saveRadio(name, input)
+
+    override suspend fun setSsidEnabled(section: String, enabled: Boolean) = admin.setSsidEnabled(section, enabled)
+
+    override suspend fun dhcpRanges() = admin.dhcpRanges()
+
+    override suspend fun saveDhcpRange(section: String, input: DhcpRangeInput) = admin.saveDhcpRange(section, input)
+
+    override suspend fun wan() = admin.wan()
+
+    override suspend fun saveWan(input: WanInput) = admin.saveWan(input)
+
+    override suspend fun system() = admin.system()
+
+    override suspend fun timezones() = admin.timezones()
+
+    override suspend fun saveSystem(input: SystemInput) = admin.saveSystem(input)
+
+    override suspend fun leds() = admin.leds()
+
+    override suspend fun saveLed(name: String, input: LedInput) = admin.saveLed(name, input)
+
+    override suspend fun crontab() = admin.crontab()
+
+    override suspend fun saveCrontab(text: String) = admin.saveCrontab(text)
 }
 
 /** Why an admin call did not happen or did not finish, in the terms the screens show. */

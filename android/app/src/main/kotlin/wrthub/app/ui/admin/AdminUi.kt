@@ -21,6 +21,17 @@ import androidx.compose.ui.res.stringResource
 import wrthub.app.R
 import wrthub.app.domain.AdminFailure
 import wrthub.core.direct.WriteOutcome
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 
 /** What an admin screen reports once in a snackbar. */
 sealed interface AdminNotice {
@@ -91,4 +102,27 @@ fun failureText(failure: AdminFailure): String = when (failure) {
     is AdminFailure.Pending -> stringResource(R.string.failure_pending, failure.configs.sorted().joinToString())
     is AdminFailure.Unreachable -> stringResource(R.string.operation_failed, failure.reason)
     is AdminFailure.Denied -> stringResource(R.string.denied_calls, failure.call)
+}
+
+/** A labelled value that opens a menu of [options]; [labelOf] renders both the value and the options. */
+@Composable
+fun <T> Selector(label: String, value: T, options: List<T>, labelOf: @Composable (T) -> String, onSelect: (T) -> Unit, enabled: Boolean = true) {
+    var open by remember { mutableStateOf(false) }
+    Column(Modifier.fillMaxWidth()) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Box {
+            OutlinedButton(onClick = { open = true }, enabled = enabled && options.isNotEmpty(), modifier = Modifier.fillMaxWidth()) {
+                Text(labelOf(value), modifier = Modifier.weight(1f))
+                Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+            }
+            DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                options.forEach { option ->
+                    DropdownMenuItem(text = { Text(labelOf(option)) }, onClick = {
+                        open = false
+                        onSelect(option)
+                    })
+                }
+            }
+        }
+    }
 }

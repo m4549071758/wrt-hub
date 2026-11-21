@@ -22,6 +22,9 @@ import wrthub.core.admin.requireValidHostname
 import wrthub.core.admin.requireValidIpv4
 import wrthub.core.direct.WriteOutcome
 import wrthub.core.direct.normalizeMac
+import wrthub.core.admin.DhcpRange
+import wrthub.core.admin.DhcpRangeInput
+import wrthub.core.admin.validate
 
 /** A client to pin, as handed over from the clients tab. */
 data class LeasePrefill(val mac: String, val ip: String?, val name: String?)
@@ -37,6 +40,10 @@ data class LeaseEditor(
     val error: LeaseField? = null,
 )
 
+enum class RangeField { START, LIMIT, LEASETIME }
+
+data class RangeEditor(val section: String, val start: String, val limit: String, val leasetime: String, val error: RangeField? = null)
+
 data class LeasesUiState(
     val title: String = "",
     val loading: Boolean = false,
@@ -44,6 +51,9 @@ data class LeasesUiState(
     /** Null until loaded. */
     val servesDhcp: Boolean? = null,
     val leases: List<StaticLease> = emptyList(),
+    /** The address pools; an empty list for a node that serves none. */
+    val ranges: List<DhcpRange> = emptyList(),
+    val rangeEditor: RangeEditor? = null,
     val editor: LeaseEditor? = null,
     val saving: Boolean = false,
     val notice: AdminNotice? = null,
@@ -103,6 +113,35 @@ class LeasesViewModel(
 
     fun delete(section: String) = write { it.deleteStaticLease(section) }
 
+    fun editRange(range: DhcpRange) = local.update {
+        it.copy(rangeEditor = RangeEditor(range.section, range.start.toString(), range.limit.toString(), range.leasetime))
+    }
+
+    fun onRange(change: (RangeEditor) -> RangeEditor) = local.update { it.copy(rangeEditor = it.rangeEditor?.let(change)?.copy(error = null)) }
+
+    fun closeRange() = local.update { it.copy(rangeEditor = null) }
+
+    /** Checks the numbers here and the subnet fit in core, so an oversize pool reports which field is wrong. */
+    fun saveRange() {
+        val editor = local.value.rangeEditor ?: return
+        val range = local.value.ranges.firstOrNull { it.section == editor.section } ?: return
+        val start = editor.start.trim().toIntOrNull()
+        val limit = editor.limit.trim().toIntOrNull()
+        val leasetime = editor.leasetime.trim()
+        val error = when {
+            start == null || start < 1 -> RangeField.START
+            limit == null || limit < 1 -> RangeField.LIMIT
+            !isValid { range.validate(DhcpRangeInput(start, limit, "12h")) } -> RangeField.LIMIT
+            !isValid { range.validate(DhcpRangeInput(start, limit, leasetime)) } -> RangeField.LEASETIME
+            else -> null
+        }
+        if (error != null || start == null || limit == null) {
+            local.update { it.copy(rangeEditor = editor.copy(error = error)) }
+            return
+        }
+        write { it.saveDhcpRange(editor.section, DhcpRangeInput(start, limit, leasetime)) }
+    }
+
     fun dismissNotice() = local.update { it.copy(notice = null) }
 
     private fun admin(): NodeAdmin? = session.state.value.nodes.firstOrNull { it.config.id == nodeId }?.config?.let(adminFor)
@@ -113,13 +152,15 @@ class LeasesViewModel(
         local.update { it.copy(saving = true) }
         viewModelScope.launch {
             val result = adminCall { call(admin) }
-            val reloaded = adminCall { admin.dhcpConfig() }.getOrNull()
+            val reloaded = adminCall { admin.dhcpConfig() to admin.dhcpRanges() }.getOrNull()
             local.update { ui ->
                 ui.copy(
                     saving = false,
-                    // Keep the editor open on failure so the input is not lost.
+                    // Keep the editors open on failure so the input is not lost.
                     editor = if (result.isSuccess) null else ui.editor,
-                    leases = reloaded?.leases ?: ui.leases,
+                    rangeEditor = if (result.isSuccess) null else ui.rangeEditor,
+                    leases = reloaded?.first?.leases ?: ui.leases,
+                    ranges = reloaded?.second ?: ui.ranges,
                     notice = result.fold({ AdminNotice.Written(it) }, { AdminNotice.Failed(it.adminFailure) }),
                 )
             }
@@ -131,12 +172,12 @@ class LeasesViewModel(
         val admin = admin() ?: return
         local.update { it.copy(loading = true, failure = null) }
         viewModelScope.launch {
-            val result = adminCall { admin.dhcpConfig() }
+            val result = adminCall { admin.dhcpConfig() to admin.dhcpRanges() }
             local.update { ui ->
                 result.fold(
-                    { config ->
+                    { (config, ranges) ->
                         val editor = if (openPrefill && config.servesDhcp) prefill?.let { editorFor(it, config.leases) } else ui.editor
-                        ui.copy(loading = false, servesDhcp = config.servesDhcp, leases = config.leases, editor = editor)
+                        ui.copy(loading = false, servesDhcp = config.servesDhcp, leases = config.leases, ranges = ranges, editor = editor)
                     },
                     { ui.copy(loading = false, failure = it.adminFailure) },
                 )

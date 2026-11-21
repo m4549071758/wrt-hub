@@ -33,8 +33,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.material3.OutlinedSecureTextField
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import wrthub.core.admin.DhcpRange
+import wrthub.core.admin.addresses
 import wrthub.app.R
 import wrthub.core.admin.StaticLease
 
@@ -50,6 +56,10 @@ data class LeasesActions(
     val onRefresh: () -> Unit,
     val onDismissNotice: () -> Unit,
     val onBack: () -> Unit,
+    val onEditRange: (DhcpRange) -> Unit = {},
+    val onRange: ((RangeEditor) -> RangeEditor) -> Unit = {},
+    val onSaveRange: () -> Unit = {},
+    val onCloseRange: () -> Unit = {},
 )
 
 @Composable
@@ -69,6 +79,10 @@ fun LeasesRoute(viewModel: LeasesViewModel, onBack: () -> Unit) {
             viewModel::refresh,
             viewModel::dismissNotice,
             onBack,
+            viewModel::editRange,
+            viewModel::onRange,
+            viewModel::saveRange,
+            viewModel::closeRange,
         ),
     )
 }
@@ -97,6 +111,30 @@ fun LeasesScreen(state: LeasesUiState, actions: LeasesActions) {
                 state.failure?.let { item { Text(failureText(it), color = MaterialTheme.colorScheme.error) } }
                 if (state.servesDhcp == false) item { Text(stringResource(R.string.not_dhcp_server)) }
                 if (state.servesDhcp == true) {
+                    if (state.ranges.isNotEmpty()) {
+                        item {
+                            Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                                Text(stringResource(R.string.dhcp_range), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(16.dp))
+                                state.ranges.forEach { range ->
+                                    ListItem(
+                                        modifier = Modifier.clickable(enabled = !state.saving) { actions.onEditRange(range) },
+                                        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                                        supportingContent = {
+                                            val addresses = range.addresses()
+                                            Text(
+                                                if (addresses != null) {
+                                                    stringResource(R.string.dhcp_range_addresses, addresses.first, addresses.second, range.leasetime)
+                                                } else {
+                                                    stringResource(R.string.dhcp_range_summary, range.start, range.limit, range.leasetime)
+                                                },
+                                            )
+                                        },
+                                        trailingContent = { range.subnet?.let { Text(it) } },
+                                    ) { Text(range.network) }
+                                }
+                            }
+                        }
+                    }
                     item {
                         Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                             if (state.leases.isEmpty()) Text(stringResource(R.string.no_leases), modifier = Modifier.padding(16.dp))
@@ -111,6 +149,27 @@ fun LeasesScreen(state: LeasesUiState, actions: LeasesActions) {
         }
     }
     state.editor?.let { LeaseDialog(it, state.saving, actions) }
+    state.rangeEditor?.let { RangeDialog(it, state.ranges.firstOrNull { r -> r.section == it.section }, state.saving, actions) }
+}
+
+@Composable
+private fun RangeDialog(editor: RangeEditor, range: DhcpRange?, saving: Boolean, actions: LeasesActions) {
+    AlertDialog(
+        onDismissRequest = actions.onCloseRange,
+        title = { Text(stringResource(R.string.dhcp_range_title, range?.network.orEmpty())) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                range?.subnet?.let { Text(stringResource(R.string.lan_address, it)) }
+                Field(editor.start, { v -> actions.onRange { it.copy(start = v) } }, R.string.dhcp_start, editor.error == RangeField.START, R.string.error_dhcp_start, KeyboardType.Number)
+                Field(editor.limit, { v -> actions.onRange { it.copy(limit = v) } }, R.string.dhcp_limit, editor.error == RangeField.LIMIT, R.string.error_dhcp_limit, KeyboardType.Number)
+                Field(editor.leasetime, { v -> actions.onRange { it.copy(leasetime = v) } }, R.string.dhcp_leasetime, editor.error == RangeField.LEASETIME, R.string.error_leasetime)
+                Text(stringResource(R.string.lan_ip_read_only), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.rollback_note), style = MaterialTheme.typography.bodySmall)
+            }
+        },
+        confirmButton = { TextButton(onClick = actions.onSaveRange, enabled = !saving) { Text(stringResource(R.string.save)) } },
+        dismissButton = { TextButton(onClick = actions.onCloseRange) { Text(stringResource(R.string.cancel)) } },
+    )
 }
 
 @Composable
@@ -185,6 +244,20 @@ internal fun Field(
         supportingText = if (isError) ({ Text(stringResource(errorText)) }) else null,
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = keyboard),
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+/** A masked field; secure text fields keep their own state, so edits are forwarded to [onValue]. */
+@Composable
+internal fun SecretField(onValue: (String) -> Unit, label: Int, isError: Boolean, errorText: Int) {
+    val state = rememberTextFieldState()
+    LaunchedEffect(state) { snapshotFlow { state.text.toString() }.collect { onValue(it) } }
+    OutlinedSecureTextField(
+        state = state,
+        label = { Text(stringResource(label)) },
+        isError = isError,
+        supportingText = if (isError) ({ Text(stringResource(errorText)) }) else null,
         modifier = Modifier.fillMaxWidth(),
     )
 }

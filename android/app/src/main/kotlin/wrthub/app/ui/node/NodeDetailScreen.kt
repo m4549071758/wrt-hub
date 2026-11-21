@@ -56,33 +56,18 @@ data class NodeDetailActions(
     val onReboot: () -> Unit,
     val onDismissNotice: () -> Unit,
     val onBack: () -> Unit,
-    val onOpenStatus: () -> Unit = {},
-    val onOpenLeases: () -> Unit = {},
-    val onOpenForwards: () -> Unit = {},
+    val onOpen: (AdminPage) -> Unit = {},
 )
 
+/** The LuCI-replacement pages reachable from a node. */
+enum class AdminPage { STATUS, LEASES, FORWARDS, WIRELESS, WAN, SYSTEM }
+
 @Composable
-fun NodeDetailRoute(
-    viewModel: NodeDetailViewModel,
-    onBack: () -> Unit,
-    onOpenStatus: () -> Unit,
-    onOpenLeases: () -> Unit,
-    onOpenForwards: () -> Unit,
-) {
+fun NodeDetailRoute(viewModel: NodeDetailViewModel, onBack: () -> Unit, onOpen: (AdminPage) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     NodeDetailScreen(
         state,
-        NodeDetailActions(
-            viewModel::onHost,
-            viewModel::ping,
-            viewModel::traceroute,
-            viewModel::reboot,
-            viewModel::dismissNotice,
-            onBack,
-            onOpenStatus,
-            onOpenLeases,
-            onOpenForwards,
-        ),
+        NodeDetailActions(viewModel::onHost, viewModel::ping, viewModel::traceroute, viewModel::reboot, viewModel::dismissNotice, onBack, onOpen),
     )
 }
 
@@ -121,9 +106,12 @@ fun NodeDetailScreen(state: NodeDetailUiState, actions: NodeDetailActions) {
             state.node?.let { NodeCard(it, wifiClients = null) }
             if (state.admin.status) {
                 Section(stringResource(R.string.manage)) {
-                    AdminEntry(R.string.status, R.string.status_body, actions.onOpenStatus)
-                    if (state.admin.staticLeases) AdminEntry(R.string.static_leases, R.string.static_leases_body, actions.onOpenLeases)
-                    if (state.admin.portForwards) AdminEntry(R.string.port_forwards, R.string.port_forwards_body, actions.onOpenForwards)
+                    AdminEntry(R.string.status, R.string.status_body) { actions.onOpen(AdminPage.STATUS) }
+                    if (state.admin.wireless) AdminEntry(R.string.wireless, R.string.wireless_body) { actions.onOpen(AdminPage.WIRELESS) }
+                    if (state.admin.staticLeases) AdminEntry(R.string.static_leases, R.string.static_leases_body) { actions.onOpen(AdminPage.LEASES) }
+                    if (state.admin.portForwards) AdminEntry(R.string.port_forwards, R.string.port_forwards_body) { actions.onOpen(AdminPage.FORWARDS) }
+                    if (state.admin.wan) AdminEntry(R.string.wan, R.string.wan_body) { actions.onOpen(AdminPage.WAN) }
+                    if (state.admin.system) AdminEntry(R.string.system, R.string.system_body) { actions.onOpen(AdminPage.SYSTEM) }
                 }
             }
             Section(stringResource(R.string.diagnostics)) {

@@ -30,7 +30,14 @@ sealed interface NodeNotice {
 data class ExecView(val title: String, val output: String, val exitCode: Int)
 
 /** Which LuCI-replacement pages the node offers; status needs the node to answer. */
-data class AdminEntries(val status: Boolean = false, val staticLeases: Boolean = false, val portForwards: Boolean = false)
+data class AdminEntries(
+    val status: Boolean = false,
+    val staticLeases: Boolean = false,
+    val portForwards: Boolean = false,
+    val wireless: Boolean = false,
+    val wan: Boolean = false,
+    val system: Boolean = false,
+)
 
 data class NodeDetailUiState(
     val node: NodeState? = null,
@@ -114,9 +121,13 @@ class NodeDetailViewModel(
 /** Static leases only where a DHCP server runs, port forwards only on the node with the WAN. */
 private fun adminEntries(node: NodeState?): AdminEntries {
     val snapshot = (node as? NodeState.Online)?.snapshot ?: return AdminEntries()
+    val router = snapshot.wanDevice() != null
     return AdminEntries(
         status = true,
         staticLeases = snapshot.dhcpConfig?.let(::parseDhcpConfig)?.servesDhcp == true,
-        portForwards = snapshot.wanDevice() != null,
+        portForwards = router,
+        wireless = snapshot.wireless.isNotEmpty(),
+        wan = router,
+        system = true,
     )
 }
