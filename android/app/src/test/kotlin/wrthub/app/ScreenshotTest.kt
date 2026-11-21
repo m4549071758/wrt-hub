@@ -277,7 +277,11 @@ class ScreenshotTest {
 
     @Test
     fun wanUnsupported() = capture("wan_unsupported", dark = true) {
-        WanScreen(WanUiState(title = "Gateway", wan = WanConfig("ipip6", null, null, null, null, emptyList(), null, false)), WanActions({}, {}, {}, {}, {}))
+        val options = listOf("proto" to "ipip6", "device" to "wan", "peeraddr" to "2001:db8::1", "ip4ifaddr" to "192.0.2.10", "encaplimit" to "ignore")
+        WanScreen(
+            WanUiState(title = "Gateway", wan = WanConfig("ipip6", null, null, null, null, emptyList(), null, false, options)),
+            WanActions({}, {}, {}, {}, {}),
+        )
     }
 
     @Test

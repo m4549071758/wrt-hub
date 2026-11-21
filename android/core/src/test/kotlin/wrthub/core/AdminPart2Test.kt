@@ -102,8 +102,16 @@ class AdminPart2Test {
 
     @Test
     fun `wan protocols the app does not edit are read only`() {
-        val ipip6 = json("""{"values":{"wan":{".type":"interface","proto":"ipip6","peeraddr":"2001:db8::1"}}}""")
-        assertNull(parseWan(ipip6)!!.proto)
+        val ipip6 = json(
+            """{"values":{"wan":{".type":"interface","proto":"ipip6","peeraddr":"2001:db8::1","ip4ifaddr":"192.0.2.10",
+            "auth_key":"x","password":"y","dns":["192.0.2.53","192.0.2.54"]}}}""",
+        )
+        val wan = parseWan(ipip6)!!
+        assertNull(wan.proto)
+        assertEquals(
+            listOf("proto" to "ipip6", "peeraddr" to "2001:db8::1", "ip4ifaddr" to "192.0.2.10", "dns" to "192.0.2.53 192.0.2.54"),
+            wan.options,
+        )
         assertEquals(WanProto.STATIC, parseWan(network)!!.proto)
     }
 

@@ -62,10 +62,19 @@ fun WanScreen(state: WanUiState, actions: WanActions) {
                 when {
                     wan == null && !state.loading && state.failure == null -> Text(stringResource(R.string.no_wan))
                     wan != null && wan.proto == null -> Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                        Text(
-                            stringResource(R.string.wan_unsupported, wan.rawProto ?: "?"),
-                            modifier = Modifier.padding(16.dp),
-                        )
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            wan.options.forEach { (option, value) ->
+                                Row(Modifier.fillMaxWidth()) {
+                                    Text(option, modifier = Modifier.weight(0.4f), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(value, modifier = Modifier.weight(0.6f))
+                                }
+                            }
+                            Text(
+                                stringResource(R.string.wan_unsupported, wan.rawProto ?: "?"),
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(top = 8.dp),
+                            )
+                        }
                     }
                     wan != null -> Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                         WanFormFields(state.form, wan.hasPassword, actions)

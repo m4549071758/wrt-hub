@@ -94,7 +94,11 @@ data class WanConfig(
     val username: String?,
     /** The PPPoE password is never read into the app; only whether one is set. */
     val hasPassword: Boolean,
+    /** Every option of the section, lists space-joined, minus anything that may hold a secret; shown when [proto] is null. */
+    val options: List<Pair<String, String>> = emptyList(),
 )
+
+private val SECRET_OPTION = Regex("password|passwd|secret|key|psk|token", RegexOption.IGNORE_CASE)
 
 fun parseWan(network: JsonObject): WanConfig? {
     val wan = network.obj("values")?.obj("wan") ?: return null
@@ -113,6 +117,8 @@ fun parseWan(network: JsonObject): WanConfig? {
         dns = stringList(wan["dns"]),
         username = wan.str("username"),
         hasPassword = !wan.str("password").isNullOrEmpty(),
+        options = wan.keys.filterNot { it.startsWith(".") || SECRET_OPTION.containsMatchIn(it) }
+            .map { it to stringList(wan[it]).joinToString(" ") },
     )
 }
 
