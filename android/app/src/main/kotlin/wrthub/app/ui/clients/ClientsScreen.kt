@@ -51,6 +51,10 @@ import wrthub.app.R
 import wrthub.app.ui.theme.LocalSemanticColors
 import wrthub.app.ui.theme.forSignal
 import wrthub.core.direct.WriteOutcome
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
+import wrthub.app.ui.TrailingText
 import wrthub.core.topology.Presence
 import wrthub.core.topology.SiteClient
 
@@ -138,17 +142,23 @@ private fun ClientRow(client: SiteClient, nodeLabels: Map<String, String>, onCli
         modifier = Modifier.clickable(onClick = onClick),
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
         leadingContent = {
-            Box(Modifier.size(12.dp).background(semantic.forSignal(client.signal), CircleShape))
+            Icon(
+                painterResource(if (client.presence == Presence.WIRELESS) R.drawable.ic_wifi else R.drawable.ic_lan),
+                contentDescription = null,
+                tint = semantic.forSignal(client.signal),
+            )
         },
-        supportingContent = { Text(listOfNotNull(client.ipv4, placeText(client, nodeLabels)).joinToString(" · ")) },
+        supportingContent = {
+            Text(listOfNotNull(client.ipv4, placeText(client, nodeLabels)).joinToString(" · "), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        },
         trailingContent = {
             when {
-                client.blocked -> Text(stringResource(R.string.blocked), color = MaterialTheme.colorScheme.error)
-                client.signal != null -> Text("${client.signal} dBm", color = semantic.forSignal(client.signal))
+                client.blocked -> TrailingText(stringResource(R.string.blocked), MaterialTheme.colorScheme.error)
+                client.signal != null -> TrailingText("${client.signal} dBm", semantic.forSignal(client.signal))
             }
         },
     ) {
-        Text(client.name ?: client.mac)
+        Text(client.name ?: client.mac, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

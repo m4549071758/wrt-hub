@@ -12,7 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -106,13 +106,13 @@ fun NodeDetailScreen(state: NodeDetailUiState, actions: NodeDetailActions) {
             state.node?.let { NodeCard(it, wifiClients = null) }
             if (state.admin.status) {
                 Section(stringResource(R.string.manage)) {
-                    AdminEntry(R.string.status, R.string.status_body) { actions.onOpen(AdminPage.STATUS) }
-                    if (state.admin.wireless) AdminEntry(R.string.wireless, R.string.wireless_body) { actions.onOpen(AdminPage.WIRELESS) }
-                    if (state.admin.staticLeases) AdminEntry(R.string.static_leases, R.string.static_leases_body) { actions.onOpen(AdminPage.LEASES) }
-                    if (state.admin.portForwards) AdminEntry(R.string.port_forwards, R.string.port_forwards_body) { actions.onOpen(AdminPage.FORWARDS) }
-                    if (state.admin.wan) AdminEntry(R.string.wan, R.string.wan_body) { actions.onOpen(AdminPage.WAN) }
-                    if (state.admin.system) AdminEntry(R.string.system, R.string.system_body) { actions.onOpen(AdminPage.SYSTEM) }
-                    if (state.admin.packages) AdminEntry(R.string.packages, R.string.packages_body) { actions.onOpen(AdminPage.PACKAGES) }
+                    AdminEntry(R.drawable.ic_monitoring, R.string.status, R.string.status_body) { actions.onOpen(AdminPage.STATUS) }
+                    if (state.admin.wireless) AdminEntry(R.drawable.ic_wifi, R.string.wireless, R.string.wireless_body) { actions.onOpen(AdminPage.WIRELESS) }
+                    if (state.admin.staticLeases) AdminEntry(R.drawable.ic_dns, R.string.static_leases, R.string.static_leases_body) { actions.onOpen(AdminPage.LEASES) }
+                    if (state.admin.portForwards) AdminEntry(R.drawable.ic_swap_horiz, R.string.port_forwards, R.string.port_forwards_body) { actions.onOpen(AdminPage.FORWARDS) }
+                    if (state.admin.wan) AdminEntry(R.drawable.ic_public, R.string.wan, R.string.wan_body) { actions.onOpen(AdminPage.WAN) }
+                    if (state.admin.system) AdminEntry(R.drawable.ic_settings, R.string.system, R.string.system_body) { actions.onOpen(AdminPage.SYSTEM) }
+                    if (state.admin.packages) AdminEntry(R.drawable.ic_inventory_2, R.string.packages, R.string.packages_body) { actions.onOpen(AdminPage.PACKAGES) }
                 }
             }
             Section(stringResource(R.string.diagnostics)) {
@@ -183,12 +183,13 @@ private fun Section(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun AdminEntry(title: Int, body: Int, onClick: () -> Unit) {
+private fun AdminEntry(icon: Int, title: Int, body: Int, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+        leadingContent = { Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
         supportingContent = { Text(stringResource(body)) },
-        trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
+        trailingContent = { Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null) },
     ) {
         Text(stringResource(title))
     }

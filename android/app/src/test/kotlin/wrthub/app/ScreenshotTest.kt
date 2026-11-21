@@ -87,6 +87,23 @@ import wrthub.app.ui.admin.PackagesScreen
 import wrthub.app.ui.admin.PackagesUiState
 import wrthub.core.admin.PackageInfo
 import wrthub.core.admin.Storage
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import wrthub.app.R
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -290,6 +307,23 @@ class ScreenshotTest {
         )
     }
 
+
+    @Test
+    fun launcherIcon() = capture("launcher_icon") {
+        Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Box(Modifier.size(108.dp).clip(RoundedCornerShape(28.dp)).background(colorResource(R.color.ic_launcher_background))) {
+                Image(painterResource(R.drawable.ic_launcher_foreground), contentDescription = null, modifier = Modifier.size(108.dp))
+            }
+            Box(Modifier.size(108.dp).clip(CircleShape).background(Color(0xFF263238))) {
+                Image(
+                    painterResource(R.drawable.ic_launcher_monochrome),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(Color(0xFFB3E5FC)),
+                    modifier = Modifier.size(108.dp),
+                )
+            }
+        }
+    }
     @Test
     fun packages() = capture("packages") {
         PackagesScreen(

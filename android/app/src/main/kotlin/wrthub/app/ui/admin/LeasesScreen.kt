@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import wrthub.core.admin.DhcpRange
 import wrthub.core.admin.addresses
+import wrthub.app.ui.TrailingText
 import wrthub.app.R
 import wrthub.core.admin.StaticLease
 
@@ -129,7 +130,7 @@ fun LeasesScreen(state: LeasesUiState, actions: LeasesActions) {
                                                 },
                                             )
                                         },
-                                        trailingContent = { range.subnet?.let { Text(it) } },
+                                        trailingContent = { range.subnet?.let { TrailingText(it) } },
                                     ) { Text(range.network) }
                                 }
                             }
@@ -183,7 +184,7 @@ private fun LeaseRow(lease: StaticLease, onClick: () -> Unit) {
                 if (!lease.editable) Text(stringResource(R.string.lease_locked), style = MaterialTheme.typography.bodySmall)
             }
         },
-        trailingContent = { lease.ip?.let { Text(it) } },
+        trailingContent = { lease.ip?.let { TrailingText(it) } },
     ) {
         Text(lease.name ?: lease.macs.firstOrNull().orEmpty())
     }

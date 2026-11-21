@@ -81,7 +81,7 @@ fun HomeScreen(
                 item { TopologyCard(strip) }
                 item { BandwidthRow(state.rates, state.realtimeError) }
                 items(state.nodes, key = { it.config.id }) { node ->
-                    NodeCard(node, wifiClients[node.config.id], onClick = { onOpenNode(node.config.id) })
+                    NodeCard(node, wifiClients[node.config.id], Modifier.animateItem(), onClick = { onOpenNode(node.config.id) })
                 }
             }
         }

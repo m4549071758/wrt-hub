@@ -1,12 +1,12 @@
 package wrthub.app.ui
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -120,32 +121,40 @@ fun WrtHubApp(container: AppContainer) {
                     NavigationBarItem(
                         selected = destination?.hasRoute<HomeDestination>() == true,
                         onClick = { navController.switchTab(HomeDestination) },
-                        icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                        icon = { Icon(painterResource(R.drawable.ic_home), contentDescription = null) },
                         label = { Text(stringResource(R.string.tab_home)) },
                     )
                     NavigationBarItem(
                         selected = destination?.hasRoute<ClientsDestination>() == true,
                         onClick = { navController.switchTab(ClientsDestination) },
-                        icon = { Icon(Icons.Default.Person, contentDescription = null) },
+                        icon = { Icon(painterResource(R.drawable.ic_devices), contentDescription = null) },
                         label = { Text(stringResource(R.string.tab_clients)) },
                     )
                     NavigationBarItem(
                         selected = destination?.hasRoute<MeshDestination>() == true,
                         onClick = { navController.switchTab(MeshDestination) },
-                        icon = { Icon(Icons.Default.Share, contentDescription = null) },
+                        icon = { Icon(painterResource(R.drawable.ic_hub), contentDescription = null) },
                         label = { Text(stringResource(R.string.tab_mesh)) },
                     )
                     NavigationBarItem(
                         selected = destination?.hasRoute<SitesDestination>() == true,
                         onClick = { navController.switchTab(SitesDestination) },
-                        icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
+                        icon = { Icon(painterResource(R.drawable.ic_router), contentDescription = null) },
                         label = { Text(stringResource(R.string.tab_sites)) },
                     )
                 }
             }
         },
     ) { padding ->
-        NavHost(navController, startDestination = HomeDestination, modifier = Modifier.padding(padding)) {
+        NavHost(
+            navController,
+            startDestination = HomeDestination,
+            modifier = Modifier.padding(padding),
+            enterTransition = { fadeIn(tween(TRANSITION_MS)) + slideInHorizontally(tween(TRANSITION_MS)) { it / 12 } },
+            exitTransition = { fadeOut(tween(TRANSITION_MS)) },
+            popEnterTransition = { fadeIn(tween(TRANSITION_MS)) },
+            popExitTransition = { fadeOut(tween(TRANSITION_MS)) + slideOutHorizontally(tween(TRANSITION_MS)) { it / 12 } },
+        ) {
             composable<HomeDestination> {
                 val vm: HomeViewModel = viewModel(
                     factory = viewModelFactory { initializer { HomeViewModel(container.session, container.counters) } },
@@ -265,6 +274,8 @@ fun WrtHubApp(container: AppContainer) {
         }
     }
 }
+
+private const val TRANSITION_MS = 220
 
 private fun NavHostController.switchTab(route: Any) = navigate(route) {
     popUpTo(graph.findStartDestination().id) { saveState = true }

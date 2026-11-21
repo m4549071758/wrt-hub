@@ -32,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 
 /** What an admin screen reports once in a snackbar. */
 sealed interface AdminNotice {
@@ -64,7 +65,7 @@ fun AdminScaffold(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(title) },
+                title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cancel))

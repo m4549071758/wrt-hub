@@ -42,6 +42,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import wrthub.app.R
 import wrthub.app.ui.formatBytes
+import wrthub.app.ui.TrailingText
 import wrthub.app.ui.theme.LocalSemanticColors
 import wrthub.core.admin.Connection
 import wrthub.core.admin.ESSENTIAL_SERVICES
@@ -191,10 +192,7 @@ private fun RouteRow(route: Route) {
             )
         },
         trailingContent = {
-            Text(
-                listOf(route.table, route.type).filterNot { it == "main" || it == "unicast" }.joinToString(" "),
-                style = MaterialTheme.typography.labelMedium,
-            )
+            TrailingText(listOf(route.table, route.type).filterNot { it == "main" || it == "unicast" }.joinToString(" "))
         },
     ) {
         Text(route.destination, fontFamily = FontFamily.Monospace)
@@ -229,7 +227,7 @@ private fun ConnectionRow(c: Connection) {
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         overlineContent = { Text("${c.family} ${c.protocol}".uppercase()) },
         supportingContent = { Text("→ " + endpoint(c.destination, c.destinationPort), fontFamily = FontFamily.Monospace) },
-        trailingContent = { Text(formatBytes(c.bytes)) },
+        trailingContent = { TrailingText(formatBytes(c.bytes)) },
     ) {
         Text(endpoint(c.source, c.sourcePort), fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodyMedium)
     }
@@ -267,8 +265,8 @@ private fun ServiceRow(service: Service, busy: Boolean, onClick: () -> Unit) {
         },
         trailingContent = {
             when (service.running) {
-                true -> Text(stringResource(R.string.service_running), color = semantic.signalGood)
-                false -> Text(stringResource(R.string.service_stopped), color = semantic.inactive)
+                true -> TrailingText(stringResource(R.string.service_running), semantic.signalGood)
+                false -> TrailingText(stringResource(R.string.service_stopped), semantic.inactive)
                 null -> Unit
             }
         },

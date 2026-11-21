@@ -184,7 +184,14 @@ fun MeshGraph(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, modifier: 
                         }
                         val count = measurer.measure(node.clients.size.toString(), countStyle)
                         drawText(count, topLeft = center - Offset(count.size.width / 2f, count.size.height / 2f))
-                        val label = measurer.measure(node.label, labelStyle)
+                        // Right of the circle, not below: below is where the line to the node's clients runs.
+                        val label = measurer.measure(
+                            node.label,
+                            labelStyle,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1,
+                            constraints = Constraints(maxWidth = 96.dp.toPx().toInt()),
+                        )
                         drawText(label, topLeft = Offset(center.x + nodeRadius + 6.dp.toPx(), center.y - label.size.height / 2f))
                     }
                 }

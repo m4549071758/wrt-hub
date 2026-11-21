@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import wrthub.app.R
 import wrthub.app.ui.formatBytes
 import wrthub.app.ui.theme.LocalSemanticColors
+import wrthub.app.ui.TrailingText
 import wrthub.core.admin.PackageInfo
 import wrthub.core.admin.isEssentialPackage
 
@@ -155,7 +156,7 @@ private fun PackageRow(pkg: PackageInfo, installed: Boolean, onClick: () -> Unit
         modifier = Modifier.clickable(onClick = onClick),
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         supportingContent = { Text(listOfNotNull(pkg.version, pkg.installedSize?.let(::formatBytes)).joinToString(" · ")) },
-        trailingContent = { if (installed) Text(stringResource(R.string.packages_installed_mark), color = semantic.signalGood) },
+        trailingContent = { if (installed) TrailingText(stringResource(R.string.packages_installed_mark), semantic.signalGood) },
     ) { Text(pkg.name) }
 }
 

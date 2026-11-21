@@ -78,7 +78,7 @@ fun SitesScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(sites, key = { it.id }) { site ->
-                Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                Card(Modifier.fillMaxWidth().animateItem(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Column(Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(site.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))

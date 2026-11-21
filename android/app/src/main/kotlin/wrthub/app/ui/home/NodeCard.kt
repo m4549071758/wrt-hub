@@ -26,6 +26,9 @@ import wrthub.app.ui.formatUptime
 import wrthub.app.ui.formatUsedPercent
 import wrthub.app.ui.theme.LocalSemanticColors
 import wrthub.core.model.summary
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 
 /** [wifiClients] is null for nodes without an AP interface; [onClick] makes the card open the node. */
 @Composable
@@ -35,12 +38,26 @@ fun NodeCard(state: NodeState, wifiClients: Int?, modifier: Modifier = Modifier,
     Card(modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
         Column(clickable.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(state.config.label, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Text(
+                    state.config.label,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
                 Box(
                     Modifier
                         .size(10.dp)
                         .background(if (state is NodeState.Online) semantic.signalGood else semantic.signalPoor, CircleShape),
                 )
+                if (onClick != null) {
+                    Icon(
+                        painterResource(R.drawable.ic_chevron_right),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 8.dp).size(20.dp),
+                    )
+                }
             }
             when (state) {
                 is NodeState.Online -> {

@@ -17,6 +17,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +25,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -47,14 +49,14 @@ fun TopologyCard(model: StripModel, modifier: Modifier = Modifier) {
             Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            DeviceDot(stringResource(R.string.internet), glyph = "WAN", online = model.wanUp)
+            DeviceDot(stringResource(R.string.internet), R.drawable.ic_public, online = model.wanUp)
             Connector(
                 top = model.wanAddress?.let { buildAnnotatedString { append(it) } },
                 bottom = null,
                 color = if (model.wanUp) semantic.signalGood else semantic.inactive,
             )
             val router = model.router
-            if (router != null) RouterDot(router) else DeviceDot(stringResource(R.string.no_router), glyph = "?", online = false)
+            if (router != null) RouterDot(router) else DeviceDot(stringResource(R.string.no_router), R.drawable.ic_router, online = false)
             model.segments.forEach { segment ->
                 val link = segment.link
                 Connector(
@@ -62,14 +64,14 @@ fun TopologyCard(model: StripModel, modifier: Modifier = Modifier) {
                     bottom = link?.signal?.let { buildAnnotatedString { withStyle(SpanStyle(color = semantic.forSignal(it))) { append("$it dBm") } } },
                     color = if (link == null) semantic.inactive else semantic.forSignal(link.signal),
                 )
-                DeviceDot(segment.node.label, glyph = "AP", online = segment.node.online)
+                DeviceDot(segment.node.label, R.drawable.ic_wifi, online = segment.node.online)
             }
         }
     }
 }
 
 @Composable
-private fun RouterDot(node: StripNode) = DeviceDot(node.label, glyph = "R", online = node.online)
+private fun RouterDot(node: StripNode) = DeviceDot(node.label, R.drawable.ic_router, online = node.online)
 
 @Composable
 private fun linkRates(link: StripLink) = buildAnnotatedString {
@@ -80,7 +82,7 @@ private fun linkRates(link: StripLink) = buildAnnotatedString {
 }
 
 @Composable
-private fun DeviceDot(label: String, glyph: String, online: Boolean) {
+private fun DeviceDot(label: String, icon: Int, online: Boolean) {
     Column(Modifier.width(64.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             Modifier
@@ -91,10 +93,11 @@ private fun DeviceDot(label: String, glyph: String, online: Boolean) {
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                glyph,
-                style = MaterialTheme.typography.labelLarge,
-                color = if (online) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+            Icon(
+                painterResource(icon),
+                contentDescription = null,
+                tint = if (online) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp),
             )
         }
         Text(
@@ -114,7 +117,14 @@ private fun RowScope.Connector(
     color: Color,
 ) {
     Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(top ?: buildAnnotatedString {}, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center, minLines = 2)
+        Text(
+            top ?: buildAnnotatedString {},
+            style = MaterialTheme.typography.labelSmall,
+            textAlign = TextAlign.Center,
+            minLines = 2,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
         Canvas(Modifier.fillMaxWidth().height(8.dp)) {
             drawLine(
                 color = color,
@@ -124,6 +134,12 @@ private fun RowScope.Connector(
                 pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())),
             )
         }
-        Text(bottom ?: buildAnnotatedString {}, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center, minLines = 1)
+        Text(
+            bottom ?: buildAnnotatedString {},
+            style = MaterialTheme.typography.labelSmall,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
