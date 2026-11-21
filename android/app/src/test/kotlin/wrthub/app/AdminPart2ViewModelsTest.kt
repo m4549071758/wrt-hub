@@ -156,6 +156,6 @@ class AdminPart2ViewModelsTest {
     fun `an access point offers wi-fi and system but not wan or port forwarding`() = runTest(main.dispatcher) {
         val vm = NodeDetailViewModel("ap", session()) { FakeNodeOperations() }
         advanceUntilIdle()
-        assertEquals(AdminEntries(status = true, wireless = true, system = true), vm.state.value.admin)
+        assertEquals(AdminEntries(status = true, wireless = true, system = true, packages = true), vm.state.value.admin)
     }
 }

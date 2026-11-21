@@ -37,6 +37,8 @@ import wrthub.app.ui.admin.LeasesRoute
 import wrthub.app.ui.admin.LeasesViewModel
 import wrthub.app.ui.admin.StatusRoute
 import wrthub.app.ui.admin.StatusViewModel
+import wrthub.app.ui.admin.PackagesRoute
+import wrthub.app.ui.admin.PackagesViewModel
 import wrthub.app.ui.admin.SystemRoute
 import wrthub.app.ui.admin.SystemViewModel
 import wrthub.app.ui.admin.WanRoute
@@ -98,6 +100,9 @@ data class WanDestination(val nodeId: String)
 
 @Serializable
 data class SystemDestination(val nodeId: String)
+
+@Serializable
+data class PackagesDestination(val nodeId: String)
 
 @Composable
 fun WrtHubApp(container: AppContainer) {
@@ -195,6 +200,7 @@ fun WrtHubApp(container: AppContainer) {
                             AdminPage.WIRELESS -> WirelessDestination(route.nodeId)
                             AdminPage.WAN -> WanDestination(route.nodeId)
                             AdminPage.SYSTEM -> SystemDestination(route.nodeId)
+                            AdminPage.PACKAGES -> PackagesDestination(route.nodeId)
                         },
                     )
                 }
@@ -248,6 +254,13 @@ fun WrtHubApp(container: AppContainer) {
                     factory = viewModelFactory { initializer { SystemViewModel(route.nodeId, container.session, container.adminFor) } },
                 )
                 SystemRoute(vm, onBack = { navController.popBackStack() })
+            }
+            composable<PackagesDestination> { backStackEntry ->
+                val route = backStackEntry.toRoute<PackagesDestination>()
+                val vm: PackagesViewModel = viewModel(
+                    factory = viewModelFactory { initializer { PackagesViewModel(route.nodeId, container.session, container.adminFor) } },
+                )
+                PackagesRoute(vm, onBack = { navController.popBackStack() })
             }
         }
     }

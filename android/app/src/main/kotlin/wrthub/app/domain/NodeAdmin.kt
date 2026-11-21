@@ -24,6 +24,9 @@ import wrthub.core.admin.SystemInput
 import wrthub.core.admin.WanConfig
 import wrthub.core.admin.WanInput
 import wrthub.core.admin.WirelessConfig
+import wrthub.core.admin.PackageInfo
+import wrthub.core.admin.PackageResult
+import wrthub.core.admin.Storage
 import wrthub.core.direct.DirectAdmin
 import wrthub.core.direct.PendingChangesException
 import wrthub.core.direct.WriteOutcome
@@ -90,6 +93,18 @@ interface NodeAdmin {
 
     /** A plain file write without rollback. */
     suspend fun saveCrontab(text: String)
+
+    suspend fun installedPackages(): List<PackageInfo>
+
+    suspend fun availablePackages(): List<PackageInfo>
+
+    suspend fun updatePackageLists(): PackageResult
+
+    suspend fun installPackage(name: String): PackageResult
+
+    suspend fun removePackage(name: String): PackageResult
+
+    suspend fun storage(): Storage?
 }
 
 class DirectNodeAdmin(private val admin: DirectAdmin) : NodeAdmin {
@@ -150,6 +165,18 @@ class DirectNodeAdmin(private val admin: DirectAdmin) : NodeAdmin {
     override suspend fun crontab() = admin.crontab()
 
     override suspend fun saveCrontab(text: String) = admin.saveCrontab(text)
+
+    override suspend fun installedPackages() = admin.installedPackages()
+
+    override suspend fun availablePackages() = admin.availablePackages()
+
+    override suspend fun updatePackageLists() = admin.updatePackageLists()
+
+    override suspend fun installPackage(name: String) = admin.installPackage(name)
+
+    override suspend fun removePackage(name: String) = admin.removePackage(name)
+
+    override suspend fun storage() = admin.storage()
 }
 
 /** Why an admin call did not happen or did not finish, in the terms the screens show. */

@@ -23,6 +23,9 @@ import wrthub.core.admin.SystemInput
 import wrthub.core.admin.WanConfig
 import wrthub.core.admin.WanInput
 import wrthub.core.admin.WirelessConfig
+import wrthub.core.admin.PackageInfo
+import wrthub.core.admin.PackageResult
+import wrthub.core.admin.Storage
 import wrthub.core.direct.WriteOutcome
 
 /** Serves fixed data and records every write as "<verb> <argument>" in [log]; [writeFailure] makes writes throw. */
@@ -40,6 +43,10 @@ class FakeNodeAdmin(
     var systemConfig: SystemConfig = SystemConfig("cfg01", "OpenWrt", "UTC", true, emptyList()),
     var ledList: List<Led> = emptyList(),
     var cron: String = "",
+    var installed: List<PackageInfo> = emptyList(),
+    var available: List<PackageInfo> = emptyList(),
+    var packageResult: PackageResult = PackageResult(0, "OK", ""),
+    var storageInfo: Storage? = null,
 ) : NodeAdmin {
     val log = mutableListOf<String>()
 
@@ -110,4 +117,19 @@ class FakeNodeAdmin(
     override suspend fun saveCrontab(text: String) {
         write("cron $text")
     }
+
+    override suspend fun installedPackages() = installed
+
+    /** How often the large available list was fetched. */
+    var availableCalls = 0
+
+    override suspend fun availablePackages() = available.also { availableCalls++ }
+
+    override suspend fun updatePackageLists() = packageResult.also { write("update lists") }
+
+    override suspend fun installPackage(name: String) = packageResult.also { write("install $name") }
+
+    override suspend fun removePackage(name: String) = packageResult.also { write("remove $name") }
+
+    override suspend fun storage() = storageInfo
 }

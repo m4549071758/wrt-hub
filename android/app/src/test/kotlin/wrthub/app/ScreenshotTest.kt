@@ -81,6 +81,12 @@ import wrthub.core.admin.Ssid
 import wrthub.core.admin.SystemConfig
 import wrthub.core.admin.WanConfig
 import wrthub.core.admin.WanProto
+import wrthub.app.ui.admin.PackageTab
+import wrthub.app.ui.admin.PackagesActions
+import wrthub.app.ui.admin.PackagesScreen
+import wrthub.app.ui.admin.PackagesUiState
+import wrthub.core.admin.PackageInfo
+import wrthub.core.admin.Storage
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -145,7 +151,7 @@ class ScreenshotTest {
                 node = online[0],
                 host = "1.1.1.1",
                 result = ExecView("ping 1.1.1.1", "PING 1.1.1.1 (1.1.1.1): 56 data bytes\n64 bytes from 1.1.1.1: seq=0 ttl=57 time=38.211 ms\n\n--- 1.1.1.1 ping statistics ---\n4 packets transmitted, 4 packets received, 0% packet loss", 0),
-                admin = AdminEntries(status = true, staticLeases = true, portForwards = true, wireless = true, wan = true, system = true),
+                admin = AdminEntries(status = true, staticLeases = true, portForwards = true, wireless = true, wan = true, system = true, packages = true),
             ),
             NodeDetailActions({}, {}, {}, {}, {}, {}),
         )
@@ -281,6 +287,23 @@ class ScreenshotTest {
         WanScreen(
             WanUiState(title = "Gateway", wan = WanConfig("ipip6", null, null, null, null, emptyList(), null, false, options)),
             WanActions({}, {}, {}, {}, {}),
+        )
+    }
+
+    @Test
+    fun packages() = capture("packages") {
+        PackagesScreen(
+            PackagesUiState(
+                title = "Router",
+                tab = PackageTab.AVAILABLE,
+                packages = listOf(
+                    PackageInfo("luci-app-sqm", "1.2.3-r1", "Smart queue management UI", 30000),
+                    PackageInfo("tcpdump-mini", "4.99.5-r1", "Network monitoring", 385024),
+                ),
+                installedNames = setOf("tcpdump-mini"),
+                storage = Storage("/overlay", 8_000_000, 4_500_000),
+            ),
+            PackagesActions({}, {}, {}, {}, {}, {}, {}, {}, {}),
         )
     }
 

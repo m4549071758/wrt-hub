@@ -185,6 +185,6 @@ class AdminViewModelsTest {
     fun `the router offers port forwarding, and static leases only with a dhcp server`() = runTest(main.dispatcher) {
         val vm = NodeDetailViewModel("router", session()) { FakeNodeOperations() }
         advanceUntilIdle()
-        assertEquals(AdminEntries(status = true, staticLeases = false, portForwards = true, wan = true, system = true), vm.state.value.admin)
+        assertEquals(AdminEntries(status = true, staticLeases = false, portForwards = true, wan = true, system = true, packages = true), vm.state.value.admin)
     }
 }

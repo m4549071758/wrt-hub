@@ -222,4 +222,27 @@
     <string name="error_leasetime">Enter a number with s, m, h, d or w, or infinite.</string>
     <string name="lan_ip_read_only">The LAN address itself is shown only; change it in LuCI.</string>
     <string name="dhcp_range_addresses">%1$s – %2$s, lease %3$s</string>
+    <string name="packages">Packages</string>
+    <string name="packages_body">Install and remove software</string>
+    <string name="packages_title">Packages on %1$s</string>
+    <string name="packages_installed">Installed</string>
+    <string name="packages_available">Available</string>
+    <string name="packages_installed_mark">Installed</string>
+    <string name="packages_count">%1$d packages</string>
+    <string name="storage_free">Free on %1$s: %2$s of %3$s</string>
+    <string name="packages_update_lists">Update package lists</string>
+    <string name="packages_size">Installed size: %1$s</string>
+    <string name="packages_depends">Depends on: %1$s</string>
+    <string name="packages_install">Install</string>
+    <string name="packages_remove">Remove</string>
+    <string name="packages_essential">The app or the system needs this package, so it cannot be removed here.</string>
+    <string name="packages_install_confirm">Install %1$s?</string>
+    <string name="packages_remove_confirm">Remove %1$s?</string>
+    <string name="packages_space">Needs %1$s; %2$s free.</string>
+    <string name="packages_too_big">There may not be enough space. Dependencies need more on top.</string>
+    <string name="packages_no_undo">This changes the node at once and cannot be undone automatically.</string>
+    <string name="packages_done">%1$s: done</string>
+    <string name="packages_failed">%1$s: failed</string>
+    <string name="packages_lists">Package lists</string>
+    <string name="close">Close</string>
 </resources>

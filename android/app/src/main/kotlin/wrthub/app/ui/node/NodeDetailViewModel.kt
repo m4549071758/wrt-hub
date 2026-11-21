@@ -37,6 +37,7 @@ data class AdminEntries(
     val wireless: Boolean = false,
     val wan: Boolean = false,
     val system: Boolean = false,
+    val packages: Boolean = false,
 )
 
 data class NodeDetailUiState(
@@ -129,5 +130,6 @@ private fun adminEntries(node: NodeState?): AdminEntries {
         wireless = snapshot.wireless.isNotEmpty(),
         wan = router,
         system = true,
+        packages = true,
     )
 }

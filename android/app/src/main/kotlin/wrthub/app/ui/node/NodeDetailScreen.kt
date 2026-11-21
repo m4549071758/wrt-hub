@@ -60,7 +60,7 @@ data class NodeDetailActions(
 )
 
 /** The LuCI-replacement pages reachable from a node. */
-enum class AdminPage { STATUS, LEASES, FORWARDS, WIRELESS, WAN, SYSTEM }
+enum class AdminPage { STATUS, LEASES, FORWARDS, WIRELESS, WAN, SYSTEM, PACKAGES }
 
 @Composable
 fun NodeDetailRoute(viewModel: NodeDetailViewModel, onBack: () -> Unit, onOpen: (AdminPage) -> Unit) {
@@ -112,6 +112,7 @@ fun NodeDetailScreen(state: NodeDetailUiState, actions: NodeDetailActions) {
                     if (state.admin.portForwards) AdminEntry(R.string.port_forwards, R.string.port_forwards_body) { actions.onOpen(AdminPage.FORWARDS) }
                     if (state.admin.wan) AdminEntry(R.string.wan, R.string.wan_body) { actions.onOpen(AdminPage.WAN) }
                     if (state.admin.system) AdminEntry(R.string.system, R.string.system_body) { actions.onOpen(AdminPage.SYSTEM) }
+                    if (state.admin.packages) AdminEntry(R.string.packages, R.string.packages_body) { actions.onOpen(AdminPage.PACKAGES) }
                 }
             }
             Section(stringResource(R.string.diagnostics)) {

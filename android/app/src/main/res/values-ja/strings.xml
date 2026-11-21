@@ -221,4 +221,27 @@
     <string name="error_leasetime">数字にs・m・h・d・wを付けるか、infiniteと入力してください。</string>
     <string name="lan_ip_read_only">LANのアドレス自体は表示だけです。変更はLuCIで行ってください。</string>
     <string name="dhcp_range_addresses">%1$s〜%2$s、リース%3$s</string>
+    <string name="packages">パッケージ</string>
+    <string name="packages_body">ソフトウェアの追加と削除</string>
+    <string name="packages_title">%1$sのパッケージ</string>
+    <string name="packages_installed">インストール済み</string>
+    <string name="packages_available">入手可能</string>
+    <string name="packages_installed_mark">インストール済み</string>
+    <string name="packages_count">%1$d個</string>
+    <string name="storage_free">%1$sの空き: %2$s / %3$s</string>
+    <string name="packages_update_lists">パッケージ一覧を更新</string>
+    <string name="packages_size">インストール後のサイズ: %1$s</string>
+    <string name="packages_depends">依存先: %1$s</string>
+    <string name="packages_install">インストール</string>
+    <string name="packages_remove">削除</string>
+    <string name="packages_essential">アプリかシステムに必要なパッケージのため、ここでは削除できません。</string>
+    <string name="packages_install_confirm">%1$sをインストールしますか？</string>
+    <string name="packages_remove_confirm">%1$sを削除しますか？</string>
+    <string name="packages_space">必要な容量%1$s、空き%2$s。</string>
+    <string name="packages_too_big">空き容量が足りない可能性があります。依存パッケージの分はさらに必要です。</string>
+    <string name="packages_no_undo">ノードがすぐに変更され、自動で元に戻す仕組みはありません。</string>
+    <string name="packages_done">%1$s: 完了</string>
+    <string name="packages_failed">%1$s: 失敗</string>
+    <string name="packages_lists">パッケージ一覧</string>
+    <string name="close">閉じる</string>
 </resources>

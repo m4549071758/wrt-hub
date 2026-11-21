@@ -47,7 +47,10 @@ class AppContainer(context: Context) {
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
     )
     val operationsFor: (NodeConfig) -> NodeOperations = { node -> DirectNodeOperations(DirectOperations(connections.node(node))) }
-    val adminFor: (NodeConfig) -> NodeAdmin = { node -> DirectNodeAdmin(DirectAdmin(connections.node(node))) }
+    val adminFor: (NodeConfig) -> NodeAdmin = { node ->
+        val direct = connections.node(node)
+        DirectNodeAdmin(DirectAdmin(direct, streamer = direct))
+    }
     val counters: CounterReading = DirectCounterReader(connections::node)
     val verifier: NodeVerifying = DirectNodeVerifier(http)
 }
