@@ -2,8 +2,8 @@ package wrthub.app
 
 import java.io.IOException
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -15,6 +15,7 @@ import wrthub.app.domain.CounterReading
 import wrthub.app.domain.NodeState
 import wrthub.app.domain.Rate
 import wrthub.app.domain.SiteLoading
+import wrthub.app.domain.SiteSession
 import wrthub.app.ui.home.HomeViewModel
 import wrthub.core.Fixtures
 import wrthub.core.model.DeviceCounters
@@ -25,52 +26,25 @@ class HomeViewModelTest {
     val main = MainDispatcherRule()
 
     private val cabin = SiteConfig("cabin", "Cabin", listOf(node("router"), node("ap")))
-    private val home = SiteConfig("home", "Home", listOf(node("router")))
 
-    private fun loader(unreachable: Set<String> = emptySet()) = SiteLoading { site ->
-        val snapshots = if (site.id == "cabin") Fixtures.meshSite else Fixtures.wiredSite
-        site.nodes.map { n ->
-            if (n.id in unreachable) NodeState.Unreachable(n, "timeout") else NodeState.Online(n, snapshots.getValue(n.id))
-        }
+    private fun TestScope.viewModel(counters: CounterReading): HomeViewModel {
+        val loader = SiteLoading { site -> site.nodes.map { NodeState.Online(it, Fixtures.meshSite.getValue(it.id)) } }
+        val session = SiteSession(FakeSiteRepository(listOf(cabin)), loader, appScope())
+        return HomeViewModel(session, counters) { testScheduler.currentTime }
     }
 
-    private fun viewModel(
-        repository: FakeSiteRepository = FakeSiteRepository(listOf(home, cabin), "cabin"),
-        loader: SiteLoading = loader(),
-        counters: CounterReading = CounterReading { emptyMap() },
-    ) = HomeViewModel(repository, loader, counters) { main.dispatcher.scheduler.currentTime }
-
     @Test
-    fun `loads the nodes of the selected site`() = runTest(main.dispatcher) {
-        val vm = viewModel()
+    fun `state mirrors the shared session`() = runTest(main.dispatcher) {
+        val vm = viewModel { emptyMap() }
         advanceUntilIdle()
         assertEquals(cabin, vm.state.value.site)
         assertEquals(listOf("router", "ap"), vm.state.value.nodes.map { it.config.id })
-        assertEquals(false, vm.state.value.loading)
-    }
-
-    @Test
-    fun `unreachable node is kept next to the reachable ones`() = runTest(main.dispatcher) {
-        val vm = viewModel(loader = loader(unreachable = setOf("ap")))
-        advanceUntilIdle()
-        assertIs<NodeState.Online>(vm.state.value.nodes[0])
-        assertEquals(NodeState.Unreachable(cabin.nodes[1], "timeout"), vm.state.value.nodes[1])
-    }
-
-    @Test
-    fun `switching site reloads with that site's nodes`() = runTest(main.dispatcher) {
-        val vm = viewModel()
-        advanceUntilIdle()
-        vm.select("home")
-        advanceUntilIdle()
-        assertEquals(home, vm.state.value.site)
-        assertEquals(listOf("router"), vm.state.value.nodes.map { it.config.id })
     }
 
     @Test
     fun `realtime polls the router's WAN counters until stopped`() = runTest(main.dispatcher) {
         var reads = 0
-        val vm = viewModel(counters = CounterReading { reads++; mapOf("wan" to DeviceCounters(1000L * reads, 500L * reads)) })
+        val vm = viewModel { reads++; mapOf("wan" to DeviceCounters(1000L * reads, 500L * reads)) }
         advanceUntilIdle()
         vm.setRealtime(true)
         runCurrent()
@@ -84,7 +58,7 @@ class HomeViewModelTest {
 
     @Test
     fun `realtime failure is reported`() = runTest(main.dispatcher) {
-        val vm = viewModel(counters = CounterReading { throw IOException("reset") })
+        val vm = viewModel { throw IOException("reset") }
         advanceUntilIdle()
         vm.setRealtime(true)
         runCurrent()

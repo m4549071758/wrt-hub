@@ -41,7 +41,7 @@ import wrthub.app.domain.NodeState
 import wrthub.app.domain.stripModel
 import wrthub.core.model.WirelessMode
 import wrthub.core.model.wirelessInterfaces
-import wrthub.core.topology.buildTopology
+import wrthub.app.domain.siteTopology
 
 @Composable
 fun HomeRoute(viewModel: HomeViewModel, onAddSite: () -> Unit) {
@@ -83,7 +83,7 @@ fun HomeScreen(state: HomeUiState, onSelectSite: (String) -> Unit, onRefresh: ()
 /** Wireless clients per node; nodes without an AP interface are absent from the map. */
 private fun wifiClientCounts(nodes: List<NodeState>): Map<String, Int> {
     val online = nodes.filterIsInstance<NodeState.Online>()
-    val clients = buildTopology(online.associate { it.config.id to it.snapshot }).clients
+    val clients = siteTopology(nodes).clients
     return online
         .filter { node -> node.snapshot.wirelessInterfaces().any { it.mode == WirelessMode.AP } }
         .associate { node -> node.config.id to clients.count { it.attachedTo == node.config.id } }

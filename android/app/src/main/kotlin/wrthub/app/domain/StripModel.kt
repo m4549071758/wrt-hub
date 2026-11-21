@@ -1,8 +1,6 @@
 package wrthub.app.domain
 
 import wrthub.core.model.netInterfaces
-import wrthub.core.model.wanDevice
-import wrthub.core.topology.buildTopology
 
 data class StripNode(val id: String, val label: String, val online: Boolean)
 
@@ -15,11 +13,10 @@ data class StripModel(val wanAddress: String?, val wanUp: Boolean, val router: S
 
 /** Internet → router → every other node, with the mesh link to the router when there is one. */
 fun stripModel(nodes: List<NodeState>): StripModel {
-    val online = nodes.filterIsInstance<NodeState.Online>()
-    val router = online.firstOrNull { it.snapshot.wanDevice() != null }
+    val router = routerOf(nodes)
     val routerId = router?.config?.id
     val wan = router?.snapshot?.netInterfaces()?.firstOrNull { it.name == "wan" }
-    val links = buildTopology(online.associate { it.config.id to it.snapshot }).links
+    val links = siteTopology(nodes).links
     return StripModel(
         wanAddress = wan?.ipv4?.firstOrNull(),
         wanUp = wan?.up == true,

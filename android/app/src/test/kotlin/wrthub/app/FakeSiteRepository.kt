@@ -1,6 +1,10 @@
 package wrthub.app
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
@@ -10,6 +14,12 @@ import wrthub.app.data.SiteRepository
 import wrthub.app.data.resolveSelected
 import wrthub.app.data.upserted
 import wrthub.app.data.withoutNode
+
+/**
+ * A scope for app-wide objects such as SiteSession: it runs on the test scheduler so advanceUntilIdle drives it
+ * (work in backgroundScope is skipped by advanceUntilIdle), and runTest does not wait for its endless collectors.
+ */
+fun TestScope.appScope(): CoroutineScope = CoroutineScope(StandardTestDispatcher(testScheduler) + SupervisorJob())
 
 class FakeSiteRepository(sites: List<SiteConfig> = emptyList(), selected: String? = null) : SiteRepository {
     private val sitesFlow = MutableStateFlow(sites)
