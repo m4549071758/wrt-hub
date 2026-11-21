@@ -54,6 +54,17 @@ class DirectCollectorTest {
     }
 
     @Test
+    fun `a node without Wi-Fi does not ask usteer and reports no denial`() = runTest {
+        val router = fakeRouter(Fixtures.snapshot("wired-site/router.json"))
+        val luciAcl = FakeUbus { obj, method, args ->
+            if (obj == "usteer") throw UbusException(UbusException.RPC_ACCESS_DENIED, "Access denied") else router.handler(obj, method, args)
+        }
+        val collected = DirectCollector(luciAcl).collect()
+        assertTrue(collected.deniedCalls.isEmpty())
+        assertTrue(luciAcl.calls.none { it.obj == "usteer" })
+    }
+
+    @Test
     fun `falls back to iwinfo devices when luci-rpc is not installed`() = runTest {
         val router = fakeRouter(Fixtures.snapshot("mesh-site/ap.json"))
         val withoutLuci = FakeUbus { obj, method, args ->

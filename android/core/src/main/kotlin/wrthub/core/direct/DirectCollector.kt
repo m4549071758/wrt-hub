@@ -69,7 +69,9 @@ class DirectCollector(private val ubus: UbusCaller, private val clock: () -> Lon
             wireless = ifnames.map { wireless(it) },
             dhcpLeases = optional("luci-rpc", "getDHCPLeases"),
             hostHints = optional("luci-rpc", "getHostHints"),
-            usteerClients = optional("usteer", "get_clients"),
+            // uhttpd checks the ACL before the object exists, so asking a node without Wi-Fi (and without usteer)
+            // returns "access denied" instead of "not found"; usteer only matters where there are APs.
+            usteerClients = if (ifnames.isEmpty()) null else optional("usteer", "get_clients"),
             // LuCI grants exec of nlbw only with luci-app-nlbwmon, so a denial here just means "not installed".
             nlbw = optional("file", "exec", NLBW_ARGS, reportDenied = false)?.let(::nlbwOutput),
             blockedClients = optional("uci", "get", buildJsonObject { put("config", "firewall") })?.let(::blockedMacs).orEmpty(),
