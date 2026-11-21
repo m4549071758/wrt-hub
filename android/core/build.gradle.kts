@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
+    `java-test-fixtures`
 }
 
 java {
@@ -24,6 +25,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.okhttp.tls)
+    testFixturesImplementation(libs.kotlinx.serialization.json)
 }
 
 tasks.test {

@@ -87,11 +87,16 @@ fun Snapshot.netInterfaces(): List<NetInterface> =
 
 fun Snapshot.lanIpv4(): String? = netInterfaces().firstOrNull { it.name == "lan" }?.ipv4?.firstOrNull()
 
-fun Snapshot.deviceCounters(): Map<String, DeviceCounters> =
+fun parseDeviceCounters(devices: JsonObject): Map<String, DeviceCounters> =
     devices.entries.mapNotNull { (name, value) ->
         val stats = value.asObject()?.obj("statistics") ?: return@mapNotNull null
         name to DeviceCounters(stats.long("rx_bytes") ?: 0, stats.long("tx_bytes") ?: 0)
     }.toMap()
+
+fun Snapshot.deviceCounters(): Map<String, DeviceCounters> = parseDeviceCounters(devices)
+
+/** The L3 device of the `wan` interface while it is up; null on nodes without WAN such as dumb APs. */
+fun Snapshot.wanDevice(): String? = netInterfaces().firstOrNull { it.name == "wan" && it.up }?.device
 
 fun Snapshot.wirelessInterfaces(): List<WirelessInterface> = wireless.map { it.toInterface(devices) }
 

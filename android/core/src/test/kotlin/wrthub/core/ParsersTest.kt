@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.test.assertNull
 import wrthub.core.model.WirelessMode
 import wrthub.core.model.deviceCounters
 import wrthub.core.model.hostNames
@@ -13,6 +14,7 @@ import wrthub.core.model.netInterfaces
 import wrthub.core.model.summary
 import wrthub.core.model.usteerSightings
 import wrthub.core.model.wirelessInterfaces
+import wrthub.core.model.wanDevice
 
 class ParsersTest {
     private val router = Fixtures.snapshot("mesh-site/router.json")
@@ -67,5 +69,12 @@ class ParsersTest {
         val sightings = router.usteerSightings().values.flatten()
         assertTrue(sightings.any { it.nodeAddress == null })
         assertTrue(sightings.any { it.nodeAddress != null && it.apObject.startsWith("hostapd.") })
+    }
+
+    @Test
+    fun `wan device is the l3 device of the up wan interface`() {
+        assertEquals("wan", router.wanDevice())
+        assertEquals("ipip6-wan", home.wanDevice())
+        assertNull(Fixtures.snapshot("mesh-site/ap.json").wanDevice())
     }
 }
