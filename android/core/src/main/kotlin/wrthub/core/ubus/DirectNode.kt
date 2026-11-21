@@ -1,5 +1,6 @@
 package wrthub.core.ubus
 
+import java.io.InputStream
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonObject
@@ -14,13 +15,16 @@ class DirectNode(
     private val username: String,
     private val password: String,
     private val clock: () -> Long = System::currentTimeMillis,
-) : UbusCaller {
+) : UbusCaller, CommandStreamer {
     private val mutex = Mutex()
     private var session: UbusSession? = null
     private var lastUsedAt = 0L
 
     override suspend fun call(obj: String, method: String, args: JsonObject): JsonObject? =
         client.call(activeSession(), obj, method, args)
+
+    override suspend fun <T> stream(command: String, params: List<String>, read: (InputStream) -> T): T =
+        client.cgiExec(activeSession(), cgiCommandLine(command, params), read)
 
     private suspend fun activeSession(): UbusSession = mutex.withLock {
         val now = clock()

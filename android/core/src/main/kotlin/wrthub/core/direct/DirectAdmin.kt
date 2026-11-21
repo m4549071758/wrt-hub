@@ -34,6 +34,15 @@ import wrthub.core.admin.validate
 import wrthub.core.admin.validated
 import wrthub.core.json.asObject
 import wrthub.core.admin.APP_SECTION_PREFIX
+import wrthub.core.admin.PackageInfo
+import wrthub.core.admin.PackageResult
+import wrthub.core.admin.Storage
+import wrthub.core.admin.isEssentialPackage
+import wrthub.core.admin.parsePackageResult
+import wrthub.core.admin.parsePackages
+import wrthub.core.admin.parseStorage
+import wrthub.core.admin.requireValidPackageName
+import wrthub.core.ubus.CommandStreamer
 import wrthub.core.admin.Connection
 import wrthub.core.admin.ConntrackUsage
 import wrthub.core.admin.DhcpConfig
@@ -66,6 +75,7 @@ private const val PING_PATH = "/bin/ping"
 
 /** Probed by the router after a WAN change; an anycast address that answers ping from anywhere. */
 private const val WAN_PROBE = "1.1.1.1"
+private const val PACKAGE_MANAGER = "/usr/libexec/package-manager-call"
 
 /**
  * The LuCI-replacement reads and writes of one node, using only calls LuCI's own ACLs grant.
@@ -75,6 +85,7 @@ class DirectAdmin(
     private val ubus: UbusCaller,
     private val rollbackSeconds: Int = 30,
     private val newId: () -> String = { UUID.randomUUID().toString().replace("-", "").take(12) },
+    private val streamer: CommandStreamer? = null,
 ) {
     suspend fun syslog(lines: Int = 500): List<LogLine> =
         parseSyslog(
@@ -275,6 +286,29 @@ class DirectAdmin(
         )
         ubus.exec("/etc/init.d/cron", listOf("reload")).successOrThrow("cron reload")
     }
+
+    /** Package lists are too large for ubus, so they come through cgi-io like in LuCI. */
+    suspend fun installedPackages(): List<PackageInfo> = streamer().stream(PACKAGE_MANAGER, listOf("list-installed"), ::parsePackages)
+
+    suspend fun availablePackages(): List<PackageInfo> = streamer().stream(PACKAGE_MANAGER, listOf("list-available"), ::parsePackages)
+
+    /** Downloads the package indexes; slow on a thin uplink. */
+    suspend fun updatePackageLists(): PackageResult = packageManager("update")
+
+    suspend fun installPackage(name: String): PackageResult = packageManager("install", requireValidPackageName(name))
+
+    /** Dependents make apk refuse; that refusal is reported, the app never forces removal. */
+    suspend fun removePackage(name: String): PackageResult {
+        require(!isEssentialPackage(requireValidPackageName(name))) { "$name is needed by the app or the system" }
+        return packageManager("remove", name)
+    }
+
+    suspend fun storage(): Storage? = parseStorage(ubus.call("luci", "getMountPoints") ?: noData("luci.getMountPoints"))
+
+    private suspend fun packageManager(vararg args: String): PackageResult =
+        parsePackageResult(ubus.exec(PACKAGE_MANAGER, args.toList()).successOrThrow("package-manager-call ${args.first()}"))
+
+    private fun streamer(): CommandStreamer = requireNotNull(streamer) { "this connection cannot stream command output" }
 
     private enum class EditMode { CREATE, UPDATE, UPSERT }
 

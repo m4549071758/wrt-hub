@@ -1,6 +1,8 @@
 package wrthub.core.ubus
 
 import java.io.IOException
+import java.io.InputStream
+import java.net.URLEncoder
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -44,6 +46,28 @@ class UbusHttpClient(private val endpoint: HttpUrl, private val http: OkHttpClie
     suspend fun call(session: UbusSession, obj: String, method: String, args: JsonObject = EMPTY_ARGS): JsonObject? =
         invoke(session.id, obj, method, args)
 
+    /**
+     * Streams [commandLine]'s output from cgi-io next to /ubus. cgi-io checks the same ACL as `file.exec`
+     * (the whole command line must be granted) and answers 403 when it is not.
+     */
+    suspend fun <T> cgiExec(session: UbusSession, commandLine: String, read: (InputStream) -> T): T {
+        val url = endpoint.newBuilder().encodedPath("/cgi-bin/cgi-exec").build()
+        // Built by hand to encode like LuCI's encodeURIComponent (space as %20, never '+').
+        val form = listOf("sessionid" to session.id, "command" to commandLine, "stderr" to "0")
+            .joinToString("&") { (key, value) -> "$key=${uriComponent(value)}" }
+        val request = Request.Builder().url(url).post(form.toRequestBody(FORM_MEDIA_TYPE)).build()
+        return withContext(Dispatchers.IO) {
+            http.newCall(request).execute().use { response ->
+                when (response.code) {
+                    200 -> read(response.body.byteStream())
+                    403 -> throw UbusException(UbusException.PERMISSION_DENIED, "cgi-exec: $commandLine is not permitted")
+                    404 -> throw UbusException(UbusException.NOT_FOUND, "cgi-exec: not available on this node")
+                    else -> throw IOException("HTTP ${response.code} from $url")
+                }
+            }
+        }
+    }
+
     private suspend fun invoke(sid: String, obj: String, method: String, args: JsonObject): JsonObject? {
         val body = buildJsonObject {
             put("jsonrpc", "2.0")
@@ -79,5 +103,9 @@ class UbusHttpClient(private val endpoint: HttpUrl, private val http: OkHttpClie
         const val ANONYMOUS_SESSION = "00000000000000000000000000000000"
         const val DEFAULT_TIMEOUT_SECONDS = 300L
         private val JSON_MEDIA_TYPE = "application/json".toMediaType()
+        private val FORM_MEDIA_TYPE = "application/x-www-form-urlencoded".toMediaType()
     }
 }
+
+/** `encodeURIComponent`: everything but unreserved characters is %-escaped, so '+' stays a literal plus. */
+private fun uriComponent(value: String): String = URLEncoder.encode(value, Charsets.UTF_8).replace("+", "%20")
