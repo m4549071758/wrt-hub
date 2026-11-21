@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -28,8 +30,12 @@ import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 import wrthub.app.AppContainer
 import wrthub.app.R
+import wrthub.app.ui.clients.ClientsRoute
+import wrthub.app.ui.clients.ClientsViewModel
 import wrthub.app.ui.home.HomeRoute
 import wrthub.app.ui.home.HomeViewModel
+import wrthub.app.ui.mesh.MeshRoute
+import wrthub.app.ui.mesh.MeshViewModel
 import wrthub.app.ui.sites.AddNodeRoute
 import wrthub.app.ui.sites.AddNodeViewModel
 import wrthub.app.ui.sites.SitesRoute
@@ -37,6 +43,12 @@ import wrthub.app.ui.sites.SitesViewModel
 
 @Serializable
 data object HomeDestination
+
+@Serializable
+data object ClientsDestination
+
+@Serializable
+data object MeshDestination
 
 @Serializable
 data object SitesDestination
@@ -61,6 +73,18 @@ fun WrtHubApp(container: AppContainer) {
                         label = { Text(stringResource(R.string.tab_home)) },
                     )
                     NavigationBarItem(
+                        selected = destination?.hasRoute<ClientsDestination>() == true,
+                        onClick = { navController.switchTab(ClientsDestination) },
+                        icon = { Icon(Icons.Default.Person, contentDescription = null) },
+                        label = { Text(stringResource(R.string.tab_clients)) },
+                    )
+                    NavigationBarItem(
+                        selected = destination?.hasRoute<MeshDestination>() == true,
+                        onClick = { navController.switchTab(MeshDestination) },
+                        icon = { Icon(Icons.Default.Share, contentDescription = null) },
+                        label = { Text(stringResource(R.string.tab_mesh)) },
+                    )
+                    NavigationBarItem(
                         selected = destination?.hasRoute<SitesDestination>() == true,
                         onClick = { navController.switchTab(SitesDestination) },
                         icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
@@ -73,9 +97,19 @@ fun WrtHubApp(container: AppContainer) {
         NavHost(navController, startDestination = HomeDestination, modifier = Modifier.padding(padding)) {
             composable<HomeDestination> {
                 val vm: HomeViewModel = viewModel(
-                    factory = viewModelFactory { initializer { HomeViewModel(container.siteStore, container.siteLoader, container.counters) } },
+                    factory = viewModelFactory { initializer { HomeViewModel(container.session, container.counters) } },
                 )
                 HomeRoute(vm, onAddSite = { navController.navigate(AddNodeDestination()) })
+            }
+            composable<ClientsDestination> {
+                val vm: ClientsViewModel = viewModel(
+                    factory = viewModelFactory { initializer { ClientsViewModel(container.session, container.blockingFor) } },
+                )
+                ClientsRoute(vm)
+            }
+            composable<MeshDestination> {
+                val vm: MeshViewModel = viewModel(factory = viewModelFactory { initializer { MeshViewModel(container.session) } })
+                MeshRoute(vm)
             }
             composable<SitesDestination> {
                 val vm: SitesViewModel = viewModel(factory = viewModelFactory { initializer { SitesViewModel(container.siteStore) } })

@@ -15,7 +15,16 @@ import org.robolectric.annotation.GraphicsMode
 import wrthub.app.data.SiteConfig
 import wrthub.app.domain.NodeState
 import wrthub.app.domain.Rate
+import wrthub.app.domain.siteTopology
+import wrthub.app.ui.clients.ClientDetail
+import wrthub.app.ui.clients.ClientsScreen
+import wrthub.app.ui.clients.ClientsUiState
 import wrthub.app.ui.home.HomeScreen
+import wrthub.app.ui.mesh.MeshEdge
+import wrthub.app.ui.mesh.MeshNode
+import wrthub.app.ui.mesh.MeshScreen
+import wrthub.app.ui.mesh.MeshSelection
+import wrthub.app.ui.mesh.MeshUiState
 import wrthub.app.ui.home.HomeUiState
 import wrthub.app.ui.sites.AddNodeActions
 import wrthub.app.ui.sites.AddNodeError
@@ -81,4 +90,35 @@ class ScreenshotTest {
 
     @Test
     fun sites() = capture("sites") { SitesScreen(listOf(home, cabin), {}, {}, {}, { _, _ -> }) }
+
+    private val topology = siteTopology(online)
+    private val labels = mapOf("router" to "Router", "ap" to "Living AP")
+
+    @Test
+    fun clients() = capture("clients") {
+        ClientsScreen(ClientsUiState(site = cabin, nodeLabels = labels, clients = topology.clients), {}, {}, { _, _ -> }, {})
+    }
+
+    @Test
+    fun clientDetail() = capture("client_detail") {
+        val client = topology.clients.first { it.sightings.size == 2 }
+        ClientDetail(client, labels, busy = false) { _, _ -> }
+    }
+
+    private val meshState = MeshUiState(
+        site = cabin,
+        nodes = listOf(
+            MeshNode("router", "Router", true, topology.clients.filter { it.attachedTo == "router" }),
+            MeshNode("ap", "Living AP", true, topology.clients.filter { it.attachedTo == "ap" }),
+        ),
+        edges = listOf(MeshEdge("ap", "router", 1_003_176.0, 856_400.0, -61)),
+    )
+
+    @Test
+    fun meshLight() = capture("mesh_light") { MeshScreen(meshState) {} }
+
+    @Test
+    fun meshDarkEdgeSelected() = capture("mesh_dark_edge", dark = true) {
+        MeshScreen(meshState.copy(selection = MeshSelection.Edge("ap", "router"))) {}
+    }
 }
