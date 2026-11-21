@@ -49,6 +49,14 @@ fun NodeCard(state: NodeState, wifiClients: Int?, modifier: Modifier = Modifier)
                     InfoRow(R.string.load, String.format(Locale.ROOT, "%.2f", summary.load1))
                     InfoRow(R.string.memory, formatUsedPercent(summary.memoryAvailableBytes, summary.memoryTotalBytes))
                     if (wifiClients != null) InfoRow(R.string.wifi_clients, wifiClients.toString())
+                    if (state.snapshot.deniedCalls.isNotEmpty()) {
+                        Text(
+                            stringResource(R.string.denied_calls, state.snapshot.deniedCalls.joinToString(", ")),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 8.dp),
+                        )
+                    }
                 }
                 is NodeState.Unreachable -> Text(
                     stringResource(R.string.node_unreachable, state.reason),

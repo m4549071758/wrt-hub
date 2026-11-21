@@ -12,6 +12,7 @@
     <string name="upload">アップロード</string>
     <string name="realtime_unavailable">リアルタイム帯域を取得できません: %1$s</string>
     <string name="node_unreachable">接続できません: %1$s</string>
+    <string name="denied_calls">ルーターのrpcd ACLで許可されていないため取得できません: %1$s</string>
     <string name="model">機種</string>
     <string name="firmware">ファームウェア</string>
     <string name="uptime">稼働時間</string>

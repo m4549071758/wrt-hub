@@ -24,6 +24,9 @@ class FakeUbus(val handler: suspend (obj: String, method: String, args: JsonObje
 
 fun notFound(): Nothing = throw UbusException(UbusException.NOT_FOUND, "not found")
 
+/** Stands in for the Wi-Fi key that luci-rpc getWirelessDevices returns with the wireless config. */
+const val FAKE_WIFI_KEY = "fixture-wifi-key"
+
 /** A router whose ubus answers are exactly the raw responses stored in [snapshot]. */
 fun fakeRouter(snapshot: Snapshot): FakeUbus = FakeUbus { obj, method, args ->
     val device = args.str("device")
@@ -33,6 +36,20 @@ fun fakeRouter(snapshot: Snapshot): FakeUbus = FakeUbus { obj, method, args ->
         "network.interface.dump" -> snapshot.interfaces
         "network.device.status" -> snapshot.devices
         "iwinfo.devices" -> buildJsonObject { putJsonArray("devices") { snapshot.wireless.forEach { add(it.ifname) } } }
+        "luci-rpc.getWirelessDevices" -> buildJsonObject {
+            putJsonObject("radio0") {
+                putJsonArray("interfaces") {
+                    snapshot.wireless.forEach { w ->
+                        add(
+                            buildJsonObject {
+                                put("ifname", w.ifname)
+                                putJsonObject("config") { put("key", FAKE_WIFI_KEY) }
+                            },
+                        )
+                    }
+                }
+            }
+        }
         "iwinfo.info" -> snapshot.wireless.first { it.ifname == device }.info
         "iwinfo.assoclist" -> snapshot.wireless.first { it.ifname == device }.assoclist
         "luci-rpc.getDHCPLeases" -> snapshot.dhcpLeases ?: notFound()

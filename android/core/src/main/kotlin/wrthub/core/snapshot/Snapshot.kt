@@ -29,6 +29,8 @@ data class Snapshot(
     val usteerClients: JsonObject? = null,
     val nlbw: JsonObject? = null,
     val blockedClients: List<String> = emptyList(),
+    /** ubus calls (`object.method`) that the router's ACL refused, so their data is missing on purpose. */
+    val deniedCalls: List<String> = emptyList(),
 )
 
 class UnsupportedSnapshotException(version: Int) :

@@ -23,26 +23,37 @@ import wrthub.core.ubus.call
 const val BLOCK_SECTION_PREFIX = "wrthub_block_"
 private const val NLBW_PATH = "/usr/sbin/nlbw"
 
-private val ABSENT_CODES = setOf(
+private val MISSING_CODES = setOf(
     UbusException.METHOD_NOT_FOUND,
     UbusException.NOT_FOUND,
-    UbusException.PERMISSION_DENIED,
     UbusException.RPC_OBJECT_NOT_FOUND,
     UbusException.RPC_METHOD_NOT_FOUND,
-    UbusException.RPC_ACCESS_DENIED,
 )
 
-/** Runs [block] and maps "not installed / not permitted" to null; every other failure propagates. */
-internal suspend fun <T> optional(block: suspend () -> T?): T? =
-    try {
-        block()
-    } catch (e: UbusException) {
-        if (e.code in ABSENT_CODES) null else throw e
-    }
+private val DENIED_CODES = setOf(UbusException.PERMISSION_DENIED, UbusException.RPC_ACCESS_DENIED)
 
+/**
+ * Collects one node over ubus using only calls that LuCI's own rpcd ACLs grant, so a stock LuCI image works with
+ * the root login. Calls whose object is not installed yield null; calls the ACL refuses yield null and are listed
+ * in [Snapshot.deniedCalls]; every other failure propagates.
+ */
 class DirectCollector(private val ubus: UbusCaller, private val clock: () -> Long = System::currentTimeMillis) {
     suspend fun collect(): Snapshot {
-        val ifnames = optional { ubus.call("iwinfo", "devices") }?.arr("devices").orEmpty().mapNotNull { it.asString() }
+        val denied = mutableListOf<String>()
+
+        suspend fun optional(obj: String, method: String, args: JsonObject = JsonObject(emptyMap())): JsonObject? =
+            try {
+                ubus.call(obj, method, args)
+            } catch (e: UbusException) {
+                when (e.code) {
+                    in MISSING_CODES -> null
+                    in DENIED_CODES -> null.also { denied += "$obj.$method" }
+                    else -> throw e
+                }
+            }
+
+        val ifnames = optional("luci-rpc", "getWirelessDevices")?.let(::wirelessIfnames)
+            ?: optional("iwinfo", "devices")?.arr("devices").orEmpty().mapNotNull { it.asString() }
         return Snapshot(
             schemaVersion = SNAPSHOT_SCHEMA_VERSION,
             collectedAt = clock(),
@@ -51,12 +62,12 @@ class DirectCollector(private val ubus: UbusCaller, private val clock: () -> Lon
             interfaces = required("network.interface", "dump"),
             devices = required("network.device", "status"),
             wireless = ifnames.map { wireless(it) },
-            dhcpLeases = optional { ubus.call("luci-rpc", "getDHCPLeases") },
-            hostHints = optional { ubus.call("luci-rpc", "getHostHints") },
-            usteerClients = optional { ubus.call("usteer", "get_clients") },
-            nlbw = optional { nlbw() },
-            blockedClients = optional { ubus.call("uci", "get", buildJsonObject { put("config", "firewall") }) }
-                ?.let(::blockedMacs).orEmpty(),
+            dhcpLeases = optional("luci-rpc", "getDHCPLeases"),
+            hostHints = optional("luci-rpc", "getHostHints"),
+            usteerClients = optional("usteer", "get_clients"),
+            nlbw = optional("file", "exec", NLBW_ARGS)?.let(::nlbwOutput),
+            blockedClients = optional("uci", "get", buildJsonObject { put("config", "firewall") })?.let(::blockedMacs).orEmpty(),
+            deniedCalls = denied.toList(),
         )
     }
 
@@ -68,19 +79,23 @@ class DirectCollector(private val ubus: UbusCaller, private val clock: () -> Lon
         val info = ubus.call("iwinfo", "info", device)
             ?: throw UbusException(UbusException.NO_DATA, "iwinfo.info returned no data for $ifname")
         val assoclist = ubus.call("iwinfo", "assoclist", device) ?: JsonObject(mapOf("results" to JsonArray(emptyList())))
-        val hostapd = if (info.str("mode") == "Master") optional { ubus.call("hostapd.$ifname", "get_clients") } else null
-        return WirelessRaw(ifname, info, assoclist, hostapd)
+        return WirelessRaw(ifname, info, assoclist)
     }
+}
 
-    private suspend fun nlbw(): JsonObject? {
-        val args = buildJsonObject {
-            put("command", NLBW_PATH)
-            putJsonArray("params") { listOf("-c", "json", "-g", "mac").forEach { add(it) } }
-        }
-        val result = ubus.call("file", "exec", args) ?: return null
-        if (result.int("code") != 0) return null
-        return result.str("stdout")?.let { Json.parseToJsonElement(it) as? JsonObject }
-    }
+/** Only the interface names are kept: the rest of the response is the wireless config, including the Wi-Fi keys. */
+private fun wirelessIfnames(devices: JsonObject): List<String> =
+    devices.values.flatMap { radio -> radio.asObject()?.arr("interfaces").orEmpty() }
+        .mapNotNull { it.asObject()?.str("ifname") }
+
+private val NLBW_ARGS = buildJsonObject {
+    put("command", NLBW_PATH)
+    putJsonArray("params") { listOf("-c", "json", "-g", "mac").forEach { add(it) } }
+}
+
+private fun nlbwOutput(result: JsonObject): JsonObject? {
+    if (result.int("code") != 0) return null
+    return result.str("stdout")?.let { Json.parseToJsonElement(it) as? JsonObject }
 }
 
 fun blockedMacs(uciGet: JsonObject): List<String> =

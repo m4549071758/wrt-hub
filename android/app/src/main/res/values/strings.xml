@@ -13,6 +13,7 @@
     <string name="upload">Upload</string>
     <string name="realtime_unavailable">Live rate unavailable: %1$s</string>
     <string name="node_unreachable">Unreachable: %1$s</string>
+    <string name="denied_calls">Not permitted by the router\'s rpcd ACL: %1$s</string>
     <string name="model">Model</string>
     <string name="firmware">Firmware</string>
     <string name="uptime">Uptime</string>
