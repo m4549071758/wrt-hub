@@ -115,7 +115,7 @@ class AddNodeViewModelTest {
         val repository = FakeSiteRepository(listOf(existing))
         val vm = viewModel("s1", repository, FakeVerifier())
         assertEquals(false, vm.state.value.needsSiteName)
-        vm.fill("192.168.10.2", siteName = "")
+        vm.fill("192.168.1.2", siteName = "")
         vm.submit()
         advanceUntilIdle()
         assertEquals(listOf("n0", "id1"), repository.current.single().nodes.map { it.id })

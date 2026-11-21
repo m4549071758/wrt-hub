@@ -66,7 +66,7 @@ class ScreenshotTest {
     @Test
     fun addSiteWithError() = capture("add_site_error") {
         AddNodeScreen(
-            AddNodeUiState(needsSiteName = true, siteName = "Cabin", label = "Router", url = "192.168.10.1", error = AddNodeError.LOGIN_FAILED),
+            AddNodeUiState(needsSiteName = true, siteName = "Cabin", label = "Router", url = "192.168.1.1", error = AddNodeError.LOGIN_FAILED),
             noActions,
         )
     }
@@ -74,7 +74,7 @@ class ScreenshotTest {
     @Test
     fun certificateDialog() = capture("add_site_certificate") {
         AddNodeScreen(
-            AddNodeUiState(needsSiteName = true, url = "https://192.168.10.1", step = AddNodeStep.ConfirmCertificate("AB:CD:".repeat(15) + "EF")),
+            AddNodeUiState(needsSiteName = true, url = "https://192.168.1.1", step = AddNodeStep.ConfirmCertificate("AB:CD:".repeat(15) + "EF")),
             noActions,
         )
     }
