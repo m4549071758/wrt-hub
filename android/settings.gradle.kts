@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "wrt-hub"
-include(":core")
+include(":core", ":app")

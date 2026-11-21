@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">wrt-hub</string>
+    <string name="tab_home">Home</string>
+    <string name="tab_sites">Sites</string>
+    <string name="add_site">Add site</string>
+    <string name="add_node">Add node</string>
+    <string name="no_sites_title">No sites yet</string>
+    <string name="no_sites_body">Add your OpenWrt router to get started.</string>
+    <string name="internet">Internet</string>
+    <string name="no_router">No router</string>
+    <string name="download">Download</string>
+    <string name="upload">Upload</string>
+    <string name="realtime_unavailable">Live rate unavailable: %1$s</string>
+    <string name="node_unreachable">Unreachable: %1$s</string>
+    <string name="model">Model</string>
+    <string name="firmware">Firmware</string>
+    <string name="uptime">Uptime</string>
+    <string name="load">Load</string>
+    <string name="memory">Memory used</string>
+    <string name="wifi_clients">Wi-Fi clients</string>
+    <string name="site_name">Site name</string>
+    <string name="node_label">Node name</string>
+    <string name="node_url">Address</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="connect">Connect</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="trust">Trust</string>
+    <string name="certificate_title">Self-signed certificate</string>
+    <string name="certificate_body">This router presented a certificate that no authority vouches for. Trust it only on a network you control. Its SHA-256 fingerprint is:</string>
+    <string name="error_missing_fields">Fill in every field.</string>
+    <string name="error_invalid_url">The address is not a valid http(s) URL or host.</string>
+    <string name="error_login_failed">Wrong username or password.</string>
+    <string name="error_unreachable">Could not connect: %1$s</string>
+    <string name="error_certificate_rejected">Certificate not trusted; nothing was saved.</string>
+    <string name="error_site_not_found">The site was deleted meanwhile.</string>
+    <string name="remove_site_title">Delete %1$s?</string>
+    <string name="remove_site_body">Its nodes and saved passwords are removed from this phone.</string>
+    <string name="pinned_certificate">Pinned certificate</string>
+</resources>

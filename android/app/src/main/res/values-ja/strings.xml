@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_home">ホーム</string>
+    <string name="tab_sites">拠点</string>
+    <string name="add_site">拠点を追加</string>
+    <string name="add_node">ノードを追加</string>
+    <string name="no_sites_title">拠点がまだありません</string>
+    <string name="no_sites_body">OpenWrtのルーターを追加して始めましょう。</string>
+    <string name="internet">インターネット</string>
+    <string name="no_router">ルーターなし</string>
+    <string name="download">ダウンロード</string>
+    <string name="upload">アップロード</string>
+    <string name="realtime_unavailable">リアルタイム帯域を取得できません: %1$s</string>
+    <string name="node_unreachable">接続できません: %1$s</string>
+    <string name="model">機種</string>
+    <string name="firmware">ファームウェア</string>
+    <string name="uptime">稼働時間</string>
+    <string name="load">負荷</string>
+    <string name="memory">メモリ使用率</string>
+    <string name="wifi_clients">Wi-Fi端末</string>
+    <string name="site_name">拠点名</string>
+    <string name="node_label">ノード名</string>
+    <string name="node_url">アドレス</string>
+    <string name="username">ユーザー名</string>
+    <string name="password">パスワード</string>
+    <string name="connect">接続</string>
+    <string name="cancel">キャンセル</string>
+    <string name="delete">削除</string>
+    <string name="trust">信頼する</string>
+    <string name="certificate_title">自己署名証明書</string>
+    <string name="certificate_body">このルーターの証明書は認証局の保証がありません。自分で管理しているネットワーク上でだけ信頼してください。SHA-256フィンガープリント:</string>
+    <string name="error_missing_fields">すべての項目を入力してください。</string>
+    <string name="error_invalid_url">アドレスがhttp(s)のURLかホスト名として正しくありません。</string>
+    <string name="error_login_failed">ユーザー名かパスワードが違います。</string>
+    <string name="error_unreachable">接続できません: %1$s</string>
+    <string name="error_certificate_rejected">証明書を信頼しなかったため、保存していません。</string>
+    <string name="error_site_not_found">拠点が削除されていました。</string>
+    <string name="remove_site_title">%1$sを削除しますか？</string>
+    <string name="remove_site_body">この拠点のノードと保存したパスワードをこの端末から削除します。</string>
+    <string name="pinned_certificate">証明書を固定済み</string>
+</resources>
