@@ -65,4 +65,26 @@ class HomeViewModelTest {
         assertEquals("reset", vm.state.value.realtimeError)
         vm.setRealtime(false)
     }
+
+    @Test
+    fun `rates add up every upstream line and leave out the tunnels riding on them`() = runTest(main.dispatcher) {
+        val home = SiteConfig("home", "Home", listOf(node("router")))
+        val loader = SiteLoading { site -> site.nodes.map { NodeState.Online(it, Fixtures.wiredSite.getValue(it.id)) } }
+        var reads = 0L
+        val counters = CounterReading {
+            reads++
+            mapOf(
+                "br-wan" to DeviceCounters(1000 * reads, 100 * reads),
+                "wwan0" to DeviceCounters(500 * reads, 50 * reads),
+                "ipip6-wan" to DeviceCounters(900 * reads, 90 * reads),
+            )
+        }
+        val vm = HomeViewModel(SiteSession(FakeSiteRepository(listOf(home)), loader, appScope()), counters) { testScheduler.currentTime }
+        advanceUntilIdle()
+        vm.setRealtime(true)
+        runCurrent()
+        advanceTimeBy(1_001)
+        assertEquals(listOf(Rate(12000.0, 1200.0)), vm.state.value.rates)
+        vm.setRealtime(false)
+    }
 }

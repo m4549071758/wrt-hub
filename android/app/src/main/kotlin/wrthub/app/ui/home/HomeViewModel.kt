@@ -19,7 +19,8 @@ import wrthub.app.domain.Rate
 import wrthub.app.domain.RateMeter
 import wrthub.app.domain.SiteSession
 import wrthub.app.domain.routerOf
-import wrthub.core.model.wanDevice
+import wrthub.core.model.DeviceCounters
+import wrthub.core.model.upstreamTrafficDevices
 import wrthub.core.ubus.UbusException
 
 data class HomeUiState(
@@ -58,7 +59,7 @@ class HomeViewModel(
 
     fun refresh() = session.refresh()
 
-    /** Polls the router's WAN counters every second while [active]; call with false when the screen is not visible. */
+    /** Polls the router's upstream counters every second while [active]; call with false when the screen is not visible. */
     fun setRealtime(active: Boolean) {
         realtimeJob?.cancel()
         realtimeJob = if (!active) {
@@ -81,11 +82,14 @@ class HomeViewModel(
             realtime.value = Realtime(siteId)
         }
         val router = routerOf(current.nodes) ?: return
-        val device = router.snapshot.wanDevice() ?: return
+        val devices = router.snapshot.upstreamTrafficDevices().ifEmpty { return }
         try {
-            val sample = counters.read(router.config)[device]
-                ?: return realtime.update { it.copy(error = "no counters for $device") }
-            val rates = meter.add(clock(), sample)
+            val all = counters.read(router.config)
+            val samples = devices.mapNotNull { all[it] }
+            if (samples.isEmpty()) return realtime.update { it.copy(error = "no counters for ${devices.joinToString()}") }
+            // Every upstream line together: the figure is the site's internet traffic, whichever line it took.
+            val sum = DeviceCounters(samples.sumOf { it.rxBytes }, samples.sumOf { it.txBytes })
+            val rates = meter.add(clock(), sum)
             realtime.update { it.copy(rates = rates, error = null) }
         } catch (e: IOException) {
             realtime.update { it.copy(error = e.message ?: e.javaClass.simpleName) }

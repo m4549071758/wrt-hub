@@ -179,3 +179,17 @@ fun Snapshot.ownMacs(): Set<String> =
 /** L3 devices of upstream interfaces; OpenWrt names them `wan*`, and `wwan*` for cellular modems. */
 fun Snapshot.upstreamDevices(): Set<String> =
     netInterfaces().filter { it.name.startsWith("wan") || it.name.startsWith("wwan") }.mapNotNull { it.device }.toSet()
+
+/**
+ * The devices whose counters add up to the node's internet traffic: the L3 devices of every upstream interface that
+ * is up, without tunnels (IPIP6, DS-Lite, 6in4 …) when a non-tunnel upstream device carries them, so no byte counts
+ * twice. Empty on nodes without an upstream interface.
+ */
+fun Snapshot.upstreamTrafficDevices(): Set<String> {
+    val up = netInterfaces()
+        .filter { it.up && (it.name.startsWith("wan") || it.name.startsWith("wwan")) }
+        .mapNotNull { it.device }
+        .toSet()
+    val transports = up.filterNot { devices.obj(it)?.str("type") == "tunnel" }.toSet()
+    return transports.ifEmpty { up }
+}

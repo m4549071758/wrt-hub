@@ -12,6 +12,7 @@ import wrthub.core.model.lanIpv4
 import wrthub.core.model.live
 import wrthub.core.model.neighborEntries
 import wrthub.core.model.upstreamDevices
+import wrthub.core.model.upstreamTrafficDevices
 import wrthub.core.model.leases
 import wrthub.core.model.netInterfaces
 import wrthub.core.model.summary
@@ -94,5 +95,12 @@ class ParsersTest {
     fun `upstream devices are the wan and modem interfaces`() {
         assertEquals(setOf("ipip6-wan", "br-wan", "ds-wanaftr", "wwan0"), home.upstreamDevices())
         assertEquals(setOf("wan"), router.upstreamDevices())
+    }
+
+    @Test
+    fun `internet traffic is counted on the transports, not again on the tunnels they carry`() {
+        assertEquals(setOf("br-wan", "wwan0"), home.upstreamTrafficDevices())
+        assertEquals(setOf("wan"), router.upstreamTrafficDevices())
+        assertEquals(emptySet(), Fixtures.snapshot("mesh-site/ap.json").upstreamTrafficDevices())
     }
 }
