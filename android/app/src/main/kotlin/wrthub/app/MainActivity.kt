@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val container = (application as WrtHubApplication).container
-        // Notifications come from hub servers only; the distributor re-sends the endpoint, which re-registers it.
+        // Notifications come from hub servers only; FCM reports the installation ID again on every start, which re-registers it.
         lifecycleScope.launch {
             if (container.siteStore.sites.first().any { it.hub != null }) startPush(this@MainActivity)
         }

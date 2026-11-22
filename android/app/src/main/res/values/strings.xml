@@ -312,7 +312,7 @@
         <item quantity="other">%1$d new devices joined</item>
     </plurals>
     <string name="push_unavailable_title">Notifications are off</string>
-    <string name="push_unavailable_body">Install a UnifiedPush distributor such as ntfy to be notified of these events.</string>
+    <string name="push_unavailable_body">Notifications need Google Play services and permission to post notifications for WrtHub.</string>
     <string name="notification_channel_events">Site events</string>
     <string name="starlink">Starlink</string>
     <string name="starlink_unavailable">Starlink data is unavailable</string>

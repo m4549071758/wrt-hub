@@ -57,7 +57,7 @@ class PushRegistryTest {
     private fun ok(target: MockWebServer) = target.enqueue(MockResponse.Builder().code(204).build())
 
     @Test
-    fun `an endpoint is registered once per server, and a new one replaces it everywhere`() = runTest {
+    fun `an installation ID is registered once per server, and a new one replaces it everywhere`() = runTest {
         val sites = listOf(
             SiteConfig("a", "A", hub = link(server, "cabin")),
             SiteConfig("b", "B", hub = link(server, "office")),
@@ -67,7 +67,7 @@ class PushRegistryTest {
         val push = registry(sites)
         ok(server)
         ok(other)
-        assertEquals(emptyList(), push.onNewEndpoint("https://push.example/1"))
+        assertEquals(emptyList(), push.onRegistered("fid-1"))
         assertEquals(1, server.requestCount)
         assertEquals("POST", server.takeRequest().method)
         assertEquals(1, other.requestCount)
@@ -77,45 +77,36 @@ class PushRegistryTest {
         ok(server)
         ok(other)
         ok(other)
-        push.onNewEndpoint("https://push.example/2")
+        push.onRegistered("fid-2")
         val unregister = server.takeRequest()
         assertEquals("DELETE", unregister.method)
-        assertEquals("""{"endpoint":"https://push.example/1"}""", unregister.body?.utf8())
-        assertEquals("""{"endpoint":"https://push.example/2"}""", server.takeRequest().body?.utf8())
-        assertEquals("https://push.example/2", push.endpoint())
+        assertEquals("""{"token":"fid-1"}""", unregister.body?.utf8())
+        assertEquals("""{"token":"fid-2"}""", server.takeRequest().body?.utf8())
+        assertEquals("fid-2", push.installationId())
     }
 
     @Test
     fun `a server that refuses is reported and the others still register`() = runTest {
         val push = registry(listOf(SiteConfig("a", "A", hub = link(server, "s")), SiteConfig("c", "C", hub = link(other, "s"))))
-        server.enqueue(MockResponse.Builder().code(400).body("""{"error":"https endpoints only"}""").build())
+        server.enqueue(MockResponse.Builder().code(401).body("""{"error":"unauthorized"}""").build())
         ok(other)
-        val failures = push.onNewEndpoint("https://push.example/1")
+        val failures = push.onRegistered("fid-1")
         assertEquals(1, failures.size)
         assertEquals(1, other.requestCount)
     }
 
     @Test
-    fun `unregistering forgets the endpoint`() = runTest {
-        val push = registry(listOf(SiteConfig("a", "A", hub = link(server, "s"))))
-        ok(server)
-        ok(server)
-        push.onNewEndpoint("https://push.example/1")
-        push.onUnregistered()
-        assertNull(push.endpoint())
-        server.takeRequest()
-        assertEquals("DELETE", server.takeRequest().method)
-    }
-
-    @Test
-    fun `notifications parse as the server sends them and anything else is dropped`() {
-        val body = """{"kind":"new_client","siteId":"s","siteName":"Cabin","nodeId":"r","nodeLabel":"Router","macs":["ce:11:22:00:00:01"],"at":5}"""
-        assertEquals(HubNotification("new_client", "s", "Cabin", "r", "Router", listOf("ce:11:22:00:00:01"), 5), parseHubNotification(body))
+    fun `notifications parse from the data the server sends and anything else is dropped`() {
+        val data = mapOf("kind" to "new_client", "siteId" to "s", "siteName" to "Cabin", "nodeId" to "r", "nodeLabel" to "Router", "macs" to "ce:11:22:00:00:01,ce:11:22:00:00:02", "at" to "5")
+        assertEquals(
+            HubNotification("new_client", "s", "Cabin", "r", "Router", listOf("ce:11:22:00:00:01", "ce:11:22:00:00:02"), 5),
+            parseHubNotification(data),
+        )
         assertEquals(
             HubNotification("wan_down", "s", "Cabin", null, null, emptyList(), 5),
-            parseHubNotification("""{"kind":"wan_down","siteId":"s","siteName":"Cabin","nodeId":null,"nodeLabel":null,"at":5}"""),
+            parseHubNotification(mapOf("kind" to "wan_down", "siteId" to "s", "siteName" to "Cabin", "at" to "5")),
         )
-        assertNull(parseHubNotification("hello"))
-        assertNull(parseHubNotification("""{"kind":"x"}"""))
+        assertNull(parseHubNotification(mapOf("kind" to "x")))
+        assertNull(parseHubNotification(mapOf("kind" to "wan_down", "siteId" to "s", "siteName" to "Cabin", "at" to "soon")))
     }
 }

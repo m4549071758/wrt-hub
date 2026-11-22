@@ -88,9 +88,9 @@ export const knownClients = sqliteTable(
   (t) => [primaryKey({ columns: [t.siteId, t.mac] })],
 );
 
-/** UnifiedPush endpoints; [owner] is the issuer that registered it, so it can only remove its own. */
+/** FCM registration tokens; [owner] is the issuer that registered it, so it can only remove its own. */
 export const pushTargets = sqliteTable("push_targets", {
-  endpoint: text("endpoint").primaryKey(),
+  token: text("token").primaryKey(),
   owner: text("owner").notNull(),
   createdAt: integer("created_at").notNull(),
 });

@@ -129,9 +129,10 @@ class HubClient(
 
     suspend fun starlink(range: String): StarlinkData = get("starlink?range=$range", StarlinkData.serializer())
 
-    suspend fun registerPush(endpoint: String) = send("POST", "push", buildJsonObject { put("endpoint", endpoint) })
+    /** Registers this phone's FCM registration (its Firebase Installation ID), so the server sends it the site events. */
+    suspend fun registerPush(token: String) = send("POST", "push", buildJsonObject { put("token", token) })
 
-    suspend fun unregisterPush(endpoint: String) = send("DELETE", "push", buildJsonObject { put("endpoint", endpoint) })
+    suspend fun unregisterPush(token: String) = send("DELETE", "push", buildJsonObject { put("token", token) })
 
     /**
      * Issues [name] on [nodeId] and waits for its outcome, long-polling the server. Returns the agent's result for a

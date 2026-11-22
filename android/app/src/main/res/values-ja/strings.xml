@@ -305,7 +305,7 @@
         <item quantity="other">新しい端末が%1$d台接続しました</item>
     </plurals>
     <string name="push_unavailable_title">通知はオフです</string>
-    <string name="push_unavailable_body">これらのイベントを通知で受け取るには、ntfyなどのUnifiedPushディストリビューターをインストールしてください。</string>
+    <string name="push_unavailable_body">通知を受け取るには、Google Play開発者サービスと、WrtHubの通知の許可が必要です。</string>
     <string name="notification_channel_events">拠点のイベント</string>
     <string name="starlink">Starlink</string>
     <string name="starlink_unavailable">Starlinkのデータを取得できません</string>

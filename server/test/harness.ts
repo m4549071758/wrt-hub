@@ -52,6 +52,7 @@ export async function harness(options: HarnessOptions = {}): Promise<Harness> {
     offlineMs: 60_000,
     oidc: options.oidc?.config ?? null,
     influx: options.influx ?? null,
+    fcm: null,
   };
   const db = openDb(":memory:");
   const notifications: Notification[] = [];

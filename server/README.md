@@ -1,9 +1,9 @@
 # wrt-hub server
 
 The relay for hub mode: agents on the routers push snapshots and long-poll for commands, the app reads the
-snapshots (also as a server-sent event stream) and issues commands. It also sends push notifications and, if
-configured, serves Starlink telemetry from InfluxDB. Snapshots are kept in memory only; SQLite holds sites, nodes,
-tokens, the command audit log, events and push endpoints.
+snapshots (also as a server-sent event stream) and issues commands. It also sends push notifications through Firebase
+Cloud Messaging and, if configured, serves Starlink telemetry from InfluxDB. Snapshots are kept in memory only;
+SQLite holds sites, nodes, tokens, the command audit log, events and the phones' FCM registrations.
 
 ## Run
 
@@ -36,6 +36,7 @@ docker exec -e WRTHUB_PUBLIC_URL=https://hub.example.org wrthub node dist/cli.js
 | `WRTHUB_STALE_SECONDS` / `WRTHUB_OFFLINE_SECONDS` | `30` / `60` | Age after which a node's snapshot is stale, and after which the node counts as offline (and a notification goes out). |
 | `WRTHUB_OIDC_ISSUER`, `WRTHUB_OIDC_AUDIENCE`, `WRTHUB_OIDC_CLIENT_ID` | unset | Set all three to accept OIDC access tokens (JWT) besides paired phones. The client ID is only handed to the app. |
 | `WRTHUB_INFLUX_URL`, `WRTHUB_INFLUX_TOKEN`, `WRTHUB_INFLUX_ORG`, `WRTHUB_INFLUX_BUCKET` | unset | Set all four to serve Starlink telemetry: [starlink_exporter](https://github.com/joshuasing/starlink_exporter) metrics stored in InfluxDB as fields of the measurement `starlink`. Use a read-only token. |
+| `WRTHUB_FCM_SERVICE_ACCOUNT` | unset | The JSON key of a Google service account with the role `roles/firebasecloudmessaging.admin` in the Firebase project the app is built with. Without it events are still recorded and listed in the app, but no notification is sent. |
 
 ## Commands
 

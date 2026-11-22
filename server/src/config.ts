@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ServiceAccount } from "./notify.js";
 
 const optionalUrl = z.url().optional();
 
@@ -18,6 +19,8 @@ const EnvSchema = z
     WRTHUB_INFLUX_TOKEN: z.string().min(1).optional(),
     WRTHUB_INFLUX_ORG: z.string().min(1).optional(),
     WRTHUB_INFLUX_BUCKET: z.string().min(1).optional(),
+    /** A Google service account key (JSON) allowed to send through FCM; notifications are off without it. */
+    WRTHUB_FCM_SERVICE_ACCOUNT: z.string().min(1).optional(),
   })
   .superRefine((env, ctx) => {
     const oidc = [env.WRTHUB_OIDC_ISSUER, env.WRTHUB_OIDC_AUDIENCE, env.WRTHUB_OIDC_CLIENT_ID];
@@ -54,6 +57,7 @@ export interface Config {
   offlineMs: number;
   oidc: OidcConfig | null;
   influx: InfluxConfig | null;
+  fcm: ServiceAccount | null;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv): Config {
@@ -76,5 +80,21 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
       e.WRTHUB_INFLUX_URL && e.WRTHUB_INFLUX_TOKEN && e.WRTHUB_INFLUX_ORG && e.WRTHUB_INFLUX_BUCKET
         ? { url: e.WRTHUB_INFLUX_URL, token: e.WRTHUB_INFLUX_TOKEN, org: e.WRTHUB_INFLUX_ORG, bucket: e.WRTHUB_INFLUX_BUCKET }
         : null,
+    fcm: e.WRTHUB_FCM_SERVICE_ACCOUNT ? parseServiceAccount(e.WRTHUB_FCM_SERVICE_ACCOUNT) : null,
   };
+}
+
+/** Errors name only what is wrong: JSON.parse's message would quote the key. */
+function parseServiceAccount(text: string): ServiceAccount {
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new Error("invalid configuration: WRTHUB_FCM_SERVICE_ACCOUNT is not JSON");
+  }
+  const account = ServiceAccount.safeParse(json);
+  if (!account.success) {
+    throw new Error("invalid configuration: WRTHUB_FCM_SERVICE_ACCOUNT needs project_id, client_email and private_key");
+  }
+  return account.data;
 }

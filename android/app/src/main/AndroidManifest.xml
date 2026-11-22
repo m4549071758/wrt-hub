@@ -22,12 +22,16 @@
             </intent-filter>
         </activity>
         <service
-            android:name=".push.WrtHubPushService"
+            android:name=".push.WrtHubMessagingService"
             android:exported="false">
             <intent-filter>
-                <action android:name="org.unifiedpush.android.connector.PUSH_EVENT" />
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <!-- FCM targets this app instance by its Firebase Installation ID (onRegistered) rather than a registration token. -->
+        <meta-data
+            android:name="firebase_messaging_installation_id_enabled"
+            android:value="true" />
         <!-- Downloads the code scanner with the app instead of on the first scan. -->
         <meta-data
             android:name="com.google.mlkit.vision.DEPENDENCIES"

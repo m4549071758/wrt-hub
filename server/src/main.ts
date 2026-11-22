@@ -6,7 +6,7 @@ import { loadConfig } from "./config.js";
 import { openDb } from "./db/index.js";
 import { LiveState } from "./live.js";
 import { Monitor } from "./monitor.js";
-import { unifiedPushNotifier, type Logger } from "./notify.js";
+import { fcmNotifier, type Logger, type Notifier } from "./notify.js";
 
 const MONITOR_INTERVAL_MS = 10_000;
 
@@ -15,7 +15,9 @@ const db = openDb(config.dbPath);
 let app: FastifyInstance | undefined;
 // The monitor logs only when a notification fails, which is after the app (and its logger) exists.
 const log: Logger = { warn: (obj, msg) => app?.log.warn(obj, msg) };
-const monitor = new Monitor(db, unifiedPushNotifier(db, log), log, config.offlineMs);
+// Without FCM credentials events are still recorded and shown in the app; only the push is skipped.
+const notify: Notifier = config.fcm ? fcmNotifier(db, log, config.fcm) : async () => {};
+const monitor = new Monitor(db, notify, log, config.offlineMs);
 app = buildApp({
   config,
   db,

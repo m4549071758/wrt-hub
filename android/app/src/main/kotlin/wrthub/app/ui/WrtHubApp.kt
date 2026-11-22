@@ -17,8 +17,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import android.Manifest
 import android.os.Build
-import android.util.Log
-import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -76,7 +74,6 @@ import wrthub.app.ui.hub.StarlinkRoute
 import wrthub.app.ui.hub.StarlinkViewModel
 import wrthub.app.push.pushAvailable
 import wrthub.app.push.startPush
-import kotlinx.coroutines.launch
 
 @Serializable
 data object HomeDestination
@@ -141,7 +138,6 @@ fun WrtHubApp(container: AppContainer) {
     val entry by navController.currentBackStackEntryAsState()
     val destination = entry?.destination
     val context = LocalContext.current
-    val activity = LocalActivity.current
     // Denied is fine: events still show in the app.
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     Scaffold(
@@ -236,10 +232,9 @@ fun WrtHubApp(container: AppContainer) {
                     factory = viewModelFactory { initializer { AddHubViewModel(container.siteStore, container.http, container.cipher) } },
                 )
                 AddHubRoute(vm, container.oidc, onDone = {
-                    // A new server needs this phone's endpoint; the first hub site also turns notifications on.
+                    // A new server needs this phone's FCM registration; the first hub site also turns notifications on.
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    activity?.let(::startPush)
-                    container.appScope.launch { container.push.registerAll().forEach { Log.w("WrtHubPush", "push registration failed: $it") } }
+                    startPush(context)
                     navController.popBackStack()
                 }, onBack = { navController.popBackStack() })
             }

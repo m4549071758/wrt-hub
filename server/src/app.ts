@@ -38,7 +38,7 @@ const SSE_HEARTBEAT_MS = 15_000;
 const WaitQuery = z.object({ wait: z.coerce.number().int().min(0).max(MAX_WAIT_S).default(0) });
 const IdParams = z.object({ id: z.string().min(1).max(64) });
 const PairBody = z.strictObject({ code: z.string().min(1).max(64) });
-const PushBody = z.strictObject({ endpoint: z.url({ protocol: /^https$/ }).max(2048) });
+const PushBody = z.strictObject({ token: z.string().min(1).max(4096) });
 const EventsQuery = z.object({ limit: z.coerce.number().int().min(1).max(200).default(50) });
 const StarlinkQuery = z.object({ range: z.enum(Object.keys(STARLINK_RANGES) as [StarlinkRange, ...StarlinkRange[]]).default("1h") });
 const SnapshotBody = z.looseObject({ schemaVersion: z.number().int() });
@@ -251,18 +251,18 @@ export function buildApp(deps: Deps): FastifyInstance {
       });
 
       api.post("/push", async (request, reply) => {
-        const { endpoint } = PushBody.parse(request.body);
+        const { token } = PushBody.parse(request.body);
         db.insert(pushTargets)
-          .values({ endpoint, owner: request.principal!.issuer, createdAt: now() })
-          .onConflictDoUpdate({ target: pushTargets.endpoint, set: { owner: request.principal!.issuer } })
+          .values({ token, owner: request.principal!.issuer, createdAt: now() })
+          .onConflictDoUpdate({ target: pushTargets.token, set: { owner: request.principal!.issuer } })
           .run();
         return reply.code(204).send();
       });
 
       api.delete("/push", async (request, reply) => {
-        const { endpoint } = PushBody.parse(request.body);
+        const { token } = PushBody.parse(request.body);
         db.delete(pushTargets)
-          .where(and(eq(pushTargets.endpoint, endpoint), eq(pushTargets.owner, request.principal!.issuer)))
+          .where(and(eq(pushTargets.token, token), eq(pushTargets.owner, request.principal!.issuer)))
           .run();
         return reply.code(204).send();
       });

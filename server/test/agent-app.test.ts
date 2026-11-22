@@ -156,14 +156,14 @@ describe("pairing and app tokens", () => {
 });
 
 describe("push targets", () => {
-  it("are registered over HTTPS only and removed by their owner", async () => {
+  it("are registered by token and removed by their owner", async () => {
     const h = await setup();
-    const push = (method: "POST" | "DELETE", endpoint: string) =>
-      h.app.inject({ method, url: "/app/v1/push", headers: h.appAuth, payload: { endpoint } });
-    expect((await push("POST", "http://ntfy.example/up1")).statusCode).toBe(400);
-    expect((await push("POST", "https://ntfy.example/up1")).statusCode).toBe(204);
+    const push = (method: "POST" | "DELETE", payload: object) =>
+      h.app.inject({ method, url: "/app/v1/push", headers: h.appAuth, payload });
+    expect((await push("POST", { endpoint: "https://ntfy.example/up1" })).statusCode).toBe(400);
+    expect((await push("POST", { token: "fcm-token-1" })).statusCode).toBe(204);
     expect(h.db.query.pushTargets.findMany().sync()).toHaveLength(1);
-    expect((await push("DELETE", "https://ntfy.example/up1")).statusCode).toBe(204);
+    expect((await push("DELETE", { token: "fcm-token-1" })).statusCode).toBe(204);
     expect(h.db.query.pushTargets.findMany().sync()).toHaveLength(0);
   });
 });

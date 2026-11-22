@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 import { openDb } from "../src/db/index.js";
 import { pushTargets } from "../src/db/schema.js";
-import { unifiedPushNotifier, type Notification } from "../src/notify.js";
+import { generateKeyPair, exportPKCS8, decodeJwt } from "jose";
+import { fcmNotifier, type Notification } from "../src/notify.js";
 import { clientMacs, wanUp } from "../src/snapshot.js";
 import { fixture, perTest } from "./harness.js";
 
@@ -97,24 +99,44 @@ describe("events", () => {
   });
 });
 
-describe("UnifiedPush", () => {
-  it("posts to every endpoint and drops the ones that are gone", async () => {
+describe("FCM", () => {
+  const Sent = z.object({ message: z.object({ fid: z.string(), data: z.record(z.string(), z.string()) }) });
+
+  it("signs in once, sends a data message to every token and drops the unregistered ones", async () => {
     const db = openDb(":memory:");
     db.insert(pushTargets)
       .values([
-        { endpoint: "https://push.example/a", owner: "device:1", createdAt: 0 },
-        { endpoint: "https://push.example/gone", owner: "device:1", createdAt: 0 },
+        { token: "tok-a", owner: "device:1", createdAt: 0 },
+        { token: "tok-gone", owner: "device:1", createdAt: 0 },
       ])
       .run();
-    const posted: string[] = [];
-    const fetchFn: typeof fetch = async (input) => {
+    const { privateKey } = await generateKeyPair("RS256", { extractable: true });
+    const account = { project_id: "demo", client_email: "sender@demo.iam.gserviceaccount.com", private_key: await exportPKCS8(privateKey) };
+    const assertions: string[] = [];
+    const sent: z.infer<typeof Sent>[] = [];
+    const fetchFn: typeof fetch = async (input, init) => {
       const url = String(input);
-      posted.push(url);
-      return new Response(null, { status: url.endsWith("/gone") ? 410 : 201 });
+      if (url === "https://oauth2.googleapis.com/token") {
+        assertions.push(new URLSearchParams(String(init?.body)).get("assertion") ?? "");
+        return Response.json({ access_token: "at", expires_in: 3600 });
+      }
+      expect(url).toBe("https://fcm.googleapis.com/v1/projects/demo/messages:send");
+      expect(new Headers(init?.headers).get("authorization")).toBe("Bearer at");
+      const message = Sent.parse(JSON.parse(String(init?.body)));
+      sent.push(message);
+      return message.message.fid === "tok-gone"
+        ? Response.json({ error: { status: "NOT_FOUND", details: [{ errorCode: "UNREGISTERED" }] } }, { status: 404 })
+        : Response.json({ name: "projects/demo/messages/1" });
     };
-    const notify = unifiedPushNotifier(db, { warn: () => {} }, fetchFn);
-    await notify({ kind: "wan_down", siteId: "s", siteName: "Cabin", nodeId: "n", nodeLabel: "Router", at: 0 });
-    expect(posted.sort()).toEqual(["https://push.example/a", "https://push.example/gone"]);
-    expect(db.select().from(pushTargets).all().map((t) => t.endpoint)).toEqual(["https://push.example/a"]);
+    const notify = fcmNotifier(db, { warn: () => {} }, account, fetchFn, () => 1_800_000_000_000);
+    await notify({ kind: "new_client", siteId: "s", siteName: "Cabin", nodeId: null, nodeLabel: null, macs: ["ce:11:22:00:00:01", "ce:11:22:00:00:02"], at: 5 });
+    await notify({ kind: "wan_down", siteId: "s", siteName: "Cabin", nodeId: "n", nodeLabel: "Router", at: 6 });
+
+    expect(assertions).toHaveLength(1);
+    const claims = decodeJwt(assertions[0]!);
+    expect(claims).toMatchObject({ iss: account.client_email, aud: "https://oauth2.googleapis.com/token", scope: "https://www.googleapis.com/auth/firebase.messaging" });
+    expect(sent.map((s) => s.message.fid).sort()).toEqual(["tok-a", "tok-a", "tok-gone"]);
+    expect(sent[0]!.message.data).toEqual({ kind: "new_client", siteId: "s", siteName: "Cabin", at: "5", macs: "ce:11:22:00:00:01,ce:11:22:00:00:02" });
+    expect(db.select().from(pushTargets).all().map((t) => t.token)).toEqual(["tok-a"]);
   });
 });

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the google-services Gradle plugin would generate from google-services.json; Firebase reads these names. These values identify the app and are not secrets. -->
+<resources>
+    <string name="google_app_id" translatable="false">1:762390742974:android:0699a91e9957e42b439bef</string>
+    <string name="gcm_defaultSenderId" translatable="false">762390742974</string>
+    <string name="project_id" translatable="false">wrthub-m4549071758</string>
+    <string name="google_api_key" translatable="false">AIzaSyBaVghlke2YJETr1KeiOK12kcRZkSrufs0</string>
+</resources>

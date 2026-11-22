@@ -1,6 +1,5 @@
 package wrthub.app.push
 
-import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -13,26 +12,23 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.FirebaseMessagingService
+import com.google.firebase.messaging.RemoteMessage
 import java.io.IOException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
-import org.unifiedpush.android.connector.FailedReason
-import org.unifiedpush.android.connector.PushService
-import org.unifiedpush.android.connector.UnifiedPush
-import org.unifiedpush.android.connector.data.PushEndpoint
-import org.unifiedpush.android.connector.data.PushMessage
 import wrthub.app.MainActivity
 import wrthub.app.R
 import wrthub.app.WrtHubApplication
 import wrthub.app.data.HubConnections
 import wrthub.app.data.SiteRepository
 import wrthub.app.ui.hub.eventText
+import wrthub.core.hub.HubClient
 
-/** A server's notification, as `notify.ts` sends it. */
-@Serializable
+/** A server's notification, as `notify.ts` sends it in an FCM data message (every value a string). */
 data class HubNotification(
     val kind: String,
     val siteId: String,
@@ -43,44 +39,32 @@ data class HubNotification(
     val at: Long,
 )
 
-private val notificationJson = Json { ignoreUnknownKeys = true }
-
-fun parseHubNotification(body: String): HubNotification? = try {
-    notificationJson.decodeFromString(HubNotification.serializer(), body)
-} catch (e: SerializationException) {
-    null
-} catch (e: IllegalArgumentException) {
-    null
+fun parseHubNotification(data: Map<String, String>): HubNotification? {
+    val kind = data["kind"] ?: return null
+    val siteId = data["siteId"] ?: return null
+    val siteName = data["siteName"] ?: return null
+    val at = data["at"]?.toLongOrNull() ?: return null
+    val macs = data["macs"]?.split(',')?.filter { it.isNotEmpty() } ?: emptyList()
+    return HubNotification(kind, siteId, siteName, data["nodeId"], data["nodeLabel"], macs, at)
 }
 
 /**
- * This phone's UnifiedPush endpoint and the hub servers it is registered with: every server that has a site here.
- * A server that cannot be reached keeps the old registration (or none) until the next [registerAll].
+ * This phone's FCM registration (its Firebase Installation ID) and the hub servers it is registered with: every
+ * server that has a site here. FCM reports the ID again on every start, so a server that could not be reached gets it
+ * then.
  */
 class PushRegistry(private val repository: SiteRepository, private val hubs: HubConnections, private val store: DataStore<Preferences>) {
-    suspend fun endpoint(): String? = store.data.first()[ENDPOINT]
+    suspend fun installationId(): String? = store.data.first()[INSTALLATION_ID]
 
-    /** Moves the registrations to [url]; returns the servers that refused or could not be reached. */
-    suspend fun onNewEndpoint(url: String): List<String> {
-        val old = endpoint()
-        store.edit { it[ENDPOINT] = url }
-        if (old != null && old != url) each { it.unregisterPush(old) }
-        return each { it.registerPush(url) }
+    /** Moves the registrations to [id]; returns the servers that refused or could not be reached. */
+    suspend fun onRegistered(id: String): List<String> {
+        val old = installationId()
+        store.edit { it[INSTALLATION_ID] = id }
+        if (old != null && old != id) each { it.unregisterPush(old) }
+        return each { it.registerPush(id) }
     }
 
-    /** Registers the current endpoint with every server, as after adding a site of a new server. */
-    suspend fun registerAll(): List<String> {
-        val url = endpoint() ?: return emptyList()
-        return each { it.registerPush(url) }
-    }
-
-    suspend fun onUnregistered(): List<String> {
-        val old = endpoint() ?: return emptyList()
-        store.edit { it.remove(ENDPOINT) }
-        return each { it.unregisterPush(old) }
-    }
-
-    private suspend fun each(call: suspend (wrthub.core.hub.HubClient) -> Unit): List<String> =
+    private suspend fun each(call: suspend (HubClient) -> Unit): List<String> =
         repository.sites.first().mapNotNull { it.hub }.distinctBy { it.serverUrl }.mapNotNull { link ->
             try {
                 call(hubs.client(link))
@@ -91,7 +75,7 @@ class PushRegistry(private val repository: SiteRepository, private val hubs: Hub
         }
 
     private companion object {
-        val ENDPOINT = stringPreferencesKey("endpoint")
+        val INSTALLATION_ID = stringPreferencesKey("fcm_installation_id")
     }
 }
 
@@ -125,38 +109,39 @@ object EventNotifications {
     }
 }
 
-/** Uses the distributor already chosen, or the only/default one, and asks it for an endpoint (it answers in [WrtHubPushService]). */
-fun startPush(activity: Activity) {
-    UnifiedPush.tryUseCurrentOrDefaultDistributor(activity) { ok ->
-        if (ok) UnifiedPush.register(activity) else Log.i(TAG, "no UnifiedPush distributor; notifications are off")
-    }
-}
-
-fun pushAvailable(context: Context): Boolean = UnifiedPush.getDistributors(context).isNotEmpty()
-
 private const val TAG = "WrtHubPush"
 
-class WrtHubPushService : PushService() {
+private fun playServices(context: Context) =
+    GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context) == ConnectionResult.SUCCESS
+
+/** Notifications need Google Play services (FCM) and the user's permission to post them. */
+fun pushAvailable(context: Context): Boolean =
+    playServices(context) && NotificationManagerCompat.from(context).areNotificationsEnabled()
+
+/**
+ * Asks FCM to register this app instance; its Firebase Installation ID arrives in
+ * [WrtHubMessagingService.onRegistered], which registers it with every hub server. FCM calls that again on its own
+ * whenever the ID changes or on its routine sync.
+ */
+fun startPush(context: Context) {
+    if (!playServices(context)) {
+        Log.i(TAG, "no Google Play services; notifications are off")
+        return
+    }
+    FirebaseMessaging.getInstance().register().addOnFailureListener { e -> Log.w(TAG, "FCM registration failed", e) }
+}
+
+class WrtHubMessagingService : FirebaseMessagingService() {
     private val container get() = (application as WrtHubApplication).container
 
-    override fun onNewEndpoint(endpoint: PushEndpoint, instance: String) {
+    override fun onRegistered(installationId: String) {
         container.appScope.launch {
-            container.push.onNewEndpoint(endpoint.url).forEach { Log.w(TAG, "push registration failed: $it") }
+            container.push.onRegistered(installationId).forEach { Log.w(TAG, "push registration failed: $it") }
         }
     }
 
-    override fun onMessage(message: PushMessage, instance: String) {
-        val notification = parseHubNotification(message.content.decodeToString())
+    override fun onMessageReceived(message: RemoteMessage) {
+        val notification = parseHubNotification(message.data)
         if (notification == null) Log.w(TAG, "unreadable push message") else EventNotifications.show(this, notification)
-    }
-
-    override fun onRegistrationFailed(reason: FailedReason, instance: String) {
-        Log.w(TAG, "UnifiedPush registration failed: $reason")
-    }
-
-    override fun onUnregistered(instance: String) {
-        container.appScope.launch {
-            container.push.onUnregistered().forEach { Log.w(TAG, "push unregistration failed: $it") }
-        }
     }
 }

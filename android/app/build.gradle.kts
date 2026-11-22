@@ -58,7 +58,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.appauth)
     implementation(libs.play.services.code.scanner)
-    implementation(libs.unifiedpush.connector)
+    implementation(libs.firebase.messaging)
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
 
