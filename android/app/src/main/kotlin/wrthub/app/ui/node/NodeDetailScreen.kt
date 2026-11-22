@@ -1,6 +1,5 @@
 package wrthub.app.ui.node
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,47 +7,58 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.util.Locale
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import wrthub.app.R
-import wrthub.app.ui.home.NodeCard
+import wrthub.app.domain.NodeState
+import wrthub.app.ui.design.AlertCard
+import wrthub.app.ui.design.AppCard
+import wrthub.app.ui.design.AppRow
+import wrthub.app.ui.design.AppTopBar
+import wrthub.app.ui.design.GroupDivider
+import wrthub.app.ui.design.KeyValueCard
+import wrthub.app.ui.design.PrimaryButton
+import wrthub.app.ui.design.RowGroup
+import wrthub.app.ui.design.ScreenPadding
+import wrthub.app.ui.design.SecondaryButton
+import wrthub.app.ui.design.SectionHeader
+import wrthub.app.ui.design.SlideToConfirm
+import wrthub.app.ui.design.StatCard
+import wrthub.app.ui.design.StatusText
+import wrthub.app.ui.design.SubtitleText
+import wrthub.app.ui.design.UnderlineField
+import wrthub.app.ui.design.ValueText
+import wrthub.app.ui.formatBytes
+import wrthub.app.ui.formatUptime
+import wrthub.app.ui.theme.LocalSemanticColors
+import wrthub.core.admin.parseDhcpConfig
+import wrthub.core.model.NodeSummary
+import wrthub.core.model.WirelessMode
+import wrthub.core.model.netInterfaces
+import wrthub.core.model.summary
+import wrthub.core.model.wirelessInterfaces
+import wrthub.core.snapshot.Snapshot
 
 data class NodeDetailActions(
     val onHost: (String) -> Unit,
@@ -66,13 +76,16 @@ enum class AdminPage { STATUS, LEASES, FORWARDS, WIRELESS, WAN, SYSTEM, PACKAGES
 @Composable
 fun NodeDetailRoute(viewModel: NodeDetailViewModel, onBack: () -> Unit, onOpen: (AdminPage) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    LifecycleResumeEffect(viewModel) {
+        viewModel.setLive(true)
+        onPauseOrDispose { viewModel.setLive(false) }
+    }
     NodeDetailScreen(
         state,
         NodeDetailActions(viewModel::onHost, viewModel::ping, viewModel::traceroute, viewModel::reboot, viewModel::dismissNotice, onBack, onOpen),
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NodeDetailScreen(state: NodeDetailUiState, actions: NodeDetailActions) {
     val snackbar = remember { SnackbarHostState() }
@@ -83,117 +96,178 @@ fun NodeDetailScreen(state: NodeDetailUiState, actions: NodeDetailActions) {
             actions.onDismissNotice()
         }
     }
-    var confirmReboot by remember { mutableStateOf(false) }
-    val label = state.node?.config?.label.orEmpty()
+    val node = state.node
+    val snapshot = (node as? NodeState.Online)?.snapshot
+    val summary = remember(snapshot) { snapshot?.summary() }
+    val facts = remember(snapshot) { snapshot?.let(::settingFacts) }
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = {
-                    IconButton(onClick = actions.onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            AppTopBar(
+                title = node?.config?.label.orEmpty(),
+                subtitle = (snapshot?.let(::lanMac) ?: summary?.model)?.takeIf { it.isNotEmpty() }?.let { { SubtitleText(it) } },
+                onBack = actions.onBack,
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(
-            Modifier.padding(padding).padding(16.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            Modifier
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(start = ScreenPadding, end = ScreenPadding, bottom = 24.dp),
         ) {
-            state.node?.let { NodeCard(it, wifiClients = null) }
+            if (node is NodeState.Unreachable) {
+                AlertCard(stringResource(R.string.node_unreachable_title, node.config.label), node.reason, Modifier.padding(top = 4.dp))
+            }
+            if (summary != null) Stats(summary, state, Modifier.padding(top = 4.dp))
+            if (node != null) {
+                SectionHeader(stringResource(R.string.overview))
+                Overview(node, summary)
+            }
             if (state.admin.status) {
-                Section(stringResource(R.string.section_settings)) {
-                    if (state.admin.wireless) AdminEntry(R.drawable.ic_wifi, R.string.wireless, R.string.wireless_body) { actions.onOpen(AdminPage.WIRELESS) }
-                    if (state.admin.staticLeases) AdminEntry(R.drawable.ic_dns, R.string.static_leases, R.string.static_leases_body) { actions.onOpen(AdminPage.LEASES) }
-                    if (state.admin.portForwards) AdminEntry(R.drawable.ic_swap_horiz, R.string.port_forwards, R.string.port_forwards_body) { actions.onOpen(AdminPage.FORWARDS) }
-                    if (state.admin.wan) AdminEntry(R.drawable.ic_public, R.string.wan, R.string.wan_body) { actions.onOpen(AdminPage.WAN) }
-                    if (state.admin.system) AdminEntry(R.drawable.ic_settings, R.string.system, R.string.system_body) { actions.onOpen(AdminPage.SYSTEM) }
-                    if (state.admin.packages) AdminEntry(R.drawable.ic_inventory_2, R.string.packages, R.string.packages_body) { actions.onOpen(AdminPage.PACKAGES) }
-                }
+                SettingsSection(state.admin, facts, actions)
             }
-            Section(stringResource(R.string.section_status_diagnostics)) {
-                if (state.admin.status) AdminEntry(R.drawable.ic_monitoring, R.string.status, R.string.status_body) { actions.onOpen(AdminPage.STATUS) }
-                OutlinedTextField(
-                    value = state.host,
-                    onValueChange = actions.onHost,
-                    label = { Text(stringResource(R.string.target_host)) },
-                    singleLine = true,
-                    enabled = !state.running,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = actions.onPing, enabled = !state.running) { Text("ping") }
-                    OutlinedButton(onClick = actions.onTraceroute, enabled = !state.running) { Text("traceroute") }
-                    if (state.running) CircularProgressIndicator(Modifier.size(24.dp).padding(top = 8.dp), strokeWidth = 2.dp)
-                }
-                state.result?.let { result ->
-                    Text(
-                        "$ ${result.title}  (exit ${result.exitCode})",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 12.dp),
-                    )
-                    Text(
-                        result.output,
-                        fontFamily = FontFamily.Monospace,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                }
-            }
-            Section(stringResource(R.string.reboot)) {
-                Text(stringResource(R.string.reboot_body), style = MaterialTheme.typography.bodyMedium)
-                Button(
-                    onClick = { confirmReboot = true },
-                    enabled = !state.running && state.node != null,
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                ) { Text(stringResource(R.string.reboot)) }
-            }
+            SectionHeader(stringResource(R.string.section_status_diagnostics))
+            Diagnostics(state, actions)
+            SectionHeader(stringResource(R.string.reboot))
+            SlideToConfirm(
+                stringResource(R.string.slide_to_reboot),
+                onConfirm = actions.onReboot,
+                enabled = !state.running && node != null,
+            )
         }
     }
-    if (confirmReboot) {
-        AlertDialog(
-            onDismissRequest = { confirmReboot = false },
-            title = { Text(stringResource(R.string.reboot_confirm_title, label)) },
-            text = { Text(stringResource(R.string.reboot_body)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmReboot = false
-                    actions.onReboot()
-                }) { Text(stringResource(R.string.reboot)) }
-            },
-            dismissButton = { TextButton(onClick = { confirmReboot = false }) { Text(stringResource(R.string.cancel)) } },
+}
+
+@Composable
+private fun Stats(summary: NodeSummary, state: NodeDetailUiState, modifier: Modifier) {
+    val total = summary.memoryTotalBytes
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        StatCard(
+            stringResource(R.string.load),
+            String.format(Locale.ROOT, "%.2f", summary.load1),
+            Modifier.weight(1f),
+            caption = stringResource(R.string.load_1min),
+            history = state.loadHistory,
+        )
+        StatCard(
+            stringResource(R.string.memory),
+            if (total > 0) "${100 * (total - summary.memoryAvailableBytes) / total}" else "—",
+            Modifier.weight(1f),
+            unit = if (total > 0) "%" else null,
+            caption = if (total > 0) stringResource(R.string.memory_used_of, formatBytes(total)) else null,
+            history = state.memoryHistory,
         )
     }
 }
 
 @Composable
-private fun Section(title: String, content: @Composable () -> Unit) {
-    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-        Column(Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
-            content()
+private fun Overview(node: NodeState, summary: NodeSummary?) {
+    val semantic = LocalSemanticColors.current
+    val online = node is NodeState.Online
+    val status = stringResource(if (online) R.string.status_online else R.string.status_unreachable)
+    val rows = buildList<Pair<String, @Composable () -> Unit>> {
+        add(stringResource(R.string.status) to { StatusText(status, if (online) semantic.signalGood else semantic.signalPoor) })
+        if (summary != null) {
+            add(stringResource(R.string.model) to { ValueText(summary.model) })
+            add(stringResource(R.string.firmware) to { ValueText(summary.firmware) })
+            add(stringResource(R.string.uptime) to { ValueText(formatUptime(summary.uptimeSeconds)) })
         }
+        add(stringResource(R.string.address) to { ValueText(node.config.url.substringAfter("://").trimEnd('/')) })
+    }
+    KeyValueCard(rows)
+    val denied = (node as? NodeState.Online)?.snapshot?.deniedCalls.orEmpty()
+    if (denied.isNotEmpty()) {
+        Text(
+            stringResource(R.string.denied_calls, denied.joinToString(", ")),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(start = 4.dp, top = 8.dp),
+        )
     }
 }
 
 @Composable
-private fun AdminEntry(icon: Int, title: Int, body: Int, onClick: () -> Unit) {
-    ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
-        leadingContent = { Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-        supportingContent = { Text(stringResource(body)) },
-        trailingContent = { Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null) },
-    ) {
-        Text(stringResource(title))
+private fun SettingsSection(admin: AdminEntries, facts: SettingFacts?, actions: NodeDetailActions) {
+    val leases = facts?.staticLeases?.let { pluralStringResource(R.plurals.entry_count, it, it) }
+    val entries = listOfNotNull(
+        Entry(R.drawable.ic_wifi, R.string.wireless, facts?.wireless, AdminPage.WIRELESS).takeIf { admin.wireless },
+        Entry(R.drawable.ic_dns, R.string.static_leases, leases, AdminPage.LEASES).takeIf { admin.staticLeases },
+        Entry(R.drawable.ic_swap_horiz, R.string.port_forwards, null, AdminPage.FORWARDS).takeIf { admin.portForwards },
+        Entry(R.drawable.ic_public, R.string.wan, null, AdminPage.WAN).takeIf { admin.wan },
+        Entry(R.drawable.ic_settings, R.string.system, null, AdminPage.SYSTEM).takeIf { admin.system },
+        Entry(R.drawable.ic_inventory_2, R.string.packages, null, AdminPage.PACKAGES).takeIf { admin.packages },
+    )
+    if (entries.isEmpty()) return
+    SectionHeader(stringResource(R.string.section_settings))
+    RowGroup {
+        entries.forEachIndexed { index, entry ->
+            if (index > 0) GroupDivider()
+            AppRow(stringResource(entry.title), icon = entry.icon, subtitle = entry.value, onClick = { actions.onOpen(entry.page) })
+        }
     }
+}
+
+private class Entry(val icon: Int, val title: Int, val value: String?, val page: AdminPage)
+
+@Composable
+private fun Diagnostics(state: NodeDetailUiState, actions: NodeDetailActions) {
+    if (state.admin.status) {
+        AppRow(
+            stringResource(R.string.status),
+            icon = R.drawable.ic_monitoring,
+            onClick = { actions.onOpen(AdminPage.STATUS) },
+            standalone = true,
+        )
+    }
+    UnderlineField(
+        stringResource(R.string.target_host),
+        state.host,
+        actions.onHost,
+        Modifier.padding(top = 4.dp),
+        enabled = !state.running,
+        keyboardType = KeyboardType.Uri,
+    )
+    Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        PrimaryButton("ping", actions.onPing, Modifier.weight(1f), enabled = !state.running, height = 44)
+        SecondaryButton("traceroute", actions.onTraceroute, Modifier.weight(1f), enabled = !state.running, height = 44)
+        if (state.running) CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+    }
+    state.result?.let { result ->
+        AppCard(Modifier.fillMaxWidth().padding(top = 12.dp)) {
+            Column(Modifier.padding(14.dp)) {
+                Text(
+                    "$ ${result.title}  (exit ${result.exitCode})",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    result.output,
+                    fontFamily = FontFamily.Monospace,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+        }
+    }
+}
+
+/** Current values shown next to the settings entries; null where the snapshot does not say. */
+private class SettingFacts(val wireless: String?, val staticLeases: Int?)
+
+private fun settingFacts(snapshot: Snapshot): SettingFacts {
+    val radios = snapshot.wirelessInterfaces().filter { it.mode != WirelessMode.OTHER }
+    val channels = radios.mapNotNull { it.channel }.distinct().sorted().map { "ch$it" }
+    val ssids = radios.filter { it.mode == WirelessMode.AP }.mapNotNull { it.ssid }.distinct().size
+    val wireless = (channels + listOfNotNull(ssids.takeIf { it > 0 }?.let { "SSID $it" })).joinToString(" · ").ifEmpty { null }
+    return SettingFacts(wireless, snapshot.dhcpConfig?.let(::parseDhcpConfig)?.leases?.size)
+}
+
+/** The MAC of the LAN device, which identifies the node on its label. */
+private fun lanMac(snapshot: Snapshot): String? {
+    val device = snapshot.netInterfaces().firstOrNull { it.name == "lan" }?.device ?: return null
+    return ((snapshot.devices[device] as? JsonObject)?.get("macaddr") as? JsonPrimitive)?.content?.lowercase()
 }
 
 @Composable

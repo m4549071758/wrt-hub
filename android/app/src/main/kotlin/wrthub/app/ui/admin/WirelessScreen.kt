@@ -2,22 +2,13 @@ package wrthub.app.ui.admin
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,10 +20,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.material3.Icon
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.res.painterResource
 import wrthub.app.R
+import wrthub.app.ui.design.AppRow
+import wrthub.app.ui.design.Badge
+import wrthub.app.ui.design.GroupDivider
+import wrthub.app.ui.design.ListPadding
+import wrthub.app.ui.design.RowGroup
+import wrthub.app.ui.design.SectionHeader
 import wrthub.core.admin.Radio
 import wrthub.core.admin.Ssid
 import wrthub.core.admin.htmodesFor
@@ -74,7 +68,8 @@ fun WirelessRoute(viewModel: WirelessViewModel, onBack: () -> Unit) {
 fun WirelessScreen(state: WirelessUiState, actions: WirelessActions) {
     var disabling by remember { mutableStateOf<Ssid?>(null) }
     AdminScaffold(
-        title = stringResource(R.string.wireless_title, state.title),
+        title = stringResource(R.string.wireless),
+        subtitle = state.title,
         notice = state.notice,
         onDismissNotice = actions.onDismissNotice,
         onBack = actions.onBack,
@@ -82,26 +77,41 @@ fun WirelessScreen(state: WirelessUiState, actions: WirelessActions) {
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             if (state.loading || state.saving) LinearProgressIndicator(Modifier.fillMaxWidth())
-            LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                state.failure?.let { item { Text(failureText(it), color = MaterialTheme.colorScheme.error) } }
-                items(state.radios, key = { it.radio.name }) { view -> RadioCard(view, state.saving, actions) }
-                if (state.ssids.isNotEmpty()) {
+            LazyColumn(contentPadding = ListPadding) {
+                state.failure?.let {
+                    item { Text(failureText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(4.dp)) }
+                }
+                if (state.radios.isNotEmpty()) {
+                    item { SectionHeader(stringResource(R.string.radios)) }
                     item {
-                        Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                            Text(stringResource(R.string.ssids), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(16.dp))
+                        RowGroup {
+                            state.radios.forEachIndexed { index, view ->
+                                if (index > 0) GroupDivider()
+                                RadioRow(view, state.saving, actions)
+                            }
+                        }
+                    }
+                }
+                if (state.ssids.isNotEmpty()) {
+                    item { SectionHeader(stringResource(R.string.ssids)) }
+                    item {
+                        RowGroup {
                             state.ssids.forEachIndexed { index, ssid ->
-                                if (index > 0) HorizontalDivider()
-                                ListItem(
-                                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
-                                    supportingContent = { Text(radioLabel(state.radios.firstOrNull { it.radio.name == ssid.radio }?.radio?.band, ssid.radio)) },
-                                    trailingContent = {
-                                        Switch(
+                                if (index > 0) GroupDivider()
+                                val band = state.radios.firstOrNull { it.radio.name == ssid.radio }?.radio?.band
+                                AppRow(
+                                    ssid.ssid ?: ssid.section,
+                                    subtitle = ssid.radio,
+                                    dim = !ssid.enabled,
+                                    trailing = {
+                                        bandLabel(band)?.let { Badge(it) }
+                                        AdminSwitch(
                                             checked = ssid.enabled,
                                             enabled = !state.saving,
                                             onCheckedChange = { on -> if (on) actions.onSetSsidEnabled(ssid.section, true) else disabling = ssid },
                                         )
                                     },
-                                ) { Text(ssid.ssid ?: ssid.section) }
+                                )
                             }
                         }
                     }
@@ -114,7 +124,7 @@ fun WirelessScreen(state: WirelessUiState, actions: WirelessActions) {
         AlertDialog(
             onDismissRequest = { disabling = null },
             title = { Text(stringResource(R.string.ssid_disable_title, ssid.ssid ?: ssid.section)) },
-            text = { Text(stringResource(R.string.ssid_disable_body)) },
+            text = { Text(stringResource(R.string.ssid_disable_short)) },
             confirmButton = {
                 TextButton(onClick = {
                     disabling = null
@@ -126,46 +136,35 @@ fun WirelessScreen(state: WirelessUiState, actions: WirelessActions) {
     }
 }
 
-@Composable
-private fun radioLabel(band: String?, name: String): String = when (band) {
-    "2g" -> "2.4GHz ($name)"
-    "5g" -> "5GHz ($name)"
-    "6g" -> "6GHz ($name)"
-    else -> name
+private fun bandLabel(band: String?): String? = when (band) {
+    "2g" -> "2.4 GHz"
+    "5g" -> "5 GHz"
+    "6g" -> "6 GHz"
+    else -> null
 }
 
+private fun radioLabel(band: String?, name: String): String = bandLabel(band)?.let { "$it ($name)" } ?: name
+
 @Composable
-private fun RadioCard(view: RadioView, saving: Boolean, actions: WirelessActions) {
+private fun RadioRow(view: RadioView, saving: Boolean, actions: WirelessActions) {
     val radio = view.radio
-    Card(
+    val values = listOf(
+        channelLabel(radio.channel),
+        radio.htmode ?: stringResource(R.string.driver_default),
+        txpowerLabel(radio.txpower),
+    )
+    AppRow(
+        radioLabel(radio.band, radio.name),
+        icon = R.drawable.ic_wifi,
+        subtitle = values.joinToString(" · "),
+        trailing = if (radio.carriesMesh) ({ Badge(stringResource(R.string.mesh_badge)) }) else null,
         onClick = { actions.onEdit(radio) },
         enabled = !saving,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(radioLabel(radio.band, radio.name), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null)
-            }
-            Value(stringResource(R.string.channel), channelLabel(radio.channel))
-            Value(stringResource(R.string.width), radio.htmode ?: stringResource(R.string.driver_default))
-            Value(stringResource(R.string.txpower), txpowerLabel(radio.txpower))
-            if (radio.carriesMesh) Text(stringResource(R.string.mesh_radio_note), style = MaterialTheme.typography.bodySmall)
-        }
-    }
+    )
 }
 
 @Composable
-private fun Value(label: String, value: String) {
-    Row(Modifier.fillMaxWidth()) {
-        Text(label, modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value)
-    }
-}
-
-@Composable
-private fun channelLabel(channel: String) = if (channel == "auto") stringResource(R.string.channel_auto) else channel
+private fun channelLabel(channel: String) = if (channel == "auto") stringResource(R.string.channel_auto) else "ch$channel"
 
 @Composable
 private fun txpowerLabel(txpower: Int?) = txpower?.let { "$it dBm" } ?: stringResource(R.string.driver_default)
@@ -179,7 +178,7 @@ private fun RadioDialog(editor: RadioEditor, state: WirelessUiState, actions: Wi
         onDismissRequest = actions.onCloseEditor,
         title = { Text(radioLabel(view.radio.band, view.radio.name)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Selector(
                     stringResource(R.string.channel),
                     editor.channel,
@@ -197,9 +196,17 @@ private fun RadioDialog(editor: RadioEditor, state: WirelessUiState, actions: Wi
                     enabled = !locked,
                 )
                 Selector(stringResource(R.string.txpower), editor.txpower, listOf<Int?>(null) + caps.txpowers, { txpowerLabel(it) }, actions.onTxpower)
-                if (locked) Text(stringResource(R.string.mesh_radio_note), style = MaterialTheme.typography.bodySmall)
-                if (caps.channels.isEmpty()) Text(stringResource(R.string.radio_down_note), style = MaterialTheme.typography.bodySmall)
-                Text(stringResource(R.string.radio_restart_note), style = MaterialTheme.typography.bodySmall)
+                val notes = listOfNotNull(
+                    stringResource(R.string.mesh_radio_locked).takeIf { locked },
+                    stringResource(R.string.radio_down_note).takeIf { caps.channels.isEmpty() },
+                    stringResource(R.string.radio_restart_short),
+                )
+                Text(
+                    notes.joinToString(" "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
             }
         },
         confirmButton = { TextButton(onClick = actions.onSave, enabled = !state.saving) { Text(stringResource(R.string.save)) } },

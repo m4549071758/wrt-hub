@@ -6,3 +6,9 @@ This product includes icons from Material Symbols by Google
 Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
 The icons are in android/app/src/main/res/drawable/ic_*.xml, except
 ic_launcher_foreground.xml and ic_launcher_monochrome.xml, which are original.
+
+This product includes the Barlow fonts, Copyright 2017 The Barlow Project
+Authors (https://github.com/jpt/barlow), and the LINE Seed JP fonts,
+Copyright LY Corporation, both licensed under the SIL Open Font License,
+Version 1.1 (licenses/OFL-Barlow.txt, licenses/OFL-LINESeedJP.txt). The fonts
+are in android/app/src/main/res/font/, unmodified.

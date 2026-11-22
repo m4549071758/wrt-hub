@@ -7,15 +7,11 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -61,6 +57,8 @@ import wrthub.app.ui.sites.AddNodeRoute
 import wrthub.app.ui.sites.AddNodeViewModel
 import wrthub.app.ui.nodes.NodesRoute
 import wrthub.app.ui.nodes.NodesViewModel
+import wrthub.app.ui.design.AppNavBar
+import wrthub.app.ui.design.NavItem
 
 @Serializable
 data object HomeDestination
@@ -113,31 +111,34 @@ fun WrtHubApp(container: AppContainer) {
     val destination = entry?.destination
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             val onTab = destination?.let {
                 it.hasRoute<HomeDestination>() || it.hasRoute<ClientsDestination>() || it.hasRoute<NodesDestination>()
             } != false
             if (onTab) {
-                NavigationBar {
-                    NavigationBarItem(
-                        selected = destination?.hasRoute<HomeDestination>() == true,
-                        onClick = { navController.switchTab(HomeDestination) },
-                        icon = { Icon(painterResource(R.drawable.ic_home), contentDescription = null) },
-                        label = { Text(stringResource(R.string.tab_home)) },
-                    )
-                    NavigationBarItem(
-                        selected = destination?.hasRoute<ClientsDestination>() == true,
-                        onClick = { navController.switchTab(ClientsDestination) },
-                        icon = { Icon(painterResource(R.drawable.ic_devices), contentDescription = null) },
-                        label = { Text(stringResource(R.string.tab_clients)) },
-                    )
-                    NavigationBarItem(
-                        selected = destination?.hasRoute<NodesDestination>() == true,
-                        onClick = { navController.switchTab(NodesDestination) },
-                        icon = { Icon(painterResource(R.drawable.ic_router), contentDescription = null) },
-                        label = { Text(stringResource(R.string.tab_nodes)) },
-                    )
-                }
+                AppNavBar(
+                    listOf(
+                        NavItem(
+                            stringResource(R.string.tab_home),
+                            R.drawable.ic_home,
+                            R.drawable.ic_home_filled,
+                            destination?.hasRoute<HomeDestination>() == true,
+                        ) { navController.switchTab(HomeDestination) },
+                        NavItem(
+                            stringResource(R.string.tab_clients),
+                            R.drawable.ic_devices,
+                            R.drawable.ic_devices_filled,
+                            destination?.hasRoute<ClientsDestination>() == true,
+                        ) { navController.switchTab(ClientsDestination) },
+                        NavItem(
+                            stringResource(R.string.tab_nodes),
+                            R.drawable.ic_router,
+                            R.drawable.ic_router_filled,
+                            destination?.hasRoute<NodesDestination>() == true,
+                        ) { navController.switchTab(NodesDestination) },
+                    ),
+                )
             }
         },
     ) { padding ->
@@ -198,7 +199,7 @@ fun WrtHubApp(container: AppContainer) {
             composable<NodeDestination> { backStackEntry ->
                 val route = backStackEntry.toRoute<NodeDestination>()
                 val vm: NodeDetailViewModel = viewModel(
-                    factory = viewModelFactory { initializer { NodeDetailViewModel(route.nodeId, container.session, container.operationsFor) } },
+                    factory = viewModelFactory { initializer { NodeDetailViewModel(route.nodeId, container.session, operationsFor = container.operationsFor) } },
                 )
                 NodeDetailRoute(vm, onBack = { navController.popBackStack() }) { page ->
                     navController.navigate(

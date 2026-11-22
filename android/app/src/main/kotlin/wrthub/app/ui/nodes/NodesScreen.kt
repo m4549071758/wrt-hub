@@ -1,9 +1,8 @@
 package wrthub.app.ui.nodes
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,26 +10,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,11 +26,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import wrthub.app.R
 import wrthub.app.data.SiteConfig
+import wrthub.app.ui.design.AppTopBar
+import wrthub.app.ui.design.GroupDivider
+import wrthub.app.ui.design.ListPadding
+import wrthub.app.ui.design.PlainIconButton
+import wrthub.app.ui.design.RingButton
+import wrthub.app.ui.design.RowGroup
+import wrthub.app.ui.design.SectionHeader
 import wrthub.app.ui.home.NodeRow
 
 data class NodesActions(
@@ -91,46 +83,28 @@ private sealed interface Removal {
     data class Node(val site: SiteConfig) : Removal
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NodesScreen(state: NodesUiState, actions: NodesActions) {
     var removal by remember { mutableStateOf<Removal?>(null) }
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(stringResource(R.string.tab_nodes)) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            )
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = actions.onAddSite,
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text(stringResource(R.string.add_site)) },
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) { padding ->
-        LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 96.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        AppTopBar(
+            stringResource(R.string.tab_nodes),
+            actions = { RingButton(R.drawable.ic_add, stringResource(R.string.add_site), actions.onAddSite) },
+        )
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = ListPadding) {
             items(state.sites, key = { it.id }) { site ->
-                Card(Modifier.fillMaxWidth().animateItem(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                    Row(Modifier.padding(start = 16.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            site.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
-                        )
-                        SiteMenu(site, actions, onRemove = { removal = it })
+                Column(Modifier.animateItem()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        SectionHeader(site.name, Modifier.weight(1f))
+                        SiteMenu(site, actions, onRemove = { removal = it }, Modifier.padding(top = 6.dp))
                     }
-                    site.nodes.forEachIndexed { index, node ->
-                        if (index > 0) HorizontalDivider()
-                        NodeRow(node, state.states[node.id], onClick = { actions.onOpenNode(site.id, node.id) })
+                    if (site.nodes.isNotEmpty()) {
+                        RowGroup {
+                            site.nodes.forEachIndexed { index, node ->
+                                if (index > 0) GroupDivider()
+                                NodeRow(node, state.states[node.id], onClick = { actions.onOpenNode(site.id, node.id) }, standalone = false)
+                            }
+                        }
                     }
                 }
             }
@@ -158,12 +132,10 @@ fun NodesScreen(state: NodesUiState, actions: NodesActions) {
 }
 
 @Composable
-private fun SiteMenu(site: SiteConfig, actions: NodesActions, onRemove: (Removal) -> Unit) {
+private fun SiteMenu(site: SiteConfig, actions: NodesActions, onRemove: (Removal) -> Unit, modifier: Modifier = Modifier) {
     var open by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { open = true }) {
-            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.site_menu, site.name))
-        }
+    Box(modifier) {
+        PlainIconButton(R.drawable.ic_more_vert, stringResource(R.string.site_menu, site.name), onClick = { open = true })
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             DropdownMenuItem(text = { Text(stringResource(R.string.add_node)) }, onClick = {
                 open = false
@@ -195,7 +167,7 @@ private fun RemoveNodeDialog(site: SiteConfig, onRemove: (String) -> Unit, onDis
         title = { Text(stringResource(R.string.remove_node)) },
         text = {
             Column {
-                Text(stringResource(R.string.remove_node_body), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.remove_node_text), style = MaterialTheme.typography.bodyMedium)
                 site.nodes.forEach { node ->
                     Row(
                         Modifier.fillMaxWidth().selectable(selected = chosen == node.id, role = Role.RadioButton) { chosen = node.id }.padding(vertical = 4.dp),

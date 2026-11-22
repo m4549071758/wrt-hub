@@ -1,18 +1,12 @@
 package wrthub.app.ui.admin
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,6 +22,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import wrthub.app.R
+import wrthub.app.ui.design.KeyValueCard
+import wrthub.app.ui.design.PrimaryButton
+import wrthub.app.ui.design.ScreenPadding
+import wrthub.app.ui.design.SegmentedToggle
+import wrthub.app.ui.design.UnderlineField
+import wrthub.app.ui.design.ValueText
 import wrthub.core.admin.WanProto
 
 data class WanActions(
@@ -48,7 +48,8 @@ fun WanRoute(viewModel: WanViewModel, onBack: () -> Unit) {
 fun WanScreen(state: WanUiState, actions: WanActions) {
     var confirming by remember { mutableStateOf(false) }
     AdminScaffold(
-        title = stringResource(R.string.wan_title, state.title),
+        title = stringResource(R.string.wan),
+        subtitle = state.title,
         notice = state.notice,
         onDismissNotice = actions.onDismissNotice,
         onBack = actions.onBack,
@@ -56,33 +57,27 @@ fun WanScreen(state: WanUiState, actions: WanActions) {
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             if (state.loading || state.saving) LinearProgressIndicator(Modifier.fillMaxWidth())
-            Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                state.failure?.let { Text(failureText(it), color = MaterialTheme.colorScheme.error) }
+            Column(
+                Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = ScreenPadding, end = ScreenPadding, top = 4.dp, bottom = 24.dp),
+            ) {
+                state.failure?.let { Text(failureText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(4.dp)) }
                 val wan = state.wan
                 when {
-                    wan == null && !state.loading && state.failure == null -> Text(stringResource(R.string.no_wan))
-                    wan != null && wan.proto == null -> Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            wan.options.forEach { (option, value) ->
-                                Row(Modifier.fillMaxWidth()) {
-                                    Text(option, modifier = Modifier.weight(0.4f), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    Text(value, modifier = Modifier.weight(0.6f))
-                                }
-                            }
-                            Text(
-                                stringResource(R.string.wan_unsupported, wan.rawProto ?: "?"),
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.padding(top = 8.dp),
-                            )
-                        }
+                    wan == null && !state.loading && state.failure == null -> Note(stringResource(R.string.no_wan))
+                    wan != null && wan.proto == null -> {
+                        KeyValueCard(wan.options.map { (option, value) -> option to @Composable { ValueText(value) } })
+                        Note(stringResource(R.string.wan_unsupported_short, wan.rawProto ?: "?"))
                     }
-                    wan != null -> Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                    wan != null -> {
                         WanFormFields(state.form, wan.hasPassword, actions)
-                        Button(
+                        PrimaryButton(
+                            stringResource(R.string.save),
                             onClick = { confirming = true },
                             enabled = !state.saving,
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        ) { Text(stringResource(R.string.save)) }
+                            modifier = Modifier.fillMaxWidth().padding(top = 28.dp),
+                        )
                     }
                 }
             }
@@ -92,7 +87,7 @@ fun WanScreen(state: WanUiState, actions: WanActions) {
         AlertDialog(
             onDismissRequest = { confirming = false },
             title = { Text(stringResource(R.string.wan_confirm_title)) },
-            text = { Text(stringResource(R.string.wan_confirm_body)) },
+            text = { Text(stringResource(R.string.wan_confirm_short)) },
             confirmButton = {
                 TextButton(onClick = {
                     confirming = false
@@ -105,36 +100,55 @@ fun WanScreen(state: WanUiState, actions: WanActions) {
 }
 
 @Composable
+private fun Note(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 4.dp, top = 12.dp),
+    )
+}
+
+@Composable
 private fun WanFormFields(form: WanForm, hasPassword: Boolean, actions: WanActions) {
-    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            WanProto.entries.forEach { proto ->
-                FilterChip(
-                    selected = form.proto == proto,
-                    onClick = { actions.onForm { it.copy(proto = proto) } },
-                    label = { Text(stringResource(proto.label)) },
-                )
-            }
+    SegmentedToggle(
+        WanProto.entries.map { it to stringResource(it.label) },
+        form.proto,
+        { proto -> actions.onForm { it.copy(proto = proto) } },
+        Modifier.padding(top = 8.dp),
+    )
+    when (form.proto) {
+        WanProto.DHCP -> Note(stringResource(R.string.wan_dhcp_note))
+        WanProto.STATIC -> {
+            FormField(form.ipaddr, R.string.ip_address, form.error == WanField.IPADDR, R.string.error_ipv4, KeyboardType.Decimal) { v -> actions.onForm { it.copy(ipaddr = v) } }
+            FormField(form.netmask, R.string.netmask, form.error == WanField.NETMASK, R.string.error_netmask, KeyboardType.Decimal) { v -> actions.onForm { it.copy(netmask = v) } }
+            FormField(form.gateway, R.string.gateway, form.error == WanField.GATEWAY, R.string.error_ipv4, KeyboardType.Decimal) { v -> actions.onForm { it.copy(gateway = v) } }
+            FormField(form.dns, R.string.dns_servers, form.error == WanField.DNS, R.string.error_ipv4) { v -> actions.onForm { it.copy(dns = v) } }
         }
-        when (form.proto) {
-            WanProto.DHCP -> Text(stringResource(R.string.wan_dhcp_note), style = MaterialTheme.typography.bodySmall)
-            WanProto.STATIC -> {
-                Field(form.ipaddr, { v -> actions.onForm { it.copy(ipaddr = v) } }, R.string.ip_address, form.error == WanField.IPADDR, R.string.error_ipv4, KeyboardType.Decimal)
-                Field(form.netmask, { v -> actions.onForm { it.copy(netmask = v) } }, R.string.netmask, form.error == WanField.NETMASK, R.string.error_netmask, KeyboardType.Decimal)
-                Field(form.gateway, { v -> actions.onForm { it.copy(gateway = v) } }, R.string.gateway, form.error == WanField.GATEWAY, R.string.error_ipv4, KeyboardType.Decimal)
-                Field(form.dns, { v -> actions.onForm { it.copy(dns = v) } }, R.string.dns_servers, form.error == WanField.DNS, R.string.error_ipv4)
-            }
-            WanProto.PPPOE -> {
-                Field(form.username, { v -> actions.onForm { it.copy(username = v) } }, R.string.pppoe_username, form.error == WanField.USERNAME, R.string.error_required)
-                SecretField(
-                    { v -> actions.onForm { it.copy(password = v) } },
-                    if (hasPassword) R.string.pppoe_password_keep else R.string.pppoe_password,
-                    form.error == WanField.PASSWORD,
-                    R.string.error_required,
-                )
-            }
+        WanProto.PPPOE -> {
+            FormField(form.username, R.string.pppoe_username, form.error == WanField.USERNAME, R.string.error_required) { v -> actions.onForm { it.copy(username = v) } }
+            UnderlineField(
+                stringResource(if (hasPassword) R.string.pppoe_password_keep else R.string.pppoe_password),
+                form.password,
+                { v -> actions.onForm { it.copy(password = v) } },
+                Modifier.padding(top = 8.dp),
+                error = if (form.error == WanField.PASSWORD) stringResource(R.string.error_required) else null,
+                password = true,
+            )
         }
     }
+}
+
+@Composable
+private fun FormField(value: String, label: Int, error: Boolean, errorText: Int, keyboard: KeyboardType = KeyboardType.Text, onValue: (String) -> Unit) {
+    UnderlineField(
+        stringResource(label),
+        value,
+        onValue,
+        Modifier.padding(top = 8.dp),
+        error = if (error) stringResource(errorText) else null,
+        keyboardType = keyboard,
+    )
 }
 
 private val WanProto.label: Int

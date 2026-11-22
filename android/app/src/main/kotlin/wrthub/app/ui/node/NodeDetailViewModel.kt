@@ -3,10 +3,15 @@ package wrthub.app.ui.node
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import java.io.IOException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -17,6 +22,8 @@ import wrthub.app.domain.SiteSession
 import wrthub.core.direct.ExecResult
 import wrthub.core.ubus.UbusException
 import wrthub.core.admin.parseDhcpConfig
+import wrthub.core.model.NodeSummary
+import wrthub.core.model.summary
 import wrthub.core.model.wanDevice
 
 sealed interface NodeNotice {
@@ -47,11 +54,28 @@ data class NodeDetailUiState(
     val result: ExecView? = null,
     val notice: NodeNotice? = null,
     val admin: AdminEntries = AdminEntries(),
+    /** 1-minute load of each snapshot that arrived while the page was open, oldest first. */
+    val loadHistory: List<Double> = emptyList(),
+    /** Used fraction of the memory (0..1), sampled like [loadHistory]. */
+    val memoryHistory: List<Double> = emptyList(),
 )
+
+/** The last [NodeDetailViewModel.HISTORY_SIZE] samples of load and memory use. */
+private data class Samples(val load: List<Double> = emptyList(), val memory: List<Double> = emptyList()) {
+    fun plus(summary: NodeSummary): Samples {
+        val total = summary.memoryTotalBytes
+        val memory = if (total > 0) memory + (total - summary.memoryAvailableBytes).toDouble() / total else memory
+        return Samples(
+            (load + summary.load1).takeLast(NodeDetailViewModel.HISTORY_SIZE),
+            memory.takeLast(NodeDetailViewModel.HISTORY_SIZE),
+        )
+    }
+}
 
 class NodeDetailViewModel(
     private val nodeId: String,
     private val session: SiteSession,
+    private val refreshIntervalMs: Long = 5_000,
     private val operationsFor: (NodeConfig) -> NodeOperations,
 ) : ViewModel() {
     private data class Local(
@@ -62,10 +86,18 @@ class NodeDetailViewModel(
     )
 
     private val local = MutableStateFlow(Local())
+    private var liveJob: Job? = null
 
-    val state: StateFlow<NodeDetailUiState> = combine(session.state, local) { site, ui ->
+    private val samples = session.state
+        .map { site -> site.nodes.firstOrNull { it.config.id == nodeId } }
+        .filterIsInstance<NodeState.Online>()
+        .map { it.snapshot }
+        .distinctUntilChanged { old, new -> old === new }
+        .runningFold(Samples()) { acc, snapshot -> acc.plus(snapshot.summary()) }
+
+    val state: StateFlow<NodeDetailUiState> = combine(session.state, local, samples) { site, ui, history ->
         val node = site.nodes.firstOrNull { it.config.id == nodeId }
-        NodeDetailUiState(node, ui.host, ui.running, ui.result, ui.notice, adminEntries(node))
+        NodeDetailUiState(node, ui.host, ui.running, ui.result, ui.notice, adminEntries(node), history.load, history.memory)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, NodeDetailUiState())
 
     fun onHost(value: String) = local.update { it.copy(host = value) }
@@ -84,6 +116,16 @@ class NodeDetailViewModel(
     }
 
     fun dismissNotice() = local.update { it.copy(notice = null) }
+
+    /** While [active], reloads the site every [refreshIntervalMs] so the load and memory lines advance. */
+    fun setLive(active: Boolean) {
+        liveJob?.cancel()
+        liveJob = if (active) session.keepFresh(refreshIntervalMs) else null
+    }
+
+    override fun onCleared() {
+        liveJob?.cancel()
+    }
 
     private fun nodeConfig(): NodeConfig? = session.state.value.nodes.firstOrNull { it.config.id == nodeId }?.config
 
@@ -116,6 +158,7 @@ class NodeDetailViewModel(
 
     companion object {
         const val DEFAULT_HOST = "1.1.1.1"
+        const val HISTORY_SIZE = 60
     }
 }
 

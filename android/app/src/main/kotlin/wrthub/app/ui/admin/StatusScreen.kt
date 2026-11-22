@@ -1,11 +1,10 @@
 package wrthub.app.ui.admin
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,16 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PrimaryScrollableTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -31,7 +24,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -41,8 +33,17 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import wrthub.app.R
+import wrthub.app.ui.design.AppCard
+import wrthub.app.ui.design.AppRow
+import wrthub.app.ui.design.Badge
+import wrthub.app.ui.design.ListPadding
+import wrthub.app.ui.design.ScreenPadding
+import wrthub.app.ui.design.SectionHeader
+import wrthub.app.ui.design.SegmentedToggle
+import wrthub.app.ui.design.StatusText
+import wrthub.app.ui.design.UnderlineField
+import wrthub.app.ui.design.ValueText
 import wrthub.app.ui.formatBytes
-import wrthub.app.ui.TrailingText
 import wrthub.app.ui.theme.LocalSemanticColors
 import wrthub.core.admin.Connection
 import wrthub.core.admin.ESSENTIAL_SERVICES
@@ -92,14 +93,14 @@ fun StatusScreen(state: StatusUiState, actions: StatusActions) {
         onBack = actions.onBack,
         onRefresh = actions.onRefresh,
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
-            PrimaryScrollableTabRow(selectedTabIndex = state.tab.ordinal, edgePadding = 8.dp) {
-                StatusTab.entries.forEach { tab ->
-                    Tab(selected = state.tab == tab, onClick = { actions.onTab(tab) }, text = { Text(stringResource(tab.label)) })
-                }
+        Column(Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = ScreenPadding, vertical = 8.dp)) {
+                SegmentedToggle(StatusTab.entries.map { it to stringResource(it.label) }, state.tab, actions.onTab)
             }
             if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth()) else Box(Modifier.padding(top = 4.dp))
-            state.failure?.let { Text(failureText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
+            state.failure?.let {
+                Text(failureText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = ScreenPadding, vertical = 8.dp))
+            }
             when (state.tab) {
                 StatusTab.LOGS -> Logs(state, actions)
                 StatusTab.ROUTES -> Routes(state, actions)
@@ -120,18 +121,16 @@ private val StatusTab.label: Int
 
 @Composable
 private fun Logs(state: StatusUiState, actions: StatusActions) {
-    Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilterChip(state.logKind == LogKind.SYSTEM, { actions.onLogKind(LogKind.SYSTEM) }, { Text(stringResource(R.string.log_system)) })
-        FilterChip(state.logKind == LogKind.KERNEL, { actions.onLogKind(LogKind.KERNEL) }, { Text(stringResource(R.string.log_kernel)) })
+    Column(Modifier.padding(horizontal = ScreenPadding), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SegmentedToggle(
+            listOf(LogKind.SYSTEM to stringResource(R.string.log_system), LogKind.KERNEL to stringResource(R.string.log_kernel)),
+            state.logKind,
+            actions.onLogKind,
+        )
+        UnderlineField(stringResource(R.string.filter), state.logFilter, actions.onLogFilter, Modifier.fillMaxWidth())
     }
-    OutlinedTextField(
-        value = state.logFilter,
-        onValueChange = actions.onLogFilter,
-        label = { Text(stringResource(R.string.filter)) },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-    )
-    LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    LazyColumn(contentPadding = ListPadding, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        item { Box(Modifier.padding(top = 8.dp)) }
         items(state.logs) { LogRow(it) }
     }
 }
@@ -142,77 +141,68 @@ private val TIME = DateTimeFormatter.ofPattern("MM-dd HH:mm:ss")
 private fun LogRow(line: LogLine) {
     val semantic = LocalSemanticColors.current
     val color = when {
-        line.severity <= 3 -> MaterialTheme.colorScheme.error
+        line.severity <= 3 -> semantic.signalPoor
         line.severity == 4 -> semantic.signalFair
-        else -> Color.Unspecified
+        else -> MaterialTheme.colorScheme.onSurface
     }
     val time = line.epochMillis?.let { TIME.format(Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault())) }
         ?: line.bootSeconds?.let { String.format(Locale.ROOT, "%.1f s", it) }
-    Column {
-        time?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        Text(line.message, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall, color = color)
+    AppCard(Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            time?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            Text(line.message, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall, color = color)
+        }
     }
 }
 
 @Composable
 private fun Routes(state: StatusUiState, actions: StatusActions) {
-    Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilterChip(state.family == IpFamily.V4, { actions.onFamily(IpFamily.V4) }, { Text("IPv4") })
-        FilterChip(state.family == IpFamily.V6, { actions.onFamily(IpFamily.V6) }, { Text("IPv6") })
-    }
+    SegmentedToggle(
+        listOf(IpFamily.V4 to "IPv4", IpFamily.V6 to "IPv6"),
+        state.family,
+        actions.onFamily,
+        Modifier.padding(horizontal = ScreenPadding),
+    )
     when (val routes = state.routes) {
-        is RouteTable.Parsed -> LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
-            items(routes.routes) { route ->
-                RouteRow(route)
-                HorizontalDivider()
-            }
+        is RouteTable.Parsed -> LazyColumn(contentPadding = ListPadding, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            item { Box(Modifier.padding(top = 4.dp)) }
+            items(routes.routes) { RouteRow(it) }
         }
-        is RouteTable.Text -> Text(
-            routes.text,
-            fontFamily = FontFamily.Monospace,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(16.dp).horizontalScroll(rememberScrollState()),
-        )
+        is RouteTable.Text -> AppCard(Modifier.padding(ScreenPadding).fillMaxWidth()) {
+            Text(
+                routes.text,
+                fontFamily = FontFamily.Monospace,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(12.dp).horizontalScroll(rememberScrollState()),
+            )
+        }
         null -> Unit
     }
 }
 
 @Composable
 private fun RouteRow(route: Route) {
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        supportingContent = {
-            Text(
-                listOfNotNull(
-                    route.gateway?.let { stringResource(R.string.route_via, it) },
-                    route.device,
-                    route.protocol,
-                    route.metric?.let { stringResource(R.string.route_metric, it) },
-                ).joinToString(" · "),
-            )
-        },
-        trailingContent = {
-            TrailingText(listOf(route.table, route.type).filterNot { it == "main" || it == "unicast" }.joinToString(" "))
-        },
-    ) {
-        Text(route.destination, fontFamily = FontFamily.Monospace)
-    }
+    val tags = listOf(route.table, route.type).filterNot { it == "main" || it == "unicast" }.joinToString(" ")
+    AppRow(
+        route.destination,
+        subtitle = listOfNotNull(
+            route.gateway?.let { stringResource(R.string.route_via, it) },
+            route.device,
+            route.protocol,
+            route.metric?.let { stringResource(R.string.route_metric, it) },
+        ).joinToString(" · "),
+        trailing = if (tags.isNotEmpty()) ({ Badge(tags) }) else null,
+        standalone = true,
+    )
 }
 
 @Composable
 private fun Connections(state: StatusUiState) {
-    state.usage?.let {
-        Text(
-            stringResource(R.string.conntrack_usage, it.count, it.max),
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        )
-    }
-    LazyColumn(contentPadding = PaddingValues(bottom = 16.dp)) {
-        items(state.connections) { connection ->
-            ConnectionRow(connection)
-            HorizontalDivider()
+    LazyColumn(contentPadding = ListPadding, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        state.usage?.let {
+            item { SectionHeader(stringResource(R.string.tab_connections), Modifier.padding(top = 0.dp), trailing = stringResource(R.string.conntrack_usage, it.count, it.max)) }
         }
+        items(state.connections) { ConnectionRow(it) }
     }
 }
 
@@ -223,23 +213,24 @@ private fun ConnectionRow(c: Connection) {
         ':' in address -> "[$address]:$port"
         else -> "$address:$port"
     }
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        overlineContent = { Text("${c.family} ${c.protocol}".uppercase()) },
-        supportingContent = { Text("→ " + endpoint(c.destination, c.destinationPort), fontFamily = FontFamily.Monospace) },
-        trailingContent = { TrailingText(formatBytes(c.bytes)) },
-    ) {
-        Text(endpoint(c.source, c.sourcePort), fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodyMedium)
-    }
+    AppRow(
+        endpoint(c.source, c.sourcePort),
+        subtitle = "→ " + endpoint(c.destination, c.destinationPort),
+        trailing = {
+            Badge("${c.family} ${c.protocol}".uppercase())
+            ValueText(formatBytes(c.bytes))
+        },
+        standalone = true,
+    )
 }
 
 @Composable
 private fun Services(state: StatusUiState, actions: StatusActions) {
     var selected by remember { mutableStateOf<Service?>(null) }
-    LazyColumn(contentPadding = PaddingValues(bottom = 16.dp)) {
+    LazyColumn(contentPadding = ListPadding, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        item { Box(Modifier.padding(top = 4.dp)) }
         items(state.services, key = { it.name }) { service ->
             ServiceRow(service, busy = state.busyService == service.name, onClick = { selected = service })
-            HorizontalDivider()
         }
     }
     selected?.let { service ->
@@ -257,22 +248,20 @@ private fun Services(state: StatusUiState, actions: StatusActions) {
 @Composable
 private fun ServiceRow(service: Service, busy: Boolean, onClick: () -> Unit) {
     val semantic = LocalSemanticColors.current
-    ListItem(
-        modifier = Modifier.clickable(enabled = !busy, onClick = onClick),
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        supportingContent = {
-            Text(stringResource(if (service.enabled) R.string.service_enabled else R.string.service_disabled))
-        },
-        trailingContent = {
+    AppRow(
+        service.name,
+        subtitle = stringResource(if (service.enabled) R.string.service_enabled else R.string.service_disabled),
+        trailing = {
             when (service.running) {
-                true -> TrailingText(stringResource(R.string.service_running), semantic.signalGood)
-                false -> TrailingText(stringResource(R.string.service_stopped), semantic.inactive)
+                true -> StatusText(stringResource(R.string.service_running), semantic.signalGood)
+                false -> StatusText(stringResource(R.string.service_stopped), semantic.inactive)
                 null -> Unit
             }
         },
-    ) {
-        Text(service.name)
-    }
+        onClick = onClick,
+        enabled = !busy,
+        standalone = true,
+    )
 }
 
 @Composable
@@ -292,7 +281,7 @@ private fun ServiceDialog(service: Service, onAction: (ServiceAction) -> Unit, o
             text = {
                 Column {
                     if (service.name in ESSENTIAL_SERVICES) {
-                        Text(stringResource(R.string.service_essential_note), style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.service_restart_only), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     offered.forEach { option ->
                         TextButton(onClick = { confirming = option }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(option.label)) }

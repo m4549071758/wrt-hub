@@ -124,7 +124,7 @@ class ScreenshotTest {
     private val noActions = AddNodeActions({}, {}, {}, {}, {}, {}, {}, {}, {})
 
     private fun capture(name: String, dark: Boolean = false, content: @Composable () -> Unit) {
-        compose.setContent { WrtHubTheme(darkTheme = dark, dynamicColor = false, content = content) }
+        compose.setContent { WrtHubTheme(darkTheme = dark, content = content) }
         compose.onRoot().captureRoboImage("build/outputs/roborazzi/$name.png")
     }
 
@@ -135,6 +135,16 @@ class ScreenshotTest {
 
     @Test
     fun homeDark() = capture("home_dark", dark = true) { HomeScreen(homeState(online), {}, {}, {}) }
+
+    @Test
+    @Config(qualifiers = "+ja")
+    fun homeJapanese() = capture("home_ja") { HomeScreen(homeState(online), {}, {}, {}) }
+
+    @Test
+    @Config(qualifiers = "+ja")
+    fun homeUnreachableJapanese() = capture("home_unreachable_ja") {
+        HomeScreen(homeState(listOf(online[0], NodeState.Unreachable(cabin.nodes[1], "timeout"))), {}, {}, {})
+    }
 
     @Test
     fun homeUnreachableAp() = capture("home_unreachable_ap") {
@@ -176,6 +186,8 @@ class ScreenshotTest {
                 host = "1.1.1.1",
                 result = ExecView("ping 1.1.1.1", "PING 1.1.1.1 (1.1.1.1): 56 data bytes\n64 bytes from 1.1.1.1: seq=0 ttl=57 time=38.211 ms\n\n--- 1.1.1.1 ping statistics ---\n4 packets transmitted, 4 packets received, 0% packet loss", 0),
                 admin = AdminEntries(status = true, staticLeases = true, portForwards = true, wireless = true, wan = true, system = true, packages = true),
+                loadHistory = List(60) { 0.1 + 0.06 * sin(it / 3.0) },
+                memoryHistory = List(60) { 0.24 + 0.01 * cos(it / 7.0) },
             ),
             NodeDetailActions({}, {}, {}, {}, {}, {}),
         )

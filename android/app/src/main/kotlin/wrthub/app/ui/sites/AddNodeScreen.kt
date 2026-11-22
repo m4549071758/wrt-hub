@@ -1,27 +1,20 @@
 package wrthub.app.ui.sites
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,12 +22,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.material3.OutlinedSecureTextField
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import wrthub.app.R
+import wrthub.app.ui.design.AlertCard
+import wrthub.app.ui.design.AppTopBar
+import wrthub.app.ui.design.PrimaryButton
+import wrthub.app.ui.design.ScreenPadding
+import wrthub.app.ui.design.UnderlineField
 
 data class AddNodeActions(
     val onSiteName: (String) -> Unit,
@@ -61,51 +56,89 @@ fun AddNodeRoute(viewModel: AddNodeViewModel, onDone: () -> Unit, onBack: () -> 
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddNodeScreen(state: AddNodeUiState, actions: AddNodeActions) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(if (state.needsSiteName) R.string.add_site else R.string.add_node)) },
-                navigationIcon = {
-                    IconButton(onClick = actions.onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        val editable = state.step == AddNodeStep.Form
+    val editable = state.step == AddNodeStep.Form
+    val missing = state.error == AddNodeError.MISSING_FIELDS
+    val required = stringResource(R.string.error_required)
+    fun requiredError(blank: Boolean) = if (missing && blank) required else null
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .navigationBarsPadding()
+            .imePadding(),
+    ) {
+        AppTopBar(
+            title = stringResource(if (state.needsSiteName) R.string.add_site else R.string.add_node),
+            onBack = actions.onBack,
+            actions = {
+                if (state.step == AddNodeStep.Working) {
+                    CircularProgressIndicator(Modifier.padding(end = 12.dp).size(20.dp), strokeWidth = 2.dp)
+                }
+            },
+        )
         Column(
-            Modifier.padding(padding).padding(16.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = ScreenPadding, vertical = 8.dp),
         ) {
             if (state.needsSiteName) {
-                Field(state.siteName, actions.onSiteName, R.string.site_name, editable)
+                UnderlineField(
+                    stringResource(R.string.site_name),
+                    state.siteName,
+                    actions.onSiteName,
+                    enabled = editable,
+                    error = requiredError(state.siteName.isBlank()),
+                )
             }
-            Field(state.label, actions.onLabel, R.string.node_label, editable)
-            Field(state.url, actions.onUrl, R.string.node_url, editable, KeyboardOptions(keyboardType = KeyboardType.Uri), placeholder = "192.168.1.1")
-            Field(state.username, actions.onUsername, R.string.username, editable)
-            val password = rememberTextFieldState(state.password)
-            LaunchedEffect(password, actions.onPassword) {
-                snapshotFlow { password.text.toString() }.collect(actions.onPassword)
-            }
-            OutlinedSecureTextField(
-                state = password,
-                label = { Text(stringResource(R.string.password)) },
+            UnderlineField(
+                stringResource(R.string.node_label),
+                state.label,
+                actions.onLabel,
                 enabled = editable,
-                modifier = Modifier.fillMaxWidth(),
+                error = requiredError(state.label.isBlank()),
             )
-            state.error?.let { Text(errorText(it, state.errorDetail), color = MaterialTheme.colorScheme.error) }
-            Button(onClick = actions.onSubmit, enabled = editable, modifier = Modifier.fillMaxWidth()) {
-                if (state.step == AddNodeStep.Working) {
-                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                } else {
-                    Text(stringResource(R.string.connect))
-                }
+            UnderlineField(
+                stringResource(R.string.node_url),
+                state.url,
+                actions.onUrl,
+                enabled = editable,
+                error = requiredError(state.url.isBlank())
+                    ?: if (state.error == AddNodeError.INVALID_URL) stringResource(R.string.error_invalid_url) else null,
+                placeholder = "192.168.1.1",
+                keyboardType = KeyboardType.Uri,
+            )
+            UnderlineField(
+                stringResource(R.string.username),
+                state.username,
+                actions.onUsername,
+                enabled = editable,
+                error = requiredError(state.username.isBlank()),
+            )
+            UnderlineField(
+                stringResource(R.string.password),
+                state.password,
+                actions.onPassword,
+                enabled = editable,
+                error = requiredError(state.password.isEmpty()),
+                password = true,
+            )
+            alertTitle(state.error)?.let { title ->
+                AlertCard(
+                    title,
+                    if (state.error == AddNodeError.UNREACHABLE) state.errorDetail else null,
+                    Modifier.padding(top = 20.dp),
+                )
             }
         }
+        PrimaryButton(
+            stringResource(R.string.connect),
+            actions.onSubmit,
+            Modifier.fillMaxWidth().padding(horizontal = ScreenPadding, vertical = 16.dp),
+            enabled = editable,
+        )
     }
     (state.step as? AddNodeStep.ConfirmCertificate)?.let { step ->
         AlertDialog(
@@ -113,7 +146,7 @@ fun AddNodeScreen(state: AddNodeUiState, actions: AddNodeActions) {
             title = { Text(stringResource(R.string.certificate_title)) },
             text = {
                 Column {
-                    Text(stringResource(R.string.certificate_body))
+                    Text(stringResource(R.string.certificate_text))
                     Text(
                         step.fingerprint,
                         fontFamily = FontFamily.Monospace,
@@ -128,33 +161,12 @@ fun AddNodeScreen(state: AddNodeUiState, actions: AddNodeActions) {
     }
 }
 
+/** Errors that are not about a single field, shown in a card under the form. */
 @Composable
-private fun Field(
-    value: String,
-    onChange: (String) -> Unit,
-    label: Int,
-    enabled: Boolean,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    placeholder: String? = null,
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onChange,
-        label = { Text(stringResource(label)) },
-        placeholder = placeholder?.let { { Text(it) } },
-        singleLine = true,
-        enabled = enabled,
-        keyboardOptions = keyboardOptions,
-        modifier = Modifier.fillMaxWidth(),
-    )
-}
-
-@Composable
-private fun errorText(error: AddNodeError, detail: String?): String = when (error) {
-    AddNodeError.MISSING_FIELDS -> stringResource(R.string.error_missing_fields)
-    AddNodeError.INVALID_URL -> stringResource(R.string.error_invalid_url)
+private fun alertTitle(error: AddNodeError?): String? = when (error) {
+    null, AddNodeError.MISSING_FIELDS, AddNodeError.INVALID_URL -> null
     AddNodeError.LOGIN_FAILED -> stringResource(R.string.error_login_failed)
-    AddNodeError.UNREACHABLE -> stringResource(R.string.error_unreachable, detail.orEmpty())
+    AddNodeError.UNREACHABLE -> stringResource(R.string.add_node_unreachable)
     AddNodeError.CERTIFICATE_REJECTED -> stringResource(R.string.error_certificate_rejected)
     AddNodeError.SITE_NOT_FOUND -> stringResource(R.string.error_site_not_found)
 }
