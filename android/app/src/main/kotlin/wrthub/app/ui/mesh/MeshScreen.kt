@@ -112,22 +112,32 @@ fun MeshGraph(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, modifier: 
     val globeIcon = painterResource(R.drawable.ic_public)
     val counts = state.nodes.associate { it.id to pluralStringResource(R.plurals.clients_count, it.clients.size, it.clients.size) }
     val density = LocalDensity.current
-    val metrics = remember(density) {
-        with(density) { TreeMetrics(cell = 56.dp.toPx(), level = 104.dp.toPx(), row = 60.dp.toPx(), padding = 28.dp.toPx()) }
+    val base = remember(density) {
+        with(density) { TreeMetrics(cell = 56.dp.toPx(), level = 104.dp.toPx(), row = 60.dp.toPx(), padding = 40.dp.toPx()) }
     }
+    val minCell = with(density) { 36.dp.toPx() }
     val nodeRadius = with(density) { 22.dp.toPx() }
     val internetRadius = with(density) { 18.dp.toPx() }
     val clientRadius = with(density) { 6.dp.toPx() }
     val slop = with(density) { 14.dp.toPx() }
-    val layout = remember(state.nodes, state.edges, state.routerId, metrics) {
-        treeLayout(state.nodes, state.edges, state.routerId, metrics)
-    }
     val clientsByMac = remember(state.nodes) { state.nodes.flatMap { it.clients }.associateBy { it.mac } }
     val online = remember(state.nodes) { state.nodes.associate { it.id to it.online } }
     BoxWithConstraints(modifier) {
-        val canvasWidth = max(layout.width, constraints.maxWidth.toFloat())
+        val viewport = constraints.maxWidth.toFloat()
+        // Narrower columns before sideways scrolling: everything outside the padding scales with the cell.
+        val (metrics, layout) = remember(state.nodes, state.edges, state.routerId, base, viewport) {
+            val natural = treeLayout(state.nodes, state.edges, state.routerId, base)
+            val inner = natural.width - 2 * base.padding
+            if (natural.width <= viewport || inner <= 0f) {
+                base to natural
+            } else {
+                val fitted = base.copy(cell = (base.cell * (viewport - 2 * base.padding) / inner).coerceAtLeast(minCell))
+                fitted to treeLayout(state.nodes, state.edges, state.routerId, fitted)
+            }
+        }
+        val canvasWidth = max(layout.width, viewport)
         val canvasHeight = max(layout.height, constraints.maxHeight.toFloat())
-        val shift = Offset((canvasWidth - layout.width) / 2, 0f)
+        val shift = Offset((canvasWidth - layout.width) / 2, (canvasHeight - layout.height) * 0.4f)
         val horizontal = rememberScrollState()
         val viewportWidth = constraints.maxWidth
         LaunchedEffect(layout, viewportWidth) {
@@ -182,7 +192,9 @@ fun MeshGraph(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, modifier: 
                         if (rate != null) {
                             val text = measurer.measure(formatBps(rate), smallStyle)
                             val bend = link.points[link.points.size - 2]
-                            drawText(text, topLeft = Offset(end.x + 8.dp.toPx(), (bend.y + end.y) / 2 - text.size.height / 2f))
+                            val right = end.x + 8.dp.toPx()
+                            val x = if (right + text.size.width + shift.x <= size.width) right else end.x - 8.dp.toPx() - text.size.width
+                            drawText(text, topLeft = Offset(x, (bend.y + end.y) / 2 - text.size.height / 2f))
                         }
                     }
                     layout.internet?.let { p ->
@@ -192,6 +204,7 @@ fun MeshGraph(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, modifier: 
                         val label = measurer.measure(internetLabel, smallStyle)
                         drawText(label, topLeft = Offset(p.x + internetRadius + 8.dp.toPx(), p.y - label.size.height / 2f))
                     }
+                    val stagger = staggeredClients(layout.clients)
                     for ((mac, p) in layout.clients) {
                         val client = clientsByMac[mac] ?: continue
                         val wireless = client.presence == Presence.WIRELESS
@@ -199,14 +212,17 @@ fun MeshGraph(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, modifier: 
                         if (state.selection == MeshSelection.Client(mac)) {
                             drawCircle(colors.primary, clientRadius + 3.dp.toPx(), p, style = Stroke(2.dp.toPx()))
                         }
+                        // Neighbours alternate between two lines so each name gets two columns of width.
                         val label = measurer.measure(
                             client.name ?: mac.takeLast(8),
                             smallStyle,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 1,
-                            constraints = Constraints(maxWidth = (metrics.cell - 4.dp.toPx()).toInt()),
+                            constraints = Constraints(maxWidth = (2 * metrics.cell - 8.dp.toPx()).toInt()),
                         )
-                        drawText(label, topLeft = Offset(p.x - label.size.width / 2f, p.y + clientRadius + 4.dp.toPx()))
+                        val drop = if (mac in stagger) label.size.height.toFloat() else 0f
+                        val x = (p.x - label.size.width / 2f).coerceIn(-shift.x, size.width - shift.x - label.size.width)
+                        drawText(label, topLeft = Offset(x, p.y + clientRadius + 4.dp.toPx() + drop))
                     }
                     for (node in state.nodes) {
                         val center = layout.nodes[node.id] ?: continue
@@ -237,7 +253,9 @@ fun MeshGraph(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, modifier: 
                             constraints = Constraints(maxWidth = 96.dp.toPx().toInt()),
                         )
                         val count = measurer.measure(counts.getValue(node.id), smallStyle, maxLines = 1)
-                        val left = center.x + nodeRadius + 8.dp.toPx()
+                        val labelWidth = max(name.size.width, count.size.width)
+                        val right = center.x + nodeRadius + 8.dp.toPx()
+                        val left = if (right + labelWidth + shift.x <= size.width) right else center.x - nodeRadius - 8.dp.toPx() - labelWidth
                         val top = center.y - (name.size.height + count.size.height) / 2f
                         drawText(name, topLeft = Offset(left, top))
                         drawText(count, topLeft = Offset(left, top + name.size.height))
@@ -252,6 +270,14 @@ private fun pathOf(points: List<Offset>) = Path().apply {
     moveTo(points.first().x, points.first().y)
     points.drop(1).forEach { lineTo(it.x, it.y) }
 }
+
+/** Clients whose name goes on the lower line: every second one, left to right, within each row of dots. */
+private fun staggeredClients(clients: Map<String, Offset>): Set<String> =
+    clients.entries
+        .groupBy { it.value.y.roundToInt() }
+        .values
+        .flatMap { row -> row.sortedBy { it.value.x }.filterIndexed { i, _ -> i % 2 == 1 }.map { it.key } }
+        .toSet()
 
 /** A line that glows: two wide faint strokes under a thin solid one, like the home screen's topology. */
 private fun DrawScope.litPath(points: List<Offset>, color: Color, dashed: Boolean = false, core: androidx.compose.ui.unit.Dp = 1.6.dp) {

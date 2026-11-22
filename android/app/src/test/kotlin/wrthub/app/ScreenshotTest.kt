@@ -241,6 +241,17 @@ class ScreenshotTest {
         MeshScreen(meshState.copy(selection = MeshSelection.Edge("ap", "router")), {})
     }
 
+    /** Four long names under the router and the AP at the right edge, as on a narrow phone. */
+    @Test
+    @Config(qualifiers = "+ja")
+    fun meshLongNames() = capture("mesh_long_names") {
+        val names = listOf("Inspiron-14-5440", "S26-Ultra-of-someone", "motorola-edge-50", "customer-laptop")
+        val router = meshState.nodes[0]
+        val base = router.clients.first()
+        val clients = names.mapIndexed { i, name -> base.copy(mac = "ce:11:22:00:01:0$i", name = name) }
+        MeshScreen(meshState.copy(nodes = listOf(router.copy(clients = clients), meshState.nodes[1])), {})
+    }
+
     @Test
     fun meshWiredSite() = capture("mesh_wired") {
         val nodes = listOf(NodeState.Online(home.nodes[0], Fixtures.wiredSite.getValue("router")))
