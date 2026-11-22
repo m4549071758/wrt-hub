@@ -57,11 +57,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import wrthub.app.ui.TrailingText
 import wrthub.core.topology.Presence
 import wrthub.core.topology.SiteClient
+import wrthub.app.ui.SiteSwitcherBar
 
 @Composable
 fun ClientsRoute(viewModel: ClientsViewModel, onPinIp: (nodeId: String, client: SiteClient) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    ClientsScreen(state, viewModel::setFilter, viewModel::refresh, viewModel::setBlocked, viewModel::dismissNotice, onPinIp)
+    ClientsScreen(state, viewModel::setFilter, viewModel::refresh, viewModel::setBlocked, viewModel::dismissNotice, onPinIp, viewModel::select)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,6 +74,7 @@ fun ClientsScreen(
     onSetBlocked: (mac: String, blocked: Boolean) -> Unit,
     onDismissNotice: () -> Unit,
     onPinIp: (nodeId: String, client: SiteClient) -> Unit = { _, _ -> },
+    onSelectSite: (String) -> Unit = {},
 ) {
     var selectedMac by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
@@ -84,12 +86,7 @@ fun ClientsScreen(
         }
     }
     Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(state.site?.name ?: stringResource(R.string.tab_clients)) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            )
-        },
+        topBar = { SiteSwitcherBar(state.sites, state.site, onSelectSite) },
         snackbarHost = { SnackbarHost(snackbar) },
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
     ) { padding ->

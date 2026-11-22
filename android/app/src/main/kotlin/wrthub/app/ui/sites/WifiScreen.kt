@@ -65,7 +65,7 @@ fun WifiScreen(state: WifiUiState, actions: WifiActions) {
                 title = { Text(stringResource(R.string.wifi_settings_title, state.site?.name.orEmpty())) },
                 navigationIcon = {
                     IconButton(onClick = actions.onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cancel))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),

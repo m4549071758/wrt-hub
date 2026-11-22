@@ -31,7 +31,9 @@ import wrthub.app.ui.sites.AddNodeError
 import wrthub.app.ui.sites.AddNodeScreen
 import wrthub.app.ui.sites.AddNodeStep
 import wrthub.app.ui.sites.AddNodeUiState
-import wrthub.app.ui.sites.SitesScreen
+import wrthub.app.ui.nodes.NodesActions
+import wrthub.app.ui.nodes.NodesScreen
+import wrthub.app.ui.nodes.NodesUiState
 import wrthub.app.ui.theme.WrtHubTheme
 import wrthub.core.Fixtures
 import wrthub.core.topology.Presence
@@ -159,7 +161,12 @@ class ScreenshotTest {
     }
 
     @Test
-    fun sites() = capture("sites") { SitesScreen(listOf(home, cabin), {}, {}, {}, { _, _ -> }) }
+    fun nodes() = capture("nodes") {
+        NodesScreen(
+            NodesUiState(listOf(home, cabin), online.associateBy { it.config.id }),
+            NodesActions({ _, _ -> }, {}, {}, {}, {}, { _, _ -> }),
+        )
+    }
 
     @Test
     fun nodeDetail() = capture("node_detail") {
@@ -212,11 +219,14 @@ class ScreenshotTest {
     )
 
     @Test
-    fun meshLight() = capture("mesh_light") { MeshScreen(meshState) {} }
+    fun meshLight() = capture("mesh_light") { MeshScreen(meshState, {}) }
+
+    @Test
+    fun meshNodeSelected() = capture("mesh_node") { MeshScreen(meshState.copy(selection = MeshSelection.Node("ap")), {}) }
 
     @Test
     fun meshDarkEdgeSelected() = capture("mesh_dark_edge", dark = true) {
-        MeshScreen(meshState.copy(selection = MeshSelection.Edge("ap", "router"))) {}
+        MeshScreen(meshState.copy(selection = MeshSelection.Edge("ap", "router")), {})
     }
 
     @Test
@@ -230,7 +240,8 @@ class ScreenshotTest {
                 routerId = "home-router",
                 departed = wired.clients.count { it.presence == Presence.LEASE_ONLY },
             ),
-        ) {}
+            {},
+        )
     }
 
     @Test

@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -87,10 +88,10 @@ fun NodeDetailScreen(state: NodeDetailUiState, actions: NodeDetailActions) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(label) },
+                title = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = actions.onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cancel))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
@@ -105,8 +106,7 @@ fun NodeDetailScreen(state: NodeDetailUiState, actions: NodeDetailActions) {
         ) {
             state.node?.let { NodeCard(it, wifiClients = null) }
             if (state.admin.status) {
-                Section(stringResource(R.string.manage)) {
-                    AdminEntry(R.drawable.ic_monitoring, R.string.status, R.string.status_body) { actions.onOpen(AdminPage.STATUS) }
+                Section(stringResource(R.string.section_settings)) {
                     if (state.admin.wireless) AdminEntry(R.drawable.ic_wifi, R.string.wireless, R.string.wireless_body) { actions.onOpen(AdminPage.WIRELESS) }
                     if (state.admin.staticLeases) AdminEntry(R.drawable.ic_dns, R.string.static_leases, R.string.static_leases_body) { actions.onOpen(AdminPage.LEASES) }
                     if (state.admin.portForwards) AdminEntry(R.drawable.ic_swap_horiz, R.string.port_forwards, R.string.port_forwards_body) { actions.onOpen(AdminPage.FORWARDS) }
@@ -115,7 +115,8 @@ fun NodeDetailScreen(state: NodeDetailUiState, actions: NodeDetailActions) {
                     if (state.admin.packages) AdminEntry(R.drawable.ic_inventory_2, R.string.packages, R.string.packages_body) { actions.onOpen(AdminPage.PACKAGES) }
                 }
             }
-            Section(stringResource(R.string.diagnostics)) {
+            Section(stringResource(R.string.section_status_diagnostics)) {
+                if (state.admin.status) AdminEntry(R.drawable.ic_monitoring, R.string.status, R.string.status_body) { actions.onOpen(AdminPage.STATUS) }
                 OutlinedTextField(
                     value = state.host,
                     onValueChange = actions.onHost,

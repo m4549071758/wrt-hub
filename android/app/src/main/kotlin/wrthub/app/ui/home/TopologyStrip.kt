@@ -41,10 +41,15 @@ import wrthub.app.ui.formatBps
 import wrthub.app.ui.theme.LocalSemanticColors
 import wrthub.app.ui.theme.forSignal
 
+/** The site at a glance; tapping it opens the full network map. */
 @Composable
-fun TopologyCard(model: StripModel, modifier: Modifier = Modifier) {
+fun TopologyCard(model: StripModel, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     val semantic = LocalSemanticColors.current
-    Card(modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+    Card(onClick = onClick, modifier = modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 12.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.network_map), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+            Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null)
+        }
         Row(
             Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,

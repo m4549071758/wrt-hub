@@ -59,8 +59,8 @@ import wrthub.app.ui.sites.WifiRoute
 import wrthub.app.ui.sites.WifiViewModel
 import wrthub.app.ui.sites.AddNodeRoute
 import wrthub.app.ui.sites.AddNodeViewModel
-import wrthub.app.ui.sites.SitesRoute
-import wrthub.app.ui.sites.SitesViewModel
+import wrthub.app.ui.nodes.NodesRoute
+import wrthub.app.ui.nodes.NodesViewModel
 
 @Serializable
 data object HomeDestination
@@ -68,11 +68,12 @@ data object HomeDestination
 @Serializable
 data object ClientsDestination
 
+/** The full network map, opened from the home topology card. */
 @Serializable
-data object MeshDestination
+data object MapDestination
 
 @Serializable
-data object SitesDestination
+data object NodesDestination
 
 @Serializable
 data class AddNodeDestination(val siteId: String? = null)
@@ -114,7 +115,7 @@ fun WrtHubApp(container: AppContainer) {
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             val onTab = destination?.let {
-                it.hasRoute<HomeDestination>() || it.hasRoute<ClientsDestination>() || it.hasRoute<MeshDestination>() || it.hasRoute<SitesDestination>()
+                it.hasRoute<HomeDestination>() || it.hasRoute<ClientsDestination>() || it.hasRoute<NodesDestination>()
             } != false
             if (onTab) {
                 NavigationBar {
@@ -131,16 +132,10 @@ fun WrtHubApp(container: AppContainer) {
                         label = { Text(stringResource(R.string.tab_clients)) },
                     )
                     NavigationBarItem(
-                        selected = destination?.hasRoute<MeshDestination>() == true,
-                        onClick = { navController.switchTab(MeshDestination) },
-                        icon = { Icon(painterResource(R.drawable.ic_hub), contentDescription = null) },
-                        label = { Text(stringResource(R.string.tab_mesh)) },
-                    )
-                    NavigationBarItem(
-                        selected = destination?.hasRoute<SitesDestination>() == true,
-                        onClick = { navController.switchTab(SitesDestination) },
+                        selected = destination?.hasRoute<NodesDestination>() == true,
+                        onClick = { navController.switchTab(NodesDestination) },
                         icon = { Icon(painterResource(R.drawable.ic_router), contentDescription = null) },
-                        label = { Text(stringResource(R.string.tab_sites)) },
+                        label = { Text(stringResource(R.string.tab_nodes)) },
                     )
                 }
             }
@@ -163,6 +158,8 @@ fun WrtHubApp(container: AppContainer) {
                     vm,
                     onAddSite = { navController.navigate(AddNodeDestination()) },
                     onOpenNode = { navController.navigate(NodeDestination(it)) },
+                    onOpenMap = { navController.navigate(MapDestination) },
+                    onOpenSiteWifi = { navController.navigate(WifiDestination(it)) },
                 )
             }
             composable<ClientsDestination> {
@@ -173,14 +170,17 @@ fun WrtHubApp(container: AppContainer) {
                     navController.navigate(LeasesDestination(nodeId, client.mac, client.ipv4, client.name))
                 })
             }
-            composable<MeshDestination> {
+            composable<MapDestination> {
                 val vm: MeshViewModel = viewModel(factory = viewModelFactory { initializer { MeshViewModel(container.session) } })
-                MeshRoute(vm)
+                MeshRoute(vm, onBack = { navController.popBackStack() }, onOpenNode = { navController.navigate(NodeDestination(it)) })
             }
-            composable<SitesDestination> {
-                val vm: SitesViewModel = viewModel(factory = viewModelFactory { initializer { SitesViewModel(container.siteStore) } })
-                SitesRoute(
+            composable<NodesDestination> {
+                val vm: NodesViewModel = viewModel(
+                    factory = viewModelFactory { initializer { NodesViewModel(container.siteStore, container.session) } },
+                )
+                NodesRoute(
                     vm,
+                    onOpenNode = { navController.navigate(NodeDestination(it)) },
                     onAddSite = { navController.navigate(AddNodeDestination()) },
                     onAddNode = { navController.navigate(AddNodeDestination(it)) },
                     onOpenWifi = { navController.navigate(WifiDestination(it)) },

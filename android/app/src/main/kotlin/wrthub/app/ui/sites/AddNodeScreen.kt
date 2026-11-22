@@ -70,7 +70,7 @@ fun AddNodeScreen(state: AddNodeUiState, actions: AddNodeActions) {
                 title = { Text(stringResource(if (state.needsSiteName) R.string.add_site else R.string.add_node)) },
                 navigationIcon = {
                     IconButton(onClick = actions.onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cancel))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
             )

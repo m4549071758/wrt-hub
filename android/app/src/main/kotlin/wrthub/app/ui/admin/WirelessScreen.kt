@@ -29,6 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material3.Icon
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
 import wrthub.app.R
 import wrthub.core.admin.Radio
 import wrthub.core.admin.Ssid
@@ -134,14 +137,21 @@ private fun radioLabel(band: String?, name: String): String = when (band) {
 @Composable
 private fun RadioCard(view: RadioView, saving: Boolean, actions: WirelessActions) {
     val radio = view.radio
-    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+    Card(
+        onClick = { actions.onEdit(radio) },
+        enabled = !saving,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(radioLabel(radio.band, radio.name), style = MaterialTheme.typography.titleMedium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(radioLabel(radio.band, radio.name), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null)
+            }
             Value(stringResource(R.string.channel), channelLabel(radio.channel))
             Value(stringResource(R.string.width), radio.htmode ?: stringResource(R.string.driver_default))
             Value(stringResource(R.string.txpower), txpowerLabel(radio.txpower))
             if (radio.carriesMesh) Text(stringResource(R.string.mesh_radio_note), style = MaterialTheme.typography.bodySmall)
-            TextButton(onClick = { actions.onEdit(radio) }, enabled = !saving) { Text(stringResource(R.string.edit)) }
         }
     }
 }

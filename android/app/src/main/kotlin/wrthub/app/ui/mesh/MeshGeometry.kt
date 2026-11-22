@@ -108,11 +108,16 @@ private fun elbow(from: Offset, to: Offset): List<Offset> {
     return listOf(from, Offset(from.x, middle), Offset(to.x, middle), to)
 }
 
-/** Clients are drawn on top, then nodes, then links, so taps resolve in that order. */
+/**
+ * Clients are drawn on top, then nodes, then links, so taps resolve in that order. Touch radii reach 24dp (a 48dp
+ * target) and may overlap between neighbours, so the nearest one within reach wins.
+ */
 fun hitTest(point: Offset, layout: TreeLayout, nodeRadius: Float, clientRadius: Float, linkSlop: Float): MeshSelection? {
-    layout.clients.entries.firstOrNull { (_, p) -> (point - p).getDistance() <= clientRadius }
+    layout.clients.entries.filter { (_, p) -> (point - p).getDistance() <= clientRadius }
+        .minByOrNull { (_, p) -> (point - p).getDistance() }
         ?.let { return MeshSelection.Client(it.key) }
-    layout.nodes.entries.firstOrNull { (_, p) -> (point - p).getDistance() <= nodeRadius }
+    layout.nodes.entries.filter { (_, p) -> (point - p).getDistance() <= nodeRadius }
+        .minByOrNull { (_, p) -> (point - p).getDistance() }
         ?.let { return MeshSelection.Node(it.key) }
     return layout.links.firstOrNull { link ->
         link.edge != null && link.points.zipWithNext().any { (a, b) -> distanceToSegment(point, a, b) <= linkSlop }

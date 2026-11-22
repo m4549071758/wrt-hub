@@ -25,13 +25,14 @@ data class SemanticColors(
     val inactive: Color,
 )
 
+/** Each is at least 4.5:1 against the light surfaces, as these colors also paint small text. */
 private val LightSemantic = SemanticColors(
-    download = Color(0xFF0A9FD8),
-    upload = Color(0xFF9B51E0),
-    signalGood = Color(0xFF2FA84F),
-    signalFair = Color(0xFFD99A00),
-    signalPoor = Color(0xFFE5484D),
-    inactive = Color(0xFF8E8E93),
+    download = Color(0xFF0B6E99),
+    upload = Color(0xFF7B3FC4),
+    signalGood = Color(0xFF1E7B34),
+    signalFair = Color(0xFF8A5A00),
+    signalPoor = Color(0xFFC62828),
+    inactive = Color(0xFF6B6B70),
 )
 
 private val DarkSemantic = SemanticColors(

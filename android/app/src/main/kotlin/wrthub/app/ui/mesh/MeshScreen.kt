@@ -15,7 +15,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -50,22 +55,33 @@ import wrthub.app.ui.theme.forSignal
 import wrthub.core.topology.Presence
 
 @Composable
-fun MeshRoute(viewModel: MeshViewModel) {
+fun MeshRoute(viewModel: MeshViewModel, onBack: () -> Unit, onOpenNode: (String) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LifecycleResumeEffect(viewModel) {
         viewModel.setLive(true)
         onPauseOrDispose { viewModel.setLive(false) }
     }
-    MeshScreen(state, viewModel::select)
+    MeshScreen(state, viewModel::select, onBack, onOpenNode)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MeshScreen(state: MeshUiState, onSelect: (MeshSelection?) -> Unit) {
+fun MeshScreen(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, onBack: () -> Unit = {}, onOpenNode: (String) -> Unit = {}) {
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(state.site?.name ?: stringResource(R.string.tab_mesh)) },
+            TopAppBar(
+                title = {
+                    Text(
+                        stringResource(R.string.network_map_title, state.site?.name.orEmpty()),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             )
         },
@@ -82,7 +98,7 @@ fun MeshScreen(state: MeshUiState, onSelect: (MeshSelection?) -> Unit) {
                 Modifier.fillMaxWidth().padding(top = 12.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             ) {
-                SelectionDetail(state, Modifier.padding(16.dp))
+                SelectionDetail(state, onOpenNode, Modifier.padding(16.dp))
             }
         }
     }
@@ -124,7 +140,10 @@ fun MeshGraph(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, modifier: 
                 Modifier
                     .size(with(density) { canvasWidth.toDp() }, with(density) { canvasHeight.toDp() })
                     .pointerInput(layout, shift) {
-                        detectTapGestures { onSelect(hitTest(it - shift, layout, nodeRadius, clientRadius * 2, slop)) }
+                        detectTapGestures {
+                            val reach = 24.dp.toPx()
+                            onSelect(hitTest(it - shift, layout, max(nodeRadius, reach), max(clientRadius * 2, reach), slop))
+                        }
                     },
             ) {
                 translate(shift.x, shift.y) {
@@ -201,7 +220,7 @@ fun MeshGraph(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, modifier: 
 }
 
 @Composable
-private fun SelectionDetail(state: MeshUiState, modifier: Modifier = Modifier) {
+private fun SelectionDetail(state: MeshUiState, onOpenNode: (String) -> Unit, modifier: Modifier = Modifier) {
     val semantic = LocalSemanticColors.current
     val labels = state.nodes.associate { it.id to it.label }
     Column(modifier) {
@@ -217,6 +236,9 @@ private fun SelectionDetail(state: MeshUiState, modifier: Modifier = Modifier) {
                 DetailLine(stringResource(R.string.tab_clients), node.clients.size.toString())
                 node.clients.take(6).forEach { client ->
                     DetailLine(client.name ?: client.mac, client.signal?.let { "$it dBm" } ?: "—")
+                }
+                FilledTonalButton(onClick = { onOpenNode(node.id) }, modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+                    Text(stringResource(R.string.open_node))
                 }
             }
             is MeshSelection.Edge -> state.edges.firstOrNull { it.a == selection.a && it.b == selection.b }?.let { edge ->

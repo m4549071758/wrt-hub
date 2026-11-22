@@ -43,6 +43,7 @@ data class ClientsUiState(
     /** The node whose DHCP server hands out static leases; null hides "fix this IP". */
     val dhcpNodeId: String? = null,
     val staticMacs: Set<String> = emptySet(),
+    val sites: List<SiteConfig> = emptyList(),
 )
 
 /** Blocks and unblocks go to the router (the node with WAN), whose firewall forwards every client's traffic. */
@@ -66,8 +67,11 @@ class ClientsViewModel(
             notice = ui.notice,
             dhcpNodeId = dhcp?.first?.config?.id,
             staticMacs = dhcp?.second?.leases.orEmpty().flatMap { it.macs }.toSet(),
+            sites = site.sites,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, ClientsUiState())
+
+    fun select(siteId: String) = session.select(siteId)
 
     fun setFilter(filter: ClientFilter) = local.update { it.copy(filter = filter) }
 

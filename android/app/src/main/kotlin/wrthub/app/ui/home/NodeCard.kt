@@ -2,7 +2,6 @@ package wrthub.app.ui.home
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,17 +25,15 @@ import wrthub.app.ui.formatUptime
 import wrthub.app.ui.formatUsedPercent
 import wrthub.app.ui.theme.LocalSemanticColors
 import wrthub.core.model.summary
-import androidx.compose.material3.Icon
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 
-/** [wifiClients] is null for nodes without an AP interface; [onClick] makes the card open the node. */
+/** The node's facts at the top of its detail page. [wifiClients] is null for nodes without an AP interface. */
 @Composable
-fun NodeCard(state: NodeState, wifiClients: Int?, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
+fun NodeCard(state: NodeState, wifiClients: Int?, modifier: Modifier = Modifier) {
     val semantic = LocalSemanticColors.current
-    val clickable = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+    val online = state is NodeState.Online
     Card(modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-        Column(clickable.padding(16.dp)) {
+        Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     state.config.label,
@@ -45,19 +42,13 @@ fun NodeCard(state: NodeState, wifiClients: Int?, modifier: Modifier = Modifier,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
-                Box(
-                    Modifier
-                        .size(10.dp)
-                        .background(if (state is NodeState.Online) semantic.signalGood else semantic.signalPoor, CircleShape),
+                Box(Modifier.size(10.dp).background(if (online) semantic.signalGood else semantic.signalPoor, CircleShape))
+                Text(
+                    stringResource(if (online) R.string.status_online else R.string.status_unreachable),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (online) semantic.signalGood else semantic.signalPoor,
+                    modifier = Modifier.padding(start = 6.dp),
                 )
-                if (onClick != null) {
-                    Icon(
-                        painterResource(R.drawable.ic_chevron_right),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 8.dp).size(20.dp),
-                    )
-                }
             }
             when (state) {
                 is NodeState.Online -> {
