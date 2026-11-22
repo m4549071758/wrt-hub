@@ -189,13 +189,16 @@ fun MeshGraph(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, modifier: 
                                     drawPath(pathOf(link.points), colors.outline, style = Stroke(1.4.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(2.dp.toPx(), 6.dp.toPx()))))
                                 }
                             }
-                            // Straight spokes from the node to each client, as in the reference map.
-                            TreeLinkKind.CLIENT_WIFI, TreeLinkKind.CLIENT_OTHER -> drawLine(
+                            // The same down-across-down elbow as between nodes, so a node's clients and child nodes
+                            // hang from one shared bus.
+                            TreeLinkKind.CLIENT_WIFI, TreeLinkKind.CLIENT_OTHER -> drawPath(
+                                pathOf(link.points),
                                 colors.onSurfaceVariant.copy(alpha = 0.45f),
-                                link.points.first(),
-                                end,
-                                1.dp.toPx(),
-                                pathEffect = if (link.kind == TreeLinkKind.CLIENT_OTHER) PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 4.dp.toPx())) else null,
+                                style = Stroke(
+                                    1.dp.toPx(),
+                                    join = StrokeJoin.Round,
+                                    pathEffect = if (link.kind == TreeLinkKind.CLIENT_OTHER) PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 4.dp.toPx())) else null,
+                                ),
                             )
                         }
                         val rate = edge?.slowestBps()
