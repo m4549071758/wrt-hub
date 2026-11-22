@@ -25,6 +25,8 @@ import wrthub.app.ui.mesh.MeshNode
 import wrthub.app.ui.mesh.MeshScreen
 import wrthub.app.ui.mesh.MeshSelection
 import wrthub.app.ui.mesh.MeshUiState
+import wrthub.app.ui.mesh.networkNodeId
+import wrthub.app.ui.mesh.splitByNetwork
 import wrthub.app.ui.home.HomeUiState
 import wrthub.app.ui.sites.AddNodeActions
 import wrthub.app.ui.sites.AddNodeError
@@ -264,6 +266,41 @@ class ScreenshotTest {
                 departed = wired.clients.count { it.presence == Presence.LEASE_ONLY },
             ),
             {},
+        )
+    }
+
+    /** Two LANs on the router and two of the devices on one of them marked as APs that are not nodes. */
+    @Test
+    @Config(qualifiers = "+ja")
+    fun meshNetworks() = capture("mesh_networks") {
+        val nodes = listOf(NodeState.Online(home.nodes[0], Fixtures.wiredSite.getValue("router")))
+        val wired = siteTopology(nodes)
+        val aps = setOf("02:aa:bb:00:00:4e", "02:aa:bb:00:00:2a")
+        val router = MeshNode("home-router", "Gateway", true, wired.clients.filter { it.presence == Presence.ONLINE_UNKNOWN_LINK })
+        MeshScreen(
+            MeshUiState(
+                site = home.copy(unmanagedAps = aps),
+                nodes = splitByNetwork(listOf(router), "home-router", aps),
+                routerId = "home-router",
+                selection = MeshSelection.Node(networkNodeId("living")),
+                unmanagedAps = aps,
+            ),
+            {},
+        )
+    }
+
+    @Test
+    @Config(qualifiers = "+ja")
+    fun clientsByNetwork() = capture("clients_networks") {
+        val nodes = listOf(NodeState.Online(home.nodes[0], Fixtures.wiredSite.getValue("router")))
+        val wired = siteTopology(nodes)
+        ClientsScreen(
+            ClientsUiState(
+                site = home.copy(unmanagedAps = setOf("02:aa:bb:00:00:4e")),
+                nodeLabels = mapOf("home-router" to "Gateway"),
+                clients = wired.clients.filter { it.network == "living" },
+            ),
+            {}, {}, { _, _ -> }, {},
         )
     }
 

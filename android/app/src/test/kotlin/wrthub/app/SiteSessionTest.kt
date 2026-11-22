@@ -69,4 +69,18 @@ class SiteSessionTest {
         advanceTimeBy(60_000)
         assertEquals(4, loads)
     }
+
+    @Test
+    fun `marking an AP is stored without reloading the site`() = runTest {
+        var loads = 0
+        val repository = repository()
+        val session = SiteSession(repository, loader { loads++ }, appScope())
+        advanceUntilIdle()
+        session.setUnmanagedAp("CE:11:22:00:00:01", true)
+        advanceUntilIdle()
+        assertEquals(setOf("ce:11:22:00:00:01"), session.state.value.site?.unmanagedAps)
+        assertEquals(setOf("ce:11:22:00:00:01"), repository.current.single { it.id == "cabin" }.unmanagedAps)
+        assertEquals(1, loads)
+        assertEquals(2, session.state.value.nodes.size)
+    }
 }

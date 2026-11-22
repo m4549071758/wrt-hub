@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -62,6 +63,7 @@ import wrthub.app.ui.design.StatusText
 import wrthub.app.ui.design.SubtitleText
 import wrthub.app.ui.design.ValueText
 import wrthub.app.ui.formatBps
+import wrthub.app.ui.admin.AdminSwitch
 import wrthub.app.ui.theme.LocalSemanticColors
 import wrthub.app.ui.theme.forSignal
 import wrthub.app.ui.theme.weight
@@ -74,11 +76,17 @@ fun MeshRoute(viewModel: MeshViewModel, onBack: () -> Unit, onOpenNode: (String)
         viewModel.setLive(true)
         onPauseOrDispose { viewModel.setLive(false) }
     }
-    MeshScreen(state, viewModel::select, onBack, onOpenNode)
+    MeshScreen(state, viewModel::select, onBack, onOpenNode, viewModel::setUnmanagedAp)
 }
 
 @Composable
-fun MeshScreen(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, onBack: () -> Unit = {}, onOpenNode: (String) -> Unit = {}) {
+fun MeshScreen(
+    state: MeshUiState,
+    onSelect: (MeshSelection?) -> Unit,
+    onBack: () -> Unit = {},
+    onOpenNode: (String) -> Unit = {},
+    onSetAp: (mac: String, isAp: Boolean) -> Unit = { _, _ -> },
+) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         AppTopBar(
             stringResource(R.string.network_map),
@@ -89,6 +97,7 @@ fun MeshScreen(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, onBack: (
         SelectionDetail(
             state,
             onOpenNode,
+            onSetAp,
             Modifier.fillMaxWidth().navigationBarsPadding().padding(start = ScreenPadding, end = ScreenPadding, top = 8.dp, bottom = 16.dp),
         )
     }
@@ -110,6 +119,7 @@ fun MeshGraph(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, modifier: 
     val routerIcon = painterResource(R.drawable.ic_router)
     val apIcon = painterResource(R.drawable.ic_wifi)
     val globeIcon = painterResource(R.drawable.ic_public)
+    val lanIcon = painterResource(R.drawable.ic_lan)
     val counts = state.nodes.associate { it.id to pluralStringResource(R.plurals.clients_count, it.clients.size, it.clients.size) }
     val density = LocalDensity.current
     val base = remember(density) {
@@ -208,9 +218,18 @@ fun MeshGraph(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, modifier: 
                     for ((mac, p) in layout.clients) {
                         val client = clientsByMac[mac] ?: continue
                         val wireless = client.presence == Presence.WIRELESS
-                        drawCircle(if (wireless) semantic.forSignal(client.signal) else semantic.inactive, clientRadius, p)
+                        val isAp = mac in state.unmanagedAps
+                        val radius = if (isAp) clientRadius * 2 else clientRadius
+                        if (isAp) {
+                            // Equipment, not a client: a ringed Wi-Fi glyph instead of a dot.
+                            drawCircle(colors.surface, radius, p)
+                            drawCircle(colors.onSurface, radius, p, style = Stroke(1.2.dp.toPx()))
+                            icon(apIcon, p, radius * 1.3f, colors.onSurface)
+                        } else {
+                            drawCircle(if (wireless) semantic.forSignal(client.signal) else semantic.inactive, radius, p)
+                        }
                         if (state.selection == MeshSelection.Client(mac)) {
-                            drawCircle(colors.primary, clientRadius + 3.dp.toPx(), p, style = Stroke(2.dp.toPx()))
+                            drawCircle(colors.primary, radius + 3.dp.toPx(), p, style = Stroke(2.dp.toPx()))
                         }
                         // Neighbours alternate between two lines so each name gets two columns of width.
                         val label = measurer.measure(
@@ -222,28 +241,34 @@ fun MeshGraph(state: MeshUiState, onSelect: (MeshSelection?) -> Unit, modifier: 
                         )
                         val drop = if (mac in stagger) label.size.height.toFloat() else 0f
                         val x = (p.x - label.size.width / 2f).coerceIn(-shift.x, size.width - shift.x - label.size.width)
-                        drawText(label, topLeft = Offset(x, p.y + clientRadius + 4.dp.toPx() + drop))
+                        drawText(label, topLeft = Offset(x, p.y + radius + 4.dp.toPx() + drop))
                     }
                     for (node in state.nodes) {
                         val center = layout.nodes[node.id] ?: continue
                         val selected = state.selection == MeshSelection.Node(node.id)
-                        drawCircle(colors.surface, nodeRadius, center)
-                        drawCircle(
-                            when {
-                                selected -> colors.primary
-                                node.online -> colors.onSurface
-                                else -> colors.outline
-                            },
-                            nodeRadius,
-                            center,
-                            style = Stroke((if (selected) 2.4.dp else 1.4.dp).toPx()),
-                        )
-                        icon(
-                            if (node.id == state.routerId) routerIcon else apIcon,
-                            center,
-                            24.dp.toPx(),
-                            if (node.online) colors.onSurface else colors.onSurfaceVariant,
-                        )
+                        val stroke = when {
+                            selected -> colors.primary
+                            node.online -> colors.onSurface
+                            else -> colors.outline
+                        }
+                        val strokeWidth = (if (selected) 2.4.dp else 1.4.dp).toPx()
+                        if (node.kind == MeshNodeKind.NETWORK) {
+                            // A LAN is a place, not a device: a rounded tag instead of a circle.
+                            val tag = Size(nodeRadius * 2, nodeRadius * 1.3f)
+                            val topLeft = center - Offset(tag.width / 2, tag.height / 2)
+                            drawRoundRect(colors.surface, topLeft, tag, CornerRadius(8.dp.toPx()))
+                            drawRoundRect(stroke, topLeft, tag, CornerRadius(8.dp.toPx()), style = Stroke(strokeWidth))
+                            icon(lanIcon, center, 20.dp.toPx(), colors.onSurface)
+                        } else {
+                            drawCircle(colors.surface, nodeRadius, center)
+                            drawCircle(stroke, nodeRadius, center, style = Stroke(strokeWidth))
+                            icon(
+                                if (node.id == state.routerId) routerIcon else apIcon,
+                                center,
+                                24.dp.toPx(),
+                                if (node.online) colors.onSurface else colors.onSurfaceVariant,
+                            )
+                        }
                         // Right of the circle, not below: below is where the lines to the node's clients run.
                         val name = measurer.measure(
                             node.label,
@@ -302,7 +327,12 @@ private fun DrawScope.icon(painter: Painter, center: Offset, size: Float, tint: 
 }
 
 @Composable
-private fun SelectionDetail(state: MeshUiState, onOpenNode: (String) -> Unit, modifier: Modifier = Modifier) {
+private fun SelectionDetail(
+    state: MeshUiState,
+    onOpenNode: (String) -> Unit,
+    onSetAp: (mac: String, isAp: Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val semantic = LocalSemanticColors.current
     val labels = state.nodes.associate { it.id to it.label }
     when (val selection = state.selection) {
@@ -322,7 +352,17 @@ private fun SelectionDetail(state: MeshUiState, onOpenNode: (String) -> Unit, mo
                 }
             }
         }
-        is MeshSelection.Node -> state.nodes.firstOrNull { it.id == selection.id }?.let { node ->
+        is MeshSelection.Node -> state.nodes.firstOrNull { it.id == selection.id && it.kind == MeshNodeKind.NETWORK }?.let { network ->
+            Panel(network.label, modifier) {
+                Line(stringResource(R.string.tab_clients)) {
+                    ValueText(pluralStringResource(R.plurals.clients_count, network.clients.size, network.clients.size))
+                }
+                val aps = network.clients.filter { it.mac in state.unmanagedAps }
+                if (aps.isNotEmpty()) {
+                    Line(stringResource(R.string.unmanaged_aps)) { ValueText(aps.joinToString(", ") { it.name ?: it.mac }) }
+                }
+            }
+        } ?: state.nodes.firstOrNull { it.id == selection.id }?.let { node ->
             Panel(
                 node.label,
                 modifier,
@@ -361,7 +401,13 @@ private fun SelectionDetail(state: MeshUiState, onOpenNode: (String) -> Unit, mo
                 client.ipv4?.let { ip -> Line(stringResource(R.string.ip_address)) { ValueText(ip) } }
                 val place = listOfNotNull(client.attachedTo?.let { labels[it] ?: it }, client.ifname).joinToString(" ")
                 if (place.isNotEmpty()) Line(stringResource(R.string.attached_to)) { ValueText(place) }
+                client.network?.let { network -> Line(stringResource(R.string.network_lan)) { ValueText(network) } }
                 client.signal?.let { signal -> Line(stringResource(R.string.signal)) { ValueText(dbm(signal), semantic.forSignal(signal)) } }
+                if (client.presence != Presence.WIRELESS) {
+                    Line(stringResource(R.string.show_as_ap)) {
+                        AdminSwitch(client.mac in state.unmanagedAps, { onSetAp(client.mac, it) })
+                    }
+                }
             }
         }
     }

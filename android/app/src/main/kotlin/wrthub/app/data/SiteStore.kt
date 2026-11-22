@@ -18,6 +18,8 @@ class SiteStore(private val dataStore: DataStore<Preferences>) : SiteRepository 
 
     override suspend fun removeNode(siteId: String, nodeId: String) = editSites { withoutNode(it, siteId, nodeId) }
 
+    override suspend fun setUnmanagedAp(siteId: String, mac: String, isAp: Boolean) = editSites { withUnmanagedAp(it, siteId, mac, isAp) }
+
     override suspend fun select(id: String) {
         dataStore.edit { it[SELECTED] = id }
     }

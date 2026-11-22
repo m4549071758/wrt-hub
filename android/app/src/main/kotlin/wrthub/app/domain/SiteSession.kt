@@ -35,7 +35,8 @@ class SiteSession(
                 .collect { (sites, site) ->
                     val previous = mutableState.value.site
                     mutableState.update { it.copy(sites = sites, site = site) }
-                    if (site != previous) {
+                    // Marking an AP edits the site too; only a different site or node list needs a reload.
+                    if (site?.id != previous?.id || site?.nodes != previous?.nodes) {
                         mutableState.update { it.copy(nodes = emptyList()) }
                         refresh()
                     }
@@ -45,6 +46,12 @@ class SiteSession(
 
     fun select(siteId: String) {
         scope.launch { repository.select(siteId) }
+    }
+
+    /** Marks [mac] in the selected site as an access point that is not a registered node, or unmarks it. */
+    fun setUnmanagedAp(mac: String, isAp: Boolean) {
+        val siteId = mutableState.value.site?.id ?: return
+        scope.launch { repository.setUnmanagedAp(siteId, mac, isAp) }
     }
 
     fun refresh() {

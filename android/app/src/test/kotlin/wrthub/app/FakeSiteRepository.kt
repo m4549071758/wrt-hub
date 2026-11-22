@@ -13,6 +13,7 @@ import wrthub.app.data.SiteConfig
 import wrthub.app.data.SiteRepository
 import wrthub.app.data.resolveSelected
 import wrthub.app.data.upserted
+import wrthub.app.data.withUnmanagedAp
 import wrthub.app.data.withoutNode
 
 /**
@@ -36,6 +37,8 @@ class FakeSiteRepository(sites: List<SiteConfig> = emptyList(), selected: String
     override suspend fun removeSite(id: String) = sitesFlow.update { list -> list.filterNot { it.id == id } }
 
     override suspend fun removeNode(siteId: String, nodeId: String) = sitesFlow.update { withoutNode(it, siteId, nodeId) }
+
+    override suspend fun setUnmanagedAp(siteId: String, mac: String, isAp: Boolean) = sitesFlow.update { withUnmanagedAp(it, siteId, mac, isAp) }
 
     override suspend fun select(id: String) {
         selectedFlow.value = id

@@ -18,6 +18,7 @@ import wrthub.app.data.SiteConfig
 import wrthub.app.domain.NodeState
 import wrthub.app.domain.SiteLoading
 import wrthub.app.domain.SiteSession
+import wrthub.app.ui.mesh.MeshNodeKind
 import wrthub.app.ui.mesh.MeshViewModel
 import wrthub.core.Fixtures
 import wrthub.core.json.str
@@ -96,14 +97,16 @@ class MeshViewModelTest {
     }
 
     @Test
-    fun `devices on the LAN without an AP hang under the router and departed ones are counted`() = runTest(main.dispatcher) {
+    fun `devices on two LANs hang under one network each and departed ones are counted`() = runTest(main.dispatcher) {
         val home = SiteConfig("home", "Home", listOf(node("router", "Gateway")))
         val loader = SiteLoading { site -> site.nodes.map { NodeState.Online(it, Fixtures.wiredSite.getValue(it.id)) } }
         val vm = MeshViewModel(SiteSession(FakeSiteRepository(listOf(home)), loader, appScope()))
         advanceUntilIdle()
-        val router = vm.state.value.nodes.single()
-        assertEquals(57, router.clients.size)
-        assertEquals(setOf(Presence.ONLINE_UNKNOWN_LINK), router.clients.map { it.presence }.toSet())
+        val nodes = vm.state.value.nodes
+        assertEquals(emptyList(), nodes.single { it.id == "router" }.clients)
+        val networks = nodes.filter { it.kind == MeshNodeKind.NETWORK }
+        assertEquals(mapOf("lan" to 43, "living" to 14), networks.associate { it.label to it.clients.size })
+        assertEquals(setOf(Presence.ONLINE_UNKNOWN_LINK), networks.flatMap { it.clients }.map { it.presence }.toSet())
         assertEquals("router", vm.state.value.routerId)
         assertEquals(4, vm.state.value.departed)
     }

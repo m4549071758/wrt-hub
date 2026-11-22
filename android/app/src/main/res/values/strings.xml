@@ -239,7 +239,6 @@
         <item quantity="one">%1$d client</item>
         <item quantity="other">%1$d clients</item>
     </plurals>
-    <string name="wired">Wired</string>
     <string name="block_confirm_text">Its traffic through the router is rejected.</string>
     <string name="link_with">Link with %1$s</string>
     <string name="remove_node_text">The node is removed from this phone only.</string>
@@ -270,4 +269,8 @@
     <string name="wan_unsupported_short">%1$s cannot be changed in the app.</string>
     <string name="cron_confirm_short">The crontab is replaced and cron reloads it.</string>
     <string name="rollback_short">Undone automatically if the router stops answering within 30 seconds.</string>
+    <string name="show_as_ap">Show as an AP</string>
+    <string name="unmanaged_aps">APs</string>
+    <string name="network_lan">LAN</string>
+    <string name="ap_badge">AP</string>
 </resources>

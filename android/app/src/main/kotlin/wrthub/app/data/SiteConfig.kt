@@ -17,8 +17,14 @@ data class NodeConfig(
     val certSha256: String? = null,
 )
 
+/** [unmanagedAps]: MACs of devices the user marked as access points that are not registered nodes. */
 @Serializable
-data class SiteConfig(val id: String, val name: String, val nodes: List<NodeConfig> = emptyList())
+data class SiteConfig(
+    val id: String,
+    val name: String,
+    val nodes: List<NodeConfig> = emptyList(),
+    val unmanagedAps: Set<String> = emptySet(),
+)
 
 private val sitesJson = Json { ignoreUnknownKeys = true }
 private val sitesSerializer = ListSerializer(SiteConfig.serializer())
@@ -37,3 +43,9 @@ fun upserted(sites: List<SiteConfig>, site: SiteConfig): List<SiteConfig> =
 
 fun withoutNode(sites: List<SiteConfig>, siteId: String, nodeId: String): List<SiteConfig> =
     sites.map { site -> if (site.id == siteId) site.copy(nodes = site.nodes.filterNot { it.id == nodeId }) else site }
+
+fun withUnmanagedAp(sites: List<SiteConfig>, siteId: String, mac: String, isAp: Boolean): List<SiteConfig> =
+    sites.map { site ->
+        if (site.id != siteId) site
+        else site.copy(unmanagedAps = if (isAp) site.unmanagedAps + mac.lowercase() else site.unmanagedAps - mac.lowercase())
+    }

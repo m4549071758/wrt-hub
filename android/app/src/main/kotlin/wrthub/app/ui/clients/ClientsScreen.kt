@@ -48,6 +48,7 @@ import wrthub.app.ui.design.SectionHeader
 import wrthub.app.ui.design.SegmentedToggle
 import wrthub.app.ui.design.SiteSwitcher
 import wrthub.app.ui.design.ValueText
+import wrthub.app.ui.admin.AdminSwitch
 import wrthub.app.ui.theme.LocalSemanticColors
 import wrthub.app.ui.theme.forSignal
 import wrthub.core.direct.WriteOutcome
@@ -57,22 +58,38 @@ import wrthub.core.topology.SiteClient
 @Composable
 fun ClientsRoute(viewModel: ClientsViewModel, onPinIp: (nodeId: String, client: SiteClient) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    ClientsScreen(state, viewModel::setFilter, viewModel::refresh, viewModel::setBlocked, viewModel::dismissNotice, onPinIp, viewModel::select)
+    ClientsScreen(
+        state,
+        viewModel::setFilter,
+        viewModel::refresh,
+        viewModel::setBlocked,
+        viewModel::dismissNotice,
+        onPinIp,
+        viewModel::select,
+        viewModel::setUnmanagedAp,
+    )
 }
 
-/** The clients attached to one node; [nodeId] is null for those not associated with any of the site's APs. */
-private class ClientGroup(val nodeId: String?, val title: String, val ifnames: String?, val clients: List<SiteClient>)
+/**
+ * The clients attached to one node, or, for those no registered AP serves, the ones seen on one LAN (the rest when the
+ * LAN is unknown too). Marked APs come first in their LAN.
+ */
+private class ClientGroup(val key: String, val title: String, val ifnames: String?, val clients: List<SiteClient>)
 
-private fun groups(clients: List<SiteClient>, nodeLabels: Map<String, String>, otherTitle: String): List<ClientGroup> {
+private fun groups(clients: List<SiteClient>, nodeLabels: Map<String, String>, aps: Set<String>, otherTitle: String): List<ClientGroup> {
     val byNode = clients.groupBy { it.attachedTo }
     val order = nodeLabels.keys.filter { it in byNode } + byNode.keys.filterNotNull().filter { it !in nodeLabels }
     val attached = order.map { id ->
         val members = byNode.getValue(id)
         val ifnames = members.mapNotNull { it.ifname }.distinct().sorted().joinToString(", ").ifEmpty { null }
-        ClientGroup(id, nodeLabels[id] ?: id, ifnames, members)
+        ClientGroup("node-$id", nodeLabels[id] ?: id, ifnames, members)
     }
-    val other = byNode[null]?.let { ClientGroup(null, otherTitle, null, it) }
-    return attached + listOfNotNull(other)
+    val byNetwork = byNode[null].orEmpty().groupBy { it.network }
+    val networks = byNetwork.keys.filterNotNull().sorted().map { network ->
+        ClientGroup("net-$network", network, null, byNetwork.getValue(network).sortedBy { it.mac !in aps })
+    }
+    val other = byNetwork[null]?.let { ClientGroup("other", otherTitle, null, it) }
+    return attached + networks + listOfNotNull(other)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,6 +102,7 @@ fun ClientsScreen(
     onDismissNotice: () -> Unit,
     onPinIp: (nodeId: String, client: SiteClient) -> Unit = { _, _ -> },
     onSelectSite: (String) -> Unit = {},
+    onSetAp: (mac: String, isAp: Boolean) -> Unit = { _, _ -> },
 ) {
     var selectedMac by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
@@ -96,7 +114,8 @@ fun ClientsScreen(
         }
     }
     val otherTitle = stringResource(R.string.filter_other)
-    val groups = remember(state.clients, state.nodeLabels, otherTitle) { groups(state.clients, state.nodeLabels, otherTitle) }
+    val aps = state.site?.unmanagedAps.orEmpty()
+    val groups = remember(state.clients, state.nodeLabels, aps, otherTitle) { groups(state.clients, state.nodeLabels, aps, otherTitle) }
     Scaffold(
         topBar = {
             AppTopBar(
@@ -141,11 +160,11 @@ fun ClientsScreen(
                     }
                 }
                 groups.forEach { group ->
-                    item(key = "head-" + (group.nodeId ?: "")) {
+                    item(key = "head-" + group.key) {
                         SectionHeader(group.title, trailing = group.ifnames)
                     }
                     items(group.clients, key = { it.mac }) { client ->
-                        ClientRow(client, Modifier.padding(bottom = 6.dp).animateItem(), onClick = { selectedMac = client.mac })
+                        ClientRow(client, client.mac in aps, Modifier.padding(bottom = 6.dp).animateItem(), onClick = { selectedMac = client.mac })
                     }
                 }
             }
@@ -160,20 +179,32 @@ fun ClientsScreen(
                     onPinIp(nodeId, selected)
                 })
             }
-            ClientDetail(selected, state.nodeLabels, busy = selected.mac in state.busy, onSetBlocked = onSetBlocked, pin = pin)
+            ClientDetail(
+                selected,
+                state.nodeLabels,
+                busy = selected.mac in state.busy,
+                onSetBlocked = onSetBlocked,
+                pin = pin,
+                isAp = selected.mac in aps,
+                onSetAp = { onSetAp(selected.mac, it) },
+            )
         }
     }
 }
 
 @Composable
-private fun ClientRow(client: SiteClient, modifier: Modifier, onClick: () -> Unit) {
+private fun ClientRow(client: SiteClient, isAp: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val semantic = LocalSemanticColors.current
     val wireless = client.presence == Presence.WIRELESS
-    val badge = presenceBadge(client.presence)
+    val badge = if (isAp) stringResource(R.string.ap_badge) else presenceBadge(client.presence)
     AppRow(
         client.name ?: client.mac,
         modifier,
-        icon = if (wireless) R.drawable.ic_wifi else R.drawable.ic_settings_ethernet,
+        icon = when {
+            wireless || isAp -> R.drawable.ic_wifi
+            client.presence == Presence.ONLINE_UNKNOWN_LINK -> R.drawable.ic_devices
+            else -> R.drawable.ic_settings_ethernet
+        },
         iconTint = if (wireless) semantic.forSignal(client.signal) else MaterialTheme.colorScheme.onSurfaceVariant,
         subtitle = client.ipv4,
         trailing = {
@@ -190,11 +221,13 @@ private fun ClientRow(client: SiteClient, modifier: Modifier, onClick: () -> Uni
     )
 }
 
-/** Wireless clients carry no badge: the band of their AP interface is not part of the client list. */
+/**
+ * Wireless clients carry no badge: the band of their AP interface is not part of the client list. Devices on the LAN
+ * without a registered AP carry none either: the router cannot tell a cable from a non-OpenWrt AP.
+ */
 @Composable
 private fun presenceBadge(presence: Presence): String? = when (presence) {
-    Presence.WIRELESS -> null
-    Presence.ONLINE_UNKNOWN_LINK -> stringResource(R.string.wired)
+    Presence.WIRELESS, Presence.ONLINE_UNKNOWN_LINK -> null
     Presence.LEASE_ONLY -> stringResource(R.string.presence_lease_only)
     Presence.OFFLINE -> stringResource(R.string.presence_offline)
 }
@@ -218,6 +251,8 @@ fun ClientDetail(
     nodeLabels: Map<String, String>,
     busy: Boolean,
     pin: PinIp? = null,
+    isAp: Boolean = false,
+    onSetAp: ((Boolean) -> Unit)? = null,
     onSetBlocked: (String, Boolean) -> Unit,
 ) {
     var confirming by remember { mutableStateOf(false) }
@@ -228,7 +263,11 @@ fun ClientDetail(
         add(stringResource(R.string.mac_address) to { ValueText(client.mac) })
         client.ipv4?.let { ip -> add(stringResource(R.string.ip_address) to { ValueText(ip) }) }
         add(stringResource(R.string.attached_to) to { ValueText(place) })
+        client.network?.let { network -> add(stringResource(R.string.network_lan) to { ValueText(network) }) }
         client.signal?.let { signal -> add(stringResource(R.string.signal) to { ValueText(dbm(signal), semantic.forSignal(signal)) }) }
+        if (onSetAp != null && client.presence != Presence.WIRELESS) {
+            add(stringResource(R.string.show_as_ap) to { AdminSwitch(isAp, onSetAp) })
+        }
     }
     Column(
         Modifier

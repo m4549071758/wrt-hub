@@ -12,5 +12,7 @@ interface SiteRepository {
 
     suspend fun removeNode(siteId: String, nodeId: String)
 
+    suspend fun setUnmanagedAp(siteId: String, mac: String, isAp: Boolean)
+
     suspend fun select(id: String)
 }

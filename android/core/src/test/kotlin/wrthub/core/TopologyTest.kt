@@ -53,6 +53,12 @@ class TopologyTest {
     }
 
     @Test
+    fun `live devices carry the logical network of the device they were seen on`() {
+        val live = buildTopology(Fixtures.wiredSite).clients.filter { it.presence == Presence.ONLINE_UNKNOWN_LINK }
+        assertEquals(setOf("lan", "living"), live.map { it.network }.toSet())
+    }
+
+    @Test
     fun `neighbour table adds static devices but not upstream peers or the site's own nodes`() {
         val ap = Fixtures.meshSite.getValue("ap")
         val apLanMac = ap.devices.obj("br-lan")!!.str("macaddr")!!

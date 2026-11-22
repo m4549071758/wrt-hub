@@ -237,7 +237,6 @@
     <plurals name="clients_count">
         <item quantity="other">%1$d台</item>
     </plurals>
-    <string name="wired">有線</string>
     <string name="block_confirm_text">ルーターを通る通信を拒否します。</string>
     <string name="link_with">%1$sとのリンク</string>
     <string name="remove_node_text">このスマホからノードの登録だけを消します。</string>
@@ -266,4 +265,8 @@
     <string name="wan_unsupported_short">%1$sはアプリでは変更できません。</string>
     <string name="cron_confirm_short">crontabを置き換え、cronを再読み込みします。</string>
     <string name="rollback_short">30秒以内にルーターが応答しなければ自動で元に戻ります。</string>
+    <string name="show_as_ap">APとして表示</string>
+    <string name="unmanaged_aps">AP</string>
+    <string name="network_lan">LAN</string>
+    <string name="ap_badge">AP</string>
 </resources>

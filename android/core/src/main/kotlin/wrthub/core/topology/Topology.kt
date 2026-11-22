@@ -7,6 +7,7 @@ import wrthub.core.model.hostNames
 import wrthub.core.model.live
 import wrthub.core.model.neighborEntries
 import wrthub.core.model.ownMacs
+import wrthub.core.model.netInterfaces
 import wrthub.core.model.upstreamDevices
 import wrthub.core.model.lanIpv4
 import wrthub.core.model.leases
@@ -47,6 +48,8 @@ data class SiteClient(
     val signal: Int?,
     val blocked: Boolean,
     val sightings: List<Sighting>,
+    /** Name of the node's logical interface (`lan`, `guest`, …) whose L3 device has the client as a neighbour. */
+    val network: String? = null,
 )
 
 data class SiteTopology(val nodeIds: List<String>, val links: List<MeshLink>, val clients: List<SiteClient>)
@@ -99,15 +102,16 @@ private fun clients(snapshots: Map<String, Snapshot>, wireless: Map<String, List
     val ownMacs = snapshots.values.flatMap { it.ownMacs() }.toSet()
     val online = snapshots.values.flatMap { snapshot ->
         val upstream = snapshot.upstreamDevices()
-        snapshot.neighborEntries().filter { it.live && it.device !in upstream }
-    }.associateBy { it.mac }
+        val networkOf = snapshot.netInterfaces().filter { it.device != null }.associate { it.device to it.name }
+        snapshot.neighborEntries().filter { it.live && it.device !in upstream }.map { it to networkOf[it.device] }
+    }.associateBy { it.first.mac }
     return (attachments.keys + leases.keys + online.keys + blocked - ownMacs).map { mac ->
         val attachment = attachments[mac]
         val lease = leases[mac]
         SiteClient(
             mac = mac,
             name = names[mac] ?: lease?.hostname,
-            ipv4 = lease?.ipv4 ?: online[mac]?.ipv4,
+            ipv4 = lease?.ipv4 ?: online[mac]?.first?.ipv4,
             presence = when {
                 attachment != null -> Presence.WIRELESS
                 mac in online -> Presence.ONLINE_UNKNOWN_LINK
@@ -119,6 +123,7 @@ private fun clients(snapshots: Map<String, Snapshot>, wireless: Map<String, List
             signal = attachment?.signal,
             blocked = mac in blocked,
             sightings = sightings[mac].orEmpty(),
+            network = online[mac]?.second,
         )
     }.sortedWith(compareBy<SiteClient>({ it.presence }, { it.attachedTo }, { it.name ?: "\uFFFF" }, { it.mac }))
 }

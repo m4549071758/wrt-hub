@@ -23,7 +23,16 @@ import wrthub.core.topology.Presence
  * devices behind other nodes cannot be told apart because LuCI's ACL does not expose the bridge forwarding table,
  * so they appear under the router.
  */
-data class MeshNode(val id: String, val label: String, val online: Boolean, val clients: List<SiteClient>)
+data class MeshNode(
+    val id: String,
+    val label: String,
+    val online: Boolean,
+    val clients: List<SiteClient>,
+    val kind: MeshNodeKind = MeshNodeKind.NODE,
+)
+
+/** NETWORK: one of the router's LANs, standing between the router and the devices seen on it. */
+enum class MeshNodeKind { NODE, NETWORK }
 
 /** Expected throughput per direction, smoothed across loads; [signal] is the weaker side's average. */
 data class MeshEdge(val a: String, val b: String, val aToBKbps: Double?, val bToAKbps: Double?, val signal: Int?)
@@ -44,6 +53,8 @@ data class MeshUiState(
     val routerId: String? = null,
     /** Devices that only left a DHCP lease; drawn as a count instead of nodes. */
     val departed: Int = 0,
+    /** MACs the user marked as access points that are not registered nodes. */
+    val unmanagedAps: Set<String> = emptySet(),
 )
 
 private data class Graph(
@@ -63,12 +74,15 @@ class MeshViewModel(private val session: SiteSession, private val refreshInterva
 
     val state: StateFlow<MeshUiState> = combine(session.state, selection) { site, selected ->
         val graph = graph(site.site?.id, site.nodes)
-        MeshUiState(site.site, graph.nodes, graph.edges, selected, graph.routerId, graph.departed)
+        val aps = site.site?.unmanagedAps.orEmpty()
+        MeshUiState(site.site, splitByNetwork(graph.nodes, graph.routerId, aps), graph.edges, selected, graph.routerId, graph.departed, aps)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, MeshUiState())
 
     fun select(selection: MeshSelection?) {
         this.selection.value = selection
     }
+
+    fun setUnmanagedAp(mac: String, isAp: Boolean) = session.setUnmanagedAp(mac, isAp)
 
     /** While [active], reloads the site every [refreshIntervalMs] so links and clients stay current. */
     fun setLive(active: Boolean) {
@@ -120,4 +134,23 @@ class MeshViewModel(private val session: SiteSession, private val refreshInterva
     private companion object {
         const val ALPHA = 0.3
     }
+}
+
+fun networkNodeId(network: String) = "network:$network"
+
+/**
+ * Moves the router's devices that no registered AP serves under one [MeshNodeKind.NETWORK] node per LAN they were
+ * seen on, with the devices marked in [aps] first. Only done when it adds something: two or more LANs, or a marked
+ * AP; otherwise [nodes] come back unchanged. Devices whose LAN is unknown stay under the router.
+ */
+fun splitByNetwork(nodes: List<MeshNode>, routerId: String?, aps: Set<String>): List<MeshNode> {
+    val router = nodes.firstOrNull { it.id == routerId } ?: return nodes
+    val unattached = router.clients.filter { it.presence == Presence.ONLINE_UNKNOWN_LINK && it.network != null }
+    val groups = unattached.groupBy { it.network.orEmpty() }
+    if (groups.size < 2 && unattached.none { it.mac in aps }) return nodes
+    val networks = groups.map { (network, clients) ->
+        MeshNode(networkNodeId(network), network, true, clients.sortedBy { it.mac !in aps }, MeshNodeKind.NETWORK)
+    }
+    val moved = unattached.map { it.mac }.toSet()
+    return nodes.map { node -> if (node.id == routerId) node.copy(clients = node.clients.filter { it.mac !in moved }) else node } + networks
 }

@@ -73,6 +73,8 @@ class ClientsViewModel(
 
     fun select(siteId: String) = session.select(siteId)
 
+    fun setUnmanagedAp(mac: String, isAp: Boolean) = session.setUnmanagedAp(mac, isAp)
+
     fun setFilter(filter: ClientFilter) = local.update { it.copy(filter = filter) }
 
     fun refresh() = session.refresh()
