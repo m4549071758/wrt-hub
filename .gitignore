@@ -7,3 +7,8 @@ local.properties
 *.keystore
 .env
 __pycache__/
+node_modules/
+server/dist/
+*.db
+*.db-shm
+*.db-wal

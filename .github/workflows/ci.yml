@@ -21,3 +21,18 @@ jobs:
       - name: Core and app tests, debug build
         working-directory: android
         run: ./gradlew --no-daemon :core:test :app:testDebugUnitTest :app:assembleDebug
+
+  server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "26"
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
