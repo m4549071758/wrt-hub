@@ -273,4 +273,55 @@
     <string name="unmanaged_aps">APs</string>
     <string name="network_lan">LAN</string>
     <string name="ap_badge">AP</string>
+    <string name="add_site_direct">Router on this network</string>
+    <string name="add_site_direct_hint">The app talks to each router itself</string>
+    <string name="add_site_hub">Through a WrtHub server</string>
+    <string name="add_site_hub_hint">Routers anywhere report to your server</string>
+    <string name="add_hub_site">Add from a server</string>
+    <string name="add_hub_intro">Pair with a code from the server (wrthub pair), scan its QR code, or sign in if the server uses single sign-on.</string>
+    <string name="hub_server">Server</string>
+    <string name="hub_pairing_code">Pairing code</string>
+    <string name="hub_scan_qr">Scan QR</string>
+    <string name="hub_sign_in">Sign in</string>
+    <string name="hub_pair">Pair</string>
+    <string name="hub_choose_sites">Choose sites</string>
+    <plurals name="node_count">
+        <item quantity="one">%1$d node</item>
+        <item quantity="other">%1$d nodes</item>
+    </plurals>
+    <plurals name="hub_add_sites">
+        <item quantity="one">Add %1$d site</item>
+        <item quantity="other">Add %1$d sites</item>
+    </plurals>
+    <string name="hub_error_qr">Not a WrtHub pairing code</string>
+    <string name="hub_error_unreachable">Can\'t reach the server</string>
+    <string name="hub_error_pairing">The code was not accepted; it may have expired or been used</string>
+    <string name="hub_error_no_oidc">This server has no sign-in; pair with a code</string>
+    <string name="hub_error_sign_in">Sign-in did not finish</string>
+    <string name="hub_error_no_sites">The server has no sites yet</string>
+    <string name="hub_badge">Hub</string>
+    <string name="hub_events">Events</string>
+    <string name="hub_no_events">Nothing has happened yet.</string>
+    <string name="event_some_node">A node</string>
+    <string name="event_node_offline">%1$s stopped reporting</string>
+    <string name="event_node_online">%1$s is reporting again</string>
+    <string name="event_wan_down">%1$s lost its internet connection</string>
+    <string name="event_wan_up">%1$s is back on the internet</string>
+    <plurals name="event_new_client">
+        <item quantity="one">%1$d new device joined</item>
+        <item quantity="other">%1$d new devices joined</item>
+    </plurals>
+    <string name="push_unavailable_title">Notifications are off</string>
+    <string name="push_unavailable_body">Install a UnifiedPush distributor such as ntfy to be notified of these events.</string>
+    <string name="notification_channel_events">Site events</string>
+    <string name="starlink">Starlink</string>
+    <string name="starlink_unavailable">Starlink data is unavailable</string>
+    <string name="starlink_status">Dish</string>
+    <string name="starlink_latency">Latency</string>
+    <string name="starlink_loss">Packet loss</string>
+    <string name="starlink_download">Download</string>
+    <string name="starlink_upload">Upload</string>
+    <string name="starlink_obstruction">Obstruction</string>
+    <string name="starlink_obstructed_24h">%1$s obstructed in 24h</string>
+    <string name="starlink_power">Power</string>
 </resources>

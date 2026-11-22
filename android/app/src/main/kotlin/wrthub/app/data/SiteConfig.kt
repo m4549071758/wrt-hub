@@ -42,6 +42,8 @@ data class HubLink(
     val auth: HubAuth,
     /** The paired device's token, or the OIDC AuthState JSON, encrypted by [SecretCipher]. */
     val credentialCipher: String,
+    /** The server offered Starlink data when the site was added. */
+    val starlink: Boolean = false,
 )
 
 private val sitesJson = Json { ignoreUnknownKeys = true }

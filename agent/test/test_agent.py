@@ -146,6 +146,41 @@ class AgentTest(unittest.TestCase):
                 return view
         raise AssertionError(f"{name} did not finish")
 
+    def test_app_live_paths_have_the_shapes_the_app_decodes(self):
+        """The stream, counters and events as HubClient (android core) reads them: these keys are its models' fields."""
+        request = urllib.request.Request(
+            f"{self.base}/app/v1/sites/{self.site}/stream",
+            headers={"authorization": f"Bearer {self.app_token}", "accept": "text/event-stream"},
+        )
+        with urllib.request.urlopen(request, timeout=30) as stream:
+            kind = None
+            for raw in stream:
+                line = raw.decode().rstrip("\n")
+                if line.startswith("event: "):
+                    kind = line.removeprefix("event: ")
+                elif line.startswith("data: ") and kind == "snapshot":
+                    pushed = json.loads(line.removeprefix("data: "))
+                    break
+        self.assertEqual(pushed["nodeId"], self.node)
+        self.assertIsInstance(pushed["receivedAt"], int)
+        self.assertIsInstance(pushed["serverTime"], int)
+        self.assertEqual(pushed["snapshot"]["schemaVersion"], self.snapshot()["snapshot"]["schemaVersion"])
+
+        self.assertEqual(self.command("set_fast_mode")["status"], "succeeded")
+        samples = wait_for(lambda: self.app("GET", f"/app/v1/nodes/{self.node}/counters")["samples"], 15)
+        sample = samples[-1]
+        self.assertIsInstance(sample["at"], int)
+        device, counters = next(iter(sample["devices"].items()))
+        self.assertIsInstance(device, str)
+        self.assertEqual(sorted(counters), ["rx", "tx"])
+
+        events = self.app("GET", f"/app/v1/sites/{self.site}/events?limit=10")["events"]
+        for event in events:
+            self.assertEqual(event["siteId"], self.site)
+            self.assertIsInstance(event["id"], int)
+            self.assertIsInstance(event["kind"], str)
+            self.assertIsInstance(event["createdAt"], int)
+
     def test_snapshot_matches_the_fixture_and_hides_wifi_keys(self):
         node = wait_for(lambda: (s := self.snapshot())["snapshot"] and s, 30)
         self.assertEqual(node["state"], "fresh")

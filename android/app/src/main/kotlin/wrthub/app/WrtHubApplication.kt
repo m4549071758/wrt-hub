@@ -27,8 +27,10 @@ import wrthub.app.domain.SiteSession
 import wrthub.core.direct.DirectOperations
 import wrthub.core.direct.DirectAdmin
 import wrthub.app.data.HubConnections
-import wrthub.app.data.HubTokens
+import wrthub.app.data.OidcAuth
+import wrthub.app.data.OidcHubTokens
 import wrthub.app.data.StoredHubTokens
+import wrthub.app.push.PushRegistry
 import wrthub.app.domain.HubCounterReader
 import wrthub.app.domain.HubNodeOperations
 import wrthub.app.domain.HubSiteLoader
@@ -49,13 +51,11 @@ class AppContainer(context: Context) {
     val siteStore = SiteStore(PreferenceDataStoreFactory.create { context.preferencesDataStoreFile("sites") })
     val cipher: SecretCipher = KeystoreSecretCipher()
     private val connections = NodeConnections(http, cipher)
-    val hubTokens: HubTokens = StoredHubTokens(cipher)
-    val hubs = HubConnections(http, hubTokens)
-    val session = SiteSession(
-        siteStore,
-        SiteLoader(HubSiteLoader(hubs::client), connections::node),
-        CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
-    )
+    val oidc = OidcAuth(context)
+    val hubs = HubConnections(http, StoredHubTokens(cipher, OidcHubTokens(cipher, oidc, siteStore)))
+    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    val session = SiteSession(siteStore, SiteLoader(HubSiteLoader(hubs::client), connections::node), appScope)
+    val push = PushRegistry(siteStore, hubs, PreferenceDataStoreFactory.create { context.preferencesDataStoreFile("push") })
 
     /** The hub a node is reached through, or null for a direct node. */
     private fun hubOf(node: NodeConfig): HubClient? =

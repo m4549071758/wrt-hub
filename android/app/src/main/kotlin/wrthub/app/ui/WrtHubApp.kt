@@ -11,8 +11,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import android.Manifest
+import android.os.Build
+import android.util.Log
+import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -59,6 +67,16 @@ import wrthub.app.ui.nodes.NodesRoute
 import wrthub.app.ui.nodes.NodesViewModel
 import wrthub.app.ui.design.AppNavBar
 import wrthub.app.ui.design.NavItem
+import wrthub.app.ui.hub.AddHubRoute
+import wrthub.app.ui.hub.AddHubViewModel
+import wrthub.app.ui.hub.AddSiteScreen
+import wrthub.app.ui.hub.EventsRoute
+import wrthub.app.ui.hub.EventsViewModel
+import wrthub.app.ui.hub.StarlinkRoute
+import wrthub.app.ui.hub.StarlinkViewModel
+import wrthub.app.push.pushAvailable
+import wrthub.app.push.startPush
+import kotlinx.coroutines.launch
 
 @Serializable
 data object HomeDestination
@@ -75,6 +93,19 @@ data object NodesDestination
 
 @Serializable
 data class AddNodeDestination(val siteId: String? = null)
+
+/** Chooses between a direct site and a hub site. */
+@Serializable
+data object AddSiteDestination
+
+@Serializable
+data object AddHubDestination
+
+@Serializable
+data class EventsDestination(val siteId: String)
+
+@Serializable
+data class StarlinkDestination(val siteId: String)
 
 @Serializable
 data class NodeDestination(val nodeId: String)
@@ -109,6 +140,10 @@ fun WrtHubApp(container: AppContainer) {
     val navController = rememberNavController()
     val entry by navController.currentBackStackEntryAsState()
     val destination = entry?.destination
+    val context = LocalContext.current
+    val activity = LocalActivity.current
+    // Denied is fine: events still show in the app.
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = MaterialTheme.colorScheme.background,
@@ -157,7 +192,7 @@ fun WrtHubApp(container: AppContainer) {
                 )
                 HomeRoute(
                     vm,
-                    onAddSite = { navController.navigate(AddNodeDestination()) },
+                    onAddSite = { navController.navigate(AddSiteDestination) },
                     onOpenNode = { navController.navigate(NodeDestination(it)) },
                     onOpenMap = { navController.navigate(MapDestination) },
                     onOpenSiteWifi = { navController.navigate(WifiDestination(it)) },
@@ -182,10 +217,45 @@ fun WrtHubApp(container: AppContainer) {
                 NodesRoute(
                     vm,
                     onOpenNode = { navController.navigate(NodeDestination(it)) },
-                    onAddSite = { navController.navigate(AddNodeDestination()) },
+                    onAddSite = { navController.navigate(AddSiteDestination) },
                     onAddNode = { navController.navigate(AddNodeDestination(it)) },
                     onOpenWifi = { navController.navigate(WifiDestination(it)) },
+                    onOpenEvents = { navController.navigate(EventsDestination(it)) },
+                    onOpenStarlink = { navController.navigate(StarlinkDestination(it)) },
                 )
+            }
+            composable<AddSiteDestination> {
+                AddSiteScreen(
+                    onDirect = { navController.navigate(AddNodeDestination()) { popUpTo<AddSiteDestination> { inclusive = true } } },
+                    onHub = { navController.navigate(AddHubDestination) { popUpTo<AddSiteDestination> { inclusive = true } } },
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable<AddHubDestination> {
+                val vm: AddHubViewModel = viewModel(
+                    factory = viewModelFactory { initializer { AddHubViewModel(container.siteStore, container.http, container.cipher) } },
+                )
+                AddHubRoute(vm, container.oidc, onDone = {
+                    // A new server needs this phone's endpoint; the first hub site also turns notifications on.
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    activity?.let(::startPush)
+                    container.appScope.launch { container.push.registerAll().forEach { Log.w("WrtHubPush", "push registration failed: $it") } }
+                    navController.popBackStack()
+                }, onBack = { navController.popBackStack() })
+            }
+            composable<EventsDestination> { backStackEntry ->
+                val route = backStackEntry.toRoute<EventsDestination>()
+                val vm: EventsViewModel = viewModel(
+                    factory = viewModelFactory { initializer { EventsViewModel(route.siteId, container.siteStore, container.hubs::client) } },
+                )
+                EventsRoute(vm, pushAvailable = remember { pushAvailable(context) }, onBack = { navController.popBackStack() })
+            }
+            composable<StarlinkDestination> { backStackEntry ->
+                val route = backStackEntry.toRoute<StarlinkDestination>()
+                val vm: StarlinkViewModel = viewModel(
+                    factory = viewModelFactory { initializer { StarlinkViewModel(route.siteId, container.siteStore, container.hubs::client) } },
+                )
+                StarlinkRoute(vm, onBack = { navController.popBackStack() })
             }
             composable<AddNodeDestination> { backStackEntry ->
                 val route = backStackEntry.toRoute<AddNodeDestination>()

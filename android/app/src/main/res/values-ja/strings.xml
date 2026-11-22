@@ -269,4 +269,52 @@
     <string name="unmanaged_aps">AP</string>
     <string name="network_lan">LAN</string>
     <string name="ap_badge">AP</string>
+    <string name="add_site_direct">このネットワークのルーター</string>
+    <string name="add_site_direct_hint">アプリが各ルーターに直接接続します</string>
+    <string name="add_site_hub">WrtHubサーバー経由</string>
+    <string name="add_site_hub_hint">どこにあるルーターもサーバーに報告します</string>
+    <string name="add_hub_site">サーバーから追加</string>
+    <string name="add_hub_intro">サーバーで発行したコード(wrthub pair)で接続するか、QRコードを読み取ります。シングルサインオンのサーバーではサインインもできます。</string>
+    <string name="hub_server">サーバー</string>
+    <string name="hub_pairing_code">ペアリングコード</string>
+    <string name="hub_scan_qr">QRを読み取る</string>
+    <string name="hub_sign_in">サインイン</string>
+    <string name="hub_pair">接続</string>
+    <string name="hub_choose_sites">拠点を選択</string>
+    <plurals name="node_count">
+        <item quantity="other">%1$d台のノード</item>
+    </plurals>
+    <plurals name="hub_add_sites">
+        <item quantity="other">%1$d拠点を追加</item>
+    </plurals>
+    <string name="hub_error_qr">WrtHubのペアリングコードではありません</string>
+    <string name="hub_error_unreachable">サーバーに接続できません</string>
+    <string name="hub_error_pairing">コードが受け付けられませんでした。期限切れか使用済みの可能性があります</string>
+    <string name="hub_error_no_oidc">このサーバーはサインインに対応していません。コードで接続してください</string>
+    <string name="hub_error_sign_in">サインインが完了しませんでした</string>
+    <string name="hub_error_no_sites">サーバーに拠点がまだありません</string>
+    <string name="hub_badge">ハブ</string>
+    <string name="hub_events">イベント</string>
+    <string name="hub_no_events">まだ何も起きていません。</string>
+    <string name="event_some_node">ノード</string>
+    <string name="event_node_offline">%1$sからの報告が途絶えました</string>
+    <string name="event_node_online">%1$sからの報告が再開しました</string>
+    <string name="event_wan_down">%1$sのインターネット接続が切れました</string>
+    <string name="event_wan_up">%1$sのインターネット接続が復旧しました</string>
+    <plurals name="event_new_client">
+        <item quantity="other">新しい端末が%1$d台接続しました</item>
+    </plurals>
+    <string name="push_unavailable_title">通知はオフです</string>
+    <string name="push_unavailable_body">これらのイベントを通知で受け取るには、ntfyなどのUnifiedPushディストリビューターをインストールしてください。</string>
+    <string name="notification_channel_events">拠点のイベント</string>
+    <string name="starlink">Starlink</string>
+    <string name="starlink_unavailable">Starlinkのデータを取得できません</string>
+    <string name="starlink_status">アンテナ</string>
+    <string name="starlink_latency">遅延</string>
+    <string name="starlink_loss">パケットロス</string>
+    <string name="starlink_download">ダウンロード</string>
+    <string name="starlink_upload">アップロード</string>
+    <string name="starlink_obstruction">障害物</string>
+    <string name="starlink_obstructed_24h">24時間で%1$s遮断</string>
+    <string name="starlink_power">消費電力</string>
 </resources>

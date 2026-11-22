@@ -12,6 +12,8 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import wrthub.app.data.HubAuth
+import wrthub.app.data.HubLink
 import wrthub.app.data.SiteConfig
 import wrthub.app.domain.NodeState
 import wrthub.app.domain.Rate
@@ -174,9 +176,10 @@ class ScreenshotTest {
 
     @Test
     fun nodes() = capture("nodes") {
+        val hubCabin = cabin.copy(hub = HubLink("https://hub.example/", "cabin", HubAuth.DEVICE, "enc"))
         NodesScreen(
-            NodesUiState(listOf(home, cabin), online.associateBy { it.config.id }),
-            NodesActions({ _, _ -> }, {}, {}, {}, {}, { _, _ -> }),
+            NodesUiState(listOf(home, hubCabin), online.associateBy { it.config.id }),
+            NodesActions({ _, _ -> }, {}, {}, {}, {}, {}, {}, { _, _ -> }),
         )
     }
 

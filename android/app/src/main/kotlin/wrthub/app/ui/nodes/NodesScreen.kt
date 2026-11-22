@@ -44,6 +44,8 @@ data class NodesActions(
     val onAddSite: () -> Unit,
     val onAddNode: (String) -> Unit,
     val onOpenWifi: (String) -> Unit,
+    val onOpenEvents: (String) -> Unit,
+    val onOpenStarlink: (String) -> Unit,
     val onRemoveSite: (String) -> Unit,
     val onRemoveNode: (siteId: String, nodeId: String) -> Unit,
 )
@@ -55,6 +57,8 @@ fun NodesRoute(
     onAddSite: () -> Unit,
     onAddNode: (String) -> Unit,
     onOpenWifi: (String) -> Unit,
+    onOpenEvents: (String) -> Unit,
+    onOpenStarlink: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     NodesScreen(
@@ -70,6 +74,8 @@ fun NodesRoute(
                 viewModel.selectSiteOf(siteId)
                 onOpenWifi(siteId)
             },
+            onOpenEvents = onOpenEvents,
+            onOpenStarlink = onOpenStarlink,
             onRemoveSite = viewModel::removeSite,
             onRemoveNode = viewModel::removeNode,
         ),
@@ -95,7 +101,7 @@ fun NodesScreen(state: NodesUiState, actions: NodesActions) {
             items(state.sites, key = { it.id }) { site ->
                 Column(Modifier.animateItem()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        SectionHeader(site.name, Modifier.weight(1f))
+                        SectionHeader(site.name, Modifier.weight(1f), trailing = site.hub?.let { stringResource(R.string.hub_badge) })
                         SiteMenu(site, actions, onRemove = { removal = it }, Modifier.padding(top = 6.dp))
                     }
                     if (site.nodes.isNotEmpty()) {
@@ -137,15 +143,30 @@ private fun SiteMenu(site: SiteConfig, actions: NodesActions, onRemove: (Removal
     Box(modifier) {
         PlainIconButton(R.drawable.ic_more_vert, stringResource(R.string.site_menu, site.name), onClick = { open = true })
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            DropdownMenuItem(text = { Text(stringResource(R.string.add_node)) }, onClick = {
-                open = false
-                actions.onAddNode(site.id)
-            })
+            // A hub site's nodes are the server's: they are added by installing the agent, not here.
+            if (site.hub == null) {
+                DropdownMenuItem(text = { Text(stringResource(R.string.add_node)) }, onClick = {
+                    open = false
+                    actions.onAddNode(site.id)
+                })
+            }
             DropdownMenuItem(text = { Text(stringResource(R.string.site_wifi)) }, onClick = {
                 open = false
                 actions.onOpenWifi(site.id)
             })
-            if (site.nodes.isNotEmpty()) {
+            if (site.hub != null) {
+                DropdownMenuItem(text = { Text(stringResource(R.string.hub_events)) }, onClick = {
+                    open = false
+                    actions.onOpenEvents(site.id)
+                })
+            }
+            if (site.hub?.starlink == true) {
+                DropdownMenuItem(text = { Text(stringResource(R.string.starlink)) }, onClick = {
+                    open = false
+                    actions.onOpenStarlink(site.id)
+                })
+            }
+            if (site.hub == null && site.nodes.isNotEmpty()) {
                 DropdownMenuItem(text = { Text(stringResource(R.string.remove_node)) }, onClick = {
                     open = false
                     onRemove(Removal.Node(site))
