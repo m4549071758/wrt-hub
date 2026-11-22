@@ -36,3 +36,9 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Agent in an OpenWrt container against this server
+        working-directory: .
+        run: python3 -m unittest agent/test/test_agent.py -v

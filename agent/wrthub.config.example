@@ -1,0 +1,4 @@
+config agent 'main'
+	option server 'https://hub.example.org'
+	# PEM file to trust instead of the system CA bundle, for a server with a private CA.
+	#option ca_file '/etc/wrthub/ca.pem'
