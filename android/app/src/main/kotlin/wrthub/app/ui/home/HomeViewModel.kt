@@ -43,6 +43,10 @@ class HomeViewModel(
     private var meter = RateMeter()
     private var realtimeJob: Job? = null
 
+    /** For a hub site, the session's live updates (pushed snapshots plus a periodic reload) while the home shows. */
+    private var liveJob: Job? = null
+    private var liveSiteId: String? = null
+
     val state: StateFlow<HomeUiState> = combine(session.state, realtime) { site, live ->
         val current = live.siteId == site.site?.id
         HomeUiState(
@@ -62,16 +66,34 @@ class HomeViewModel(
     /** Polls the router's upstream counters every second while [active]; call with false when the screen is not visible. */
     fun setRealtime(active: Boolean) {
         realtimeJob?.cancel()
+        liveJob?.cancel()
+        liveJob = null
+        liveSiteId = null
         realtimeJob = if (!active) {
             null
         } else {
             viewModelScope.launch {
                 while (true) {
+                    followHubSite()
                     poll()
                     delay(POLL_INTERVAL_MS)
                 }
             }
         }
+    }
+
+    /** Starts or stops the session's live updates as the selected site turns into a hub site or stops being one. */
+    private fun followHubSite() {
+        val site = session.state.value.site
+        val wanted = site?.takeIf { it.hub != null }?.id
+        if (wanted == liveSiteId) return
+        liveJob?.cancel()
+        liveSiteId = wanted
+        liveJob = wanted?.let { session.keepFresh(HUB_RELOAD_MS) }
+    }
+
+    override fun onCleared() {
+        liveJob?.cancel()
     }
 
     private suspend fun poll() {
@@ -100,5 +122,8 @@ class HomeViewModel(
 
     private companion object {
         const val POLL_INTERVAL_MS = 1_000L
+
+        /** Pushed snapshots keep a hub site current; the reload only notices nodes that went silent. */
+        const val HUB_RELOAD_MS = 30_000L
     }
 }

@@ -17,13 +17,31 @@ data class NodeConfig(
     val certSha256: String? = null,
 )
 
-/** [unmanagedAps]: MACs of devices the user marked as access points that are not registered nodes. */
+/**
+ * [unmanagedAps]: MACs of devices the user marked as access points that are not registered nodes.
+ * [hub]: set for a hub-mode site; its [nodes] then mirror the server's node list (kept in step on every load).
+ */
 @Serializable
 data class SiteConfig(
     val id: String,
     val name: String,
     val nodes: List<NodeConfig> = emptyList(),
     val unmanagedAps: Set<String> = emptySet(),
+    val hub: HubLink? = null,
+)
+
+@Serializable
+enum class HubAuth { DEVICE, OIDC }
+
+/** How a hub-mode site is reached: the server, the site's id there, and the phone's credential for it. */
+@Serializable
+data class HubLink(
+    /** Normalized as `https://host[:port]/`. */
+    val serverUrl: String,
+    val siteId: String,
+    val auth: HubAuth,
+    /** The paired device's token, or the OIDC AuthState JSON, encrypted by [SecretCipher]. */
+    val credentialCipher: String,
 )
 
 private val sitesJson = Json { ignoreUnknownKeys = true }

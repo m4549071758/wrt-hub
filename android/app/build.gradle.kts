@@ -16,6 +16,8 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
+        // OIDC sign-in returns to <applicationId>:/oauth2redirect (RFC 8252 private-use scheme); wrthub:// stays for pairing links.
+        manifestPlaceholders["appAuthRedirectScheme"] = "io.github.m4549071758.wrthub"
     }
 
     buildFeatures {
@@ -54,11 +56,15 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
+    implementation(libs.appauth)
+    implementation(libs.play.services.code.scanner)
+    implementation(libs.unifiedpush.connector)
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
 
     testImplementation(testFixtures(project(":core")))
     testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
