@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Db } from "./db/index.js";
 import { commands } from "./db/schema.js";
 import { newId } from "./tokens.js";
+import { ubusRefusal } from "./ubus-allowlist.js";
 
 const Mac = z.string().regex(/^[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}$/).transform((m) => m.toLowerCase());
 
@@ -33,6 +34,13 @@ export const COMMANDS = {
   traceroute: z.strictObject({ host: Host }),
   /** Snapshots every second for the next 60 seconds; the app renews the lease while it shows live rates. */
   set_fast_mode: z.strictObject({}),
+  /** One ubus call of the app's LuCI-replacement screens, within the relay allowlist (ubus-allowlist.ts). */
+  ubus: z
+    .strictObject({ object: z.string().max(64), method: z.string().max(64), args: z.record(z.string(), z.unknown()).default({}) })
+    .superRefine((call, ctx) => {
+      const reason = ubusRefusal(call.object, call.method, call.args);
+      if (reason) ctx.addIssue({ code: "custom", message: reason });
+    }),
 } as const;
 
 export type CommandName = keyof typeof COMMANDS;

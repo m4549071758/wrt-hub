@@ -40,9 +40,11 @@ docker exec -e WRTHUB_PUBLIC_URL=https://hub.example.org wrthub node dist/cli.js
 ## Commands
 
 The server relays only these, with their arguments checked: `block_client`, `unblock_client` (`mac`), `set_wifi`
-(`ssid`, `key`), `reboot`, `ping`, `traceroute` (`host`) and `set_fast_mode`. Every command is kept with who issued
-it (`device:<id>` or `oidc:<sub>`). A command no agent fetches within 2 minutes, or answers within 5 minutes of
-fetching, expires.
+(`ssid`, `key`), `reboot`, `ping`, `traceroute` (`host`), `set_fast_mode`, and `ubus` (`object`, `method`, `args`):
+one ubus call of the app's LuCI-replacement screens, within the allowlist in `src/ubus-allowlist.ts` (listed objects
+and methods, five uci configs, two files, fixed command lines; never stopping the services or removing the packages
+the node or the agent needs). Every command is kept with who issued it (`device:<id>` or `oidc:<sub>`). A command no
+agent fetches within 2 minutes, or answers within 5 minutes of fetching, expires.
 
 ## Develop
 

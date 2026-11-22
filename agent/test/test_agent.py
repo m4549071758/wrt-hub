@@ -11,6 +11,7 @@ import subprocess
 import tempfile
 import time
 import unittest
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -36,6 +37,12 @@ config wifi-iface 'mesh0'
 	option mode 'mesh'
 	option mesh_id 'mesh'
 	option key 'mesh-password'
+"""
+
+# openwrt/rootfs has no system config; the relayed write test edits its host name.
+SYSTEM_CONFIG = """
+config system
+	option hostname 'OpenWrt'
 """
 
 
@@ -84,17 +91,21 @@ class AgentTest(unittest.TestCase):
         (tmp / "config").mkdir()
         (tmp / "config" / "wrthub").write_text(f"config agent 'main'\n\toption server '{cls.base}'\n")
         (tmp / "wireless").write_text(WIRELESS_CONFIG)
+        (tmp / "system").write_text(SYSTEM_CONFIG)
         cls.container = subprocess.run(
             [
                 "docker", "run", "-d", "--rm", "--network", "host",
                 "-v", f"{ROOT}:/src:ro", "-v", f"{tmp}:/work:ro",
                 "-e", "WRTHUB_UCI_CONFDIR=/work/config", "-e", "WRTHUB_TOKEN_FILE=/work/token",
                 IMAGE, "/bin/sh", "-c",
-                f"cp /work/wireless /etc/config/wireless && /src/agent/test/container.sh {FIXTURE} "
+                f"cp /work/wireless /etc/config/wireless && cp /work/system /etc/config/system && /src/agent/test/container.sh {FIXTURE} "
                 "ucode -L /src/agent /src/agent/wrthub-agent.uc",
             ],
             check=True, capture_output=True, text=True,
         ).stdout.strip()
+        # The container starts ubusd, rpcd and the fake node before the agent; its first snapshot means all are up.
+        sites = f"/app/v1/sites/{cls.site}/snapshots"
+        wait_for(lambda: cls._request("GET", sites, token=cls.app_token)["nodes"][0]["snapshot"], 60)
 
     @classmethod
     def tearDownClass(cls):
@@ -191,6 +202,46 @@ class AgentTest(unittest.TestCase):
             20,
         )
         self.assertNotIn("wrthub_block_ce1122000088", firewall)
+
+    def test_relay_allowlist_agrees_with_the_server(self):
+        script = (
+            "import { readfile } from 'fs'; import { refusal } from 'wrthub.relay';"
+            "for (let c in json(readfile('/src/fixtures/relay-cases.json')))"
+            "  print(sprintf('%J\\n', refusal(c.object, c.method, c.args) == null));"
+        )
+        out = subprocess.run(["docker", "exec", self.container, "ucode", "-L", "/src/agent", "-e", script], capture_output=True, text=True, timeout=30)
+        cases = json.loads((ROOT / "fixtures" / "relay-cases.json").read_text())
+        verdicts = [json.loads(line) for line in out.stdout.splitlines()]
+        self.assertEqual(len(verdicts), len(cases), out.stderr)
+        for case, allowed in zip(cases, verdicts):
+            self.assertEqual(allowed, case["allowed"], case)
+
+    def relay(self, obj, method, args=None):
+        view = self.command("ubus", {"object": obj, "method": method, "args": args or {}})
+        self.assertEqual(view["status"], "succeeded", view)
+        return view["result"]
+
+    def test_relayed_write_is_staged_applied_and_confirmed_like_direct_mode(self):
+        values = self.relay("uci", "get", {"config": "system"})["data"]["values"]
+        section = next(name for name, s in values.items() if s[".type"] == "system")
+        pending = self.relay("uci", "changes")
+        self.assertEqual(pending["code"], 0)
+        self.assertFalse(any((pending["data"] or {}).get("changes", {}).values()))
+        self.assertEqual(self.relay("uci", "set", {"config": "system", "section": section, "values": {"hostname": "relayed"}})["code"], 0)
+        self.assertEqual(self.relay("uci", "apply", {"rollback": True, "timeout": 30})["code"], 0)
+        self.assertEqual(self.relay("system", "info")["code"], 0)
+        self.assertEqual(self.relay("uci", "confirm")["code"], 0)
+        shown = subprocess.run(["docker", "exec", self.container, "uci", "get", f"system.{section}.hostname"], capture_output=True, text=True).stdout
+        self.assertEqual(shown.strip(), "relayed")
+
+    def test_relayed_exec_returns_output_and_refusals_never_reach_the_node(self):
+        dmesg = self.relay("file", "exec", {"command": "/bin/dmesg", "params": ["-r"]})
+        self.assertEqual(dmesg["code"], 0)
+        self.assertEqual(set(dmesg["data"]), {"code", "stdout", "stderr"})
+        self.assertIn(self.relay("file", "read", {"path": "/etc/crontabs/root"})["code"], (0, 4))
+        with self.assertRaises(urllib.error.HTTPError) as refused:
+            self.app("POST", f"/app/v1/nodes/{self.node}/commands", {"name": "ubus", "args": {"object": "file", "method": "read", "args": {"path": "/etc/shadow"}}})
+        self.assertEqual(refused.exception.code, 400)
 
 
 if __name__ == "__main__":

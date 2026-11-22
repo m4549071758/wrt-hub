@@ -4,6 +4,7 @@
 import * as uloop from 'uloop';
 import { readfile, unlink } from 'fs';
 import { BLOCK_PREFIX } from 'wrthub.collect';
+import * as relay from 'wrthub.relay';
 
 const MAC = /^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/;
 const HOST = /^[A-Za-z0-9.:-]{1,253}$/;
@@ -144,7 +145,7 @@ export function create(conn, opts) {
 		let host = host_of(args?.host);
 		if (!host)
 			return done(failed('invalid host'));
-		exec([ '/usr/bin/traceroute', '-q', '1', '-w', '2', '-m', '20', host ], done);
+		exec([ '/bin/traceroute', '-q', '1', '-w', '2', '-m', '20', host ], done);
 	}
 
 	// Reported first, then done after a pause: the result has to reach the server before the node goes down.
@@ -153,7 +154,14 @@ export function create(conn, opts) {
 		uloop.timer(3000, () => conn.call('system', 'reboot', {}));
 	}
 
-	let handlers = { block_client: block, unblock_client: unblock, set_wifi, ping, traceroute, reboot };
+	let relay_call = relay.create(conn, { tmpdir });
+
+	// The relay answers with the ubus status in the result: a refused or failed call is still a delivered answer.
+	function ubus_call(args, done) {
+		relay_call(args, (reply) => done({ status: 'succeeded', result: reply }));
+	}
+
+	let handlers = { block_client: block, unblock_client: unblock, set_wifi, ping, traceroute, reboot, ubus: ubus_call };
 
 	return {
 		names: keys(handlers),

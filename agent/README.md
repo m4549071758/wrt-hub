@@ -5,6 +5,11 @@ sends the node's snapshot to the [server](../server/README.md), gzipped, and it 
 which it runs only if they are on its own allowlist with valid arguments. Writes go through rpcd's `uci apply` with a
 rollback timer and are confirmed only once the server answers again, so a change that cuts the node off is undone.
 
+The LuCI-replacement screens of the app make the same ubus calls as in direct mode, relayed by the agent (command
+`ubus`) within an allowlist shaped like LuCI's rpcd ACL (`wrthub/relay.uc`; the server holds the same list and
+`fixtures/relay-cases.json` keeps both in step). uci calls share one rpcd session, so the app stages, applies with
+rollback and confirms a change over several relayed calls, and a change that cuts the agent off is never confirmed.
+
 It needs nothing beyond OpenWrt 25.12's `ucode` with the `ubus`, `uci`, `fs`, `uloop` and `uclient` modules
 (`ucode-mod-uclient`) and busybox `gzip`. It takes about 20 KB on the router.
 
