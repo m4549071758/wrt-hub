@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -18,6 +20,27 @@ android {
         versionName = "0.1.0"
         // OIDC sign-in returns to <applicationId>:/oauth2redirect (RFC 8252 private-use scheme); wrthub:// stays for pairing links.
         manifestPlaceholders["appAuthRedirectScheme"] = "io.github.m4549071758.wrthub"
+    }
+
+    // The release key stays outside the repository: -Pwrthub.signing=<path> or WRTHUB_SIGNING names a properties file
+    // with storeFile, storePassword, keyAlias and keyPassword. Without it the release build is left unsigned.
+    val signingFile = (providers.gradleProperty("wrthub.signing").orNull ?: providers.environmentVariable("WRTHUB_SIGNING").orNull)
+        ?.let { file(it) }
+    val releaseSigning = signingFile?.let { path ->
+        val props = Properties().apply { path.inputStream().use { load(it) } }
+        fun prop(name: String) = requireNotNull(props.getProperty(name)) { "$name is missing from $path" }
+        signingConfigs.create("release") {
+            storeFile = file(prop("storeFile"))
+            storePassword = prop("storePassword")
+            keyAlias = prop("keyAlias")
+            keyPassword = prop("keyPassword")
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig = releaseSigning
+        }
     }
 
     buildFeatures {
